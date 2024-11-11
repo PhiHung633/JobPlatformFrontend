@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+
+@media (max-width: 1024px) {
+  .hidden-on-small {
+    display: none;
+  }
+}
+
+.truncate-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.download-mode .cv-sidebar {
+  height: 1530px;
+  overflow: hidden;
+}
+
+.download-mode .cv-content {
+  max-height: 1530px;
+  overflow-y: auto; 
+}
+
+.fixed-bg {
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover; /* Đảm bảo hình ảnh không bị cắt */
+}
+
