@@ -47,8 +47,8 @@ const Preview = () => {
             phone: cvFormData.formData.phone,
             email: cvFormData.formData.email,
             image: selectedImage,
-            website: 'www.example.com',  // You can replace with a real value if available
-            skills: skillsData.map(skill => ({ name: skill.name, level: skill.rating * 20 })),  // Assuming rating out of 5
+            website: 'www.example.com', 
+            skills: skillsData.map(skill => ({ name: skill.name, level: skill.rating * 20 })),
             summary: summaryData,
             workHistory: workHistories.map(work => ({
                 date: `${work.startMonth} ${work.startYear} - ${work.endMonth} ${work.endYear}`,
@@ -71,13 +71,11 @@ const Preview = () => {
         const element = document.querySelector("#cv-content");
         element.classList.add("download-mode");
 
-        // Đặt tỉ lệ cho canvas để có độ phân giải cao
         html2canvas(element, { scale: 3, useCORS: true }).then((canvas) => {
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = pdf.internal.pageSize.getHeight(); // 297 mm
 
-            // Chuyển đổi canvas thành hình ảnh và tính toán chiều cao của ảnh
             const imgData = canvas.toDataURL('image/png');
             const imgWidth = pdfWidth;
             const imgHeight = (canvas.height * pdfWidth) / canvas.width;
@@ -85,7 +83,6 @@ const Preview = () => {
             let heightLeft = imgHeight;
             let position = 0;
 
-            // Thêm từng phần của hình ảnh vào PDF và chuyển sang trang mới khi hết chỗ
             while (heightLeft > 0) {
                 pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
                 heightLeft -= pdfHeight;
