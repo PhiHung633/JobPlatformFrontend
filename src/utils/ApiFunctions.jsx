@@ -63,11 +63,11 @@ export async function loginUser(login) {
         const response = await api.post("/auth/login", login);
         if (response.status >= 200 && response.status < 300) {
             return { data: response.data, error: null };
-        } 
+        }
     } catch (error) {
-        console.log("Error",error.response);
+        console.log("Error", error.response);
         if (error.response) {
-            return { data: null, error: error.response.data, status: error.status };  
+            return { data: null, error: error.response.data, status: error.status };
         }
     }
 }
@@ -77,7 +77,7 @@ export async function signUpUser(signup) {
         const response = await api.post("/auth/signup", signup);
         return response.data;
     } catch (error) {
-        console.log("Error",error.response.data)
+        console.log("Error", error.response.data)
         if (error.response && error.response.data) {
             throw error.response.data;
         } else {
@@ -98,12 +98,12 @@ export async function refreshAccessToken(refreshToken) {
     }
 }
 
-export async function fetchAllJobs(page = 0, size = 10, title = '', related = false) {
+export async function fetchAllJobs(page = 0, size = 10, title = '', related = false, status = true) {
     try {
         const response = await api.get(`/jobs`, {
-            params: { page, size, title, related }
+            params: { page, size, title, related, status }
         });
-        return { data: response.data, error: null };
+        return { data: response.data, error: null, headers: response.headers };
     } catch (error) {
         console.log("Error fetching jobs", error.response);
         if (error.response) {
@@ -114,24 +114,24 @@ export async function fetchAllJobs(page = 0, size = 10, title = '', related = fa
 
 export async function fetchJobById(id) {
     try {
-        const response=await api.get(`/jobs/${id}`);
-        return {data:response.data, error:null};
+        const response = await api.get(`/jobs/${id}`);
+        return { data: response.data, error: null };
     } catch (error) {
         console.log("Error fetching job by ID", error.response);
-        if(error.response){
-            return {data:null, error:error.response.data, status:error.status};
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.status };
         }
-    }  
+    }
 }
 
 export async function fetchCompanyById(id) {
     try {
-        const response=await api.get(`/companies/id/${id}`);
-        return {data:response.data, error:null};
+        const response = await api.get(`/companies/id/${id}`);
+        return { data: response.data, error: null };
     } catch (error) {
         console.log("Error fetching company by ID", error.response);
-        if(error.response){
-            return {data:null, error:error.response.data, status:error.response.status};
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
         }
     }
 }
@@ -175,4 +175,50 @@ export async function fetchJobSavesByUser() {
         }
     }
 }
+
+export async function updateStatusJobs(jobs, status) {
+    const results = [];
+
+    for (const job of jobs) {
+        try {
+            const response = await api.patch(`/jobs/${job}`, { "status": status });
+            results.push({ jobId: job, data: response.data, error: null });
+        } catch (error) {
+            console.log("Error updating job status", error.response);
+
+            results.push({
+                jobId: job,
+                data: null,
+                error: error.response?.data || error.message,
+                status: error.response?.status || 500,
+            });
+        }
+    }
+
+    return results;
+}
+
+export async function deleteJobs(jobs) {
+    const results = [];
+
+    for (const job of jobs) {
+        try {
+            await api.delete(`/jobs/${job}`);
+            results.push({ jobId: job, error: null });
+        } catch (error) {
+            console.log("Error updating job status", error.response);
+
+            results.push({
+                jobId: job,
+                data: null,
+                error: error.response?.data || error.message,
+                status: error.response?.status || 500,
+            });
+        }
+    }
+
+    return results;
+}
+
+
 

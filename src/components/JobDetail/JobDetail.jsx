@@ -12,6 +12,11 @@ const JobDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const formatDate = (dateString) => {
+        const [day, month, year] = dateString.split(" ")[0].split("-");
+        return `${day}/${month}/${year}`;
+      };
+
     useEffect(() => {
         const loadJob = async () => {
             const { data, error, status } = await fetchJobById(id);
@@ -37,6 +42,7 @@ const JobDetail = () => {
     if (!job) {
         return <p>No job found.</p>;
     }
+    console.log("JOBDETAIL",job)
 
     return (
         <div className="p-6 flex justify-between max-w-5xl mx-56 gap-6 items-start">
@@ -61,7 +67,7 @@ const JobDetail = () => {
                             <FontAwesomeIcon icon={faMapMarkerAlt} className="text-white text-xl mr-2 bg-green-600 px-4 py-3 rounded-full" />
                             <div>
                                 <p className="font-medium">Địa điểm</p>
-                                <p className="text-sm font-bold">{job.company.location}</p>
+                                <p className="text-sm font-bold">{job.companyLocation}</p>
                             </div>
                         </div>
 
@@ -76,7 +82,7 @@ const JobDetail = () => {
 
                     <div className="text-gray-600 mb-4">
                         <FontAwesomeIcon icon={faClock} className="text-gray-400 mr-2" />
-                        Hạn nộp hồ sơ: <span className="font-medium">{job.deadline}</span>
+                        Hạn nộp hồ sơ: <span className="font-medium">{formatDate(job.deadline)}</span>
                     </div>
 
                     <div className="flex justify-between mt-4">
@@ -118,11 +124,11 @@ const JobDetail = () => {
                     <div className='mt-3'>
                         <h4 className="text-base font-semibold text-gray-800 mb-2">Địa điểm làm việc</h4>
                         <ul className="list-none list-inside text-gray-600 space-y-2">
-                            <li>-{job.company.location}</li>
+                            <li>-{job.companyLocation}</li>
                         </ul>
                     </div>
                     <div className="text-gray-500 mb-4 mt-3">
-                        Hạn nộp hồ sơ: <span className="font-medium">{job.deadline}</span>
+                        Hạn nộp hồ sơ: <span className="font-medium">{formatDate(job.deadline)}</span>
                     </div>
 
                     <div className="flex mt-4">
@@ -147,11 +153,11 @@ const JobDetail = () => {
                             className="w-12 h-12 rounded-full border border-gray-200 mr-3"
                         />
                         <h3 className="text-md font-semibold text-gray-800 leading-tight">
-                            {job.company.name}
+                            {job.companyName}
                         </h3>
                     </div>
 
-                    <div className="text-gray-600 mb-2 flex items-center">
+                    {/* <div className="text-gray-600 mb-2 flex items-center">
                         <FontAwesomeIcon icon={faUsers} className="mr-2 text-gray-300" />
                         <span className="text-sm flex">Quy mô: <p className='ml-2 font-bold'>{job.company.companySize} nhân viên</p></span>
                     </div>
@@ -159,12 +165,12 @@ const JobDetail = () => {
                     <div className="text-gray-600 mb-2 flex items-center">
                         <FontAwesomeIcon icon={faBuilding} className="mr-2 text-gray-300" />
                         <span className="text-sm flex">Lĩnh vực: <p className='ml-2 font-bold'>{job.company.industry}</p></span>
-                    </div>
+                    </div> */}
 
                     <div className="text-gray-600 mb-4 flex items-start">
                         <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2 text-gray-300" />
                         <span className="text-sm">
-                        <span className="text-sm flex">Địa điểm: <p className='ml-2 font-bold'>{job.company.location}</p></span>
+                        <span className="text-sm flex">Địa điểm: <p className='ml-2 font-bold'>{job.companyLocation}</p></span>
                         </span>
                     </div>
 

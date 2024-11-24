@@ -25,15 +25,22 @@ import Dashboard from './pages/Employer/Dashboard.jsx';
 import CreateJob from './pages/Employer/CreateJob.jsx';
 import ManageJobs from './pages/Employer/ManageJobs.jsx';
 import ManageCV from './pages/Employer/ManageCV.jsx';
+import Admin from './pages/Admin/AdminPage.jsx';
 
 const App = () => {
   const location = useLocation();
 
-  const noHeaderRoutes = ['/dang-ki', '/dang-nhap', '/quen-mat-khau', '/dang-ki-danh-cho-nha-tuyen-dung','/dashboard','/dashboard/quan-li-cong-viec','/dashboard/tao-cong-viec','/dashboard/quan-li-cv'];
+  // const noHeaderRoutes = ['/dang-ki', '/dang-nhap', '/quen-mat-khau',
+  //   '/dang-ki-danh-cho-nha-tuyen-dung', '/dashboard', '/dashboard/quan-li-cong-viec',
+  //   '/dashboard/tao-cong-viec', '/dashboard/quan-li-cv', '/admin'];
+  const noHeaderRoutes = ['/dang-ki', '/dang-nhap', '/quen-mat-khau',
+  '/dang-ki-danh-cho-nha-tuyen-dung', '/dashboard', '/admin'];
+
+  const shouldHideHeader = noHeaderRoutes.some(route => location.pathname.startsWith(route))
 
   return (
     <div className="bg-gray-100 min-h-screen w-full">
-      {!noHeaderRoutes.includes(location.pathname) && <Header />}
+      {!shouldHideHeader && <Header />}
 
       <div className="w-full mx-auto">
         <Routes>
@@ -57,6 +64,8 @@ const App = () => {
           <Route path="/summary" element={<Summary />} />
           <Route path="/extra" element={<Extra />} />
           <Route path="/preview" element={<Preview />} />
+          <Route path='/admin/*' element={<Admin />} />
+
           <Route path="/dashboard" element={<Dashboard />}>
             <Route path="quan-li-cong-viec" element={<ManageJobs />} />
             <Route path="tao-cong-viec" element={<CreateJob />} />
