@@ -220,5 +220,31 @@ export async function deleteJobs(jobs) {
     return results;
 }
 
+export async function getAllUsers(page, size, role, email) {
+    try {
+        const response = await api.get('/users', {
+            params: { page, size, role, email }
+        });
+        return { data: response.data, error: null, headers: response.headers };
+    } catch (error) {
+        console.log("Error fetching users data", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function updateUser(id, payload) {
+    try {
+        const response = await api.patch(`/users/${id}`, payload);
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error updating users data", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
 
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Sidebar from '../../components/Admin/AdminSidebar';
 import Job from './JobPage.jsx';
-import Test from './test';
+import User from './UserPage.jsx';
 
 function Admin() {
     return (
@@ -16,7 +16,7 @@ function Admin() {
             }}>
                 <Routes>
                     <Route path="/" element={<Job />} />
-                    <Route path="calendar" element={<Test />} />
+                    <Route path="users" element={<User />} />
                 </Routes>
             </div>
         </div>
