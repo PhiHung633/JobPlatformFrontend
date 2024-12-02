@@ -40,11 +40,11 @@ const Sidebar = () => {
           </li>
           <li
             className={`flex items-center mb-4 px-2 py-2 rounded-md ${
-              isActive('/admin/profile') ? 'text-white bg-gray-800 border-l-4 border-blue-500 font-bold' : 'text-gray-300 hover:text-white hover:bg-gray-800'
+              isActive('/admin/statistics') ? 'text-white bg-gray-800 border-l-4 border-blue-500 font-bold' : 'text-gray-300 hover:text-white hover:bg-gray-800'
             }`}
           >
-            <FiUser className="mr-3" />
-            <Link to="/admin/profile">Profile</Link>
+            <FiBarChart2 className="mr-3" />
+            <Link to="/admin/statistics">Thống kê</Link>
           </li>
           <li
             className={`flex items-center mb-4 px-2 py-2 rounded-md ${

@@ -26,6 +26,7 @@ import CreateJob from './pages/Employer/CreateJob.jsx';
 import ManageJobs from './pages/Employer/ManageJobs.jsx';
 import ManageCV from './pages/Employer/ManageCV.jsx';
 import Admin from './pages/Admin/AdminPage.jsx';
+import ChatApp from './pages/Admin/ChatApp.jsx';
 
 const App = () => {
   const location = useLocation();
@@ -65,6 +66,7 @@ const App = () => {
           <Route path="/extra" element={<Extra />} />
           <Route path="/preview" element={<Preview />} />
           <Route path='/admin/*' element={<Admin />} />
+          <Route path='/chat' element={<ChatApp />} />
 
           <Route path="/dashboard" element={<Dashboard />}>
             <Route path="quan-li-cong-viec" element={<ManageJobs />} />

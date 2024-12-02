@@ -246,5 +246,61 @@ export async function updateUser(id, payload) {
     }
 }
 
+export async function getOverallStatistics(days) {
+    try {
+        const response = await api.get('/statistics/overall', {
+            params: { days }
+        });
+        return { data: response.data, error: null};
+    } catch (error) {
+        console.log("Error fetching overall statistics", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function getTopJobsStatistics(days) {
+    try {
+        const response = await api.get('/statistics/top-5-industry-jobs', {
+            params: { days }
+        });
+        return { data: response.data, error: null};
+    } catch (error) {
+        console.log("Error fetching top-5-industry-jobs statistics", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function getTopApplicationsStatistics(days) {
+    try {
+        const response = await api.get('/statistics/top-5-industry-applications', {
+            params: { days }
+        });
+        return { data: response.data, error: null};
+    } catch (error) {
+        console.log("Error fetching top-5-industry-applications", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function getCountStatusApplications(days) {
+    try {
+        const response = await api.get('/statistics/application-status', {
+            params: { days }
+        });
+        return { data: response.data, error: null};
+    } catch (error) {
+        console.log("Error fetching application status count", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
 
 
