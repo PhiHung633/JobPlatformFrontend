@@ -302,5 +302,17 @@ export async function getCountStatusApplications(days) {
     }
 }
 
+export async function addFCMToken(FCMToken){
+    try {
+        const response = await api.post('/users/fcm-token', {FCMToken});
+        return { data: response.data, error: null};
+    } catch (error) {
+        console.log("Error adding FCM Token", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
 
 

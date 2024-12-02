@@ -72,21 +72,6 @@ const Dashboard = () => {
         ],
     });
 
-    const requestNotificationPermission = async () => {
-        try {
-            const currentToken = await getToken(messaging, {
-                vapidKey: "BH076IGPbTBV8Boh8I6vKX-7QpyT9OD4AQ0icfUxN7eUM7QEJ35F1Yk8qxFqHCeS9ftln3UsXR8rlduennz0kMQ", // Replace this with your actual VAPID key
-            });
-            if (currentToken) {
-                console.log("FCM Token:", currentToken);
-                // Send this token to your backend for storing
-            } else {
-                console.log("No registration token available. Request permission to generate one.");
-            }
-        } catch (error) {
-            console.error("Permission denied or error:", error);
-        }
-    };
 
 
     const data = {
@@ -247,12 +232,7 @@ const Dashboard = () => {
         loadTopJobsData(timeRange)
         loadTopApplicationsData(timeRange)
         loadApplicationStatusStatistics(timeRange)
-        requestNotificationPermission();
 
-        onMessage(messaging, (payload) => {
-            console.log("Message received. ", payload);
-            alert(payload.data.body)
-          });
     }, [timeRange])
 
 

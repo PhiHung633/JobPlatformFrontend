@@ -17,10 +17,10 @@ const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(function(payload) {
   console.log('Received background message ', payload);
-  const notificationTitle = payload.notification.title;
+  const notificationTitle = "Thông báo mới";
   const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/firebase-logo.png',
+    body: payload.data.message,
+    icon: '/logo.jpg',
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
