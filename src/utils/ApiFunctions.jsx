@@ -302,6 +302,20 @@ export async function getCountStatusApplications(days) {
     }
 }
 
+export async function getDataThroughTime(days) {
+    try {
+        const response = await api.get('/statistics/statistic-by-time', {
+            params: { days }
+        });
+        return { data: response.data, error: null};
+    } catch (error) {
+        console.log("Error fetching statistic", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
 export async function addFCMToken(FCMToken){
     try {
         const response = await api.post('/users/fcm-token', {FCMToken});

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, Box, Typography, Card, CardContent } from '@mui/material';
+import { Grid, Box, Typography, Card, CardContent, CircularProgress  } from '@mui/material';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import { messaging } from '../../utils/firebase.js'
 import { getToken, onMessage } from "firebase/messaging";
@@ -18,7 +18,10 @@ import {
     ArcElement
 } from 'chart.js';
 import TimeSelector from '../../components/Admin/SelectTime'
-import { getOverallStatistics, getTopApplicationsStatistics, getTopJobsStatistics, getCountStatusApplications } from '../../utils/ApiFunctions';
+import {
+    getOverallStatistics, getTopApplicationsStatistics,
+    getTopJobsStatistics, getCountStatusApplications, getDataThroughTime
+} from '../../utils/ApiFunctions';
 
 // Register components
 ChartJS.register(
@@ -34,6 +37,12 @@ ChartJS.register(ArcElement);
 
 
 const Dashboard = () => {
+    // Loading states
+    const [loadingOverall, setLoadingOverall] = useState(true);
+    const [loadingTopJobs, setLoadingTopJobs] = useState(true);
+    const [loadingTopApplications, setLoadingTopApplications] = useState(true);
+    const [loadingApplicationStatus, setLoadingApplicationStatus] = useState(true);
+    const [loadingThroughTime, setLoadingThroughTime] = useState(true);
 
     const [timeRange, setTimeRange] = useState(30);
     const [cardData, setCardData] = useState([
@@ -71,31 +80,27 @@ const Dashboard = () => {
             },
         ],
     });
-
-
-
-    const data = {
+    const [dataThroughTime, setDataThroughTime] = useState({
         labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
         datasets: [
             {
-                label: "Job Applications Submitted",
+                label: "Số đơn ứng tuyển",
                 data: [10, 25, 15, 30, 40, 20, 50],
                 borderColor: "rgba(75,192,192,1)",
-                backgroundColor: "rgba(75,192,192,0.2)", // Area under the curve color
-                tension: 0, // Curve smoothness
+                backgroundColor: "rgba(75,192,192,0.2)",
+                tension: 0.2,
             },
             {
-                label: "New Job Postings",
+                label: "Số tin tuyển dụng",
                 data: [5, 15, 10, 20, 35, 25, 45],
                 borderColor: "rgba(153,102,255,1)",
                 backgroundColor: "rgba(153,102,255,0.2)",
-                tension: 0.4,
+                tension: 0.2,
             },
         ],
-    };
-
-    // Chart options
-    const options = {
+    }
+    );
+    const [options, setOptions] = useState({
         responsive: true,
         maintainAspectRatio: true,
         plugins: {
@@ -107,43 +112,45 @@ const Dashboard = () => {
         layout: {
             padding: {
                 top: 10,
-                bottom: 30, // Add padding to ensure space for labels
+                bottom: 30,
             },
         },
         scales: {
             x: {
                 ticks: {
-                    callback: (value, index, values) => {
-                        // This ensures long labels don't overlap
-                        return value.length > 5 ? value.slice(0, 3) + "..." : value;
+                    callback: (value, index) => {
+                        const array = ["1", "2", "3", "4", "5", "6", "7"]
+                        return array[index];
                     },
                 },
                 title: {
                     display: true,
-                    text: "Months", // Add a title for the X-axis
+                    text: "Thời gian", // Add a title for the X-axis
                 },
             },
         },
-    };
-
+    });
 
     const loadOverallData = async (days) => {
+        setLoadingOverall(true);
         const { data, error } = await getOverallStatistics(days)
         if (data) {
             const updatedCardData = [
                 { label: 'TIN TUYỂN DỤNG', value: data.numberOfJobs || 0 },
                 { label: 'ĐƠN ỨNG TUYỂN', value: data.numberOfApplications || 0 },
-                { label: 'NGƯỜI DÙNG MỚI', value: data.numberOfNewMembers || 0 },
-                { label: '...', value: 0 }, // Placeholder for additional data
+                { label: 'NHÀ TUYỂN DỤNG', value: data.numberOfJobSeekers || 0 },
+                { label: 'NGƯỜI TÌM VIỆC', value: data.numberOfRecruiters || 0 },
             ];
             setCardData(updatedCardData);
         }
         else {
             console.log(error)
         }
+        setLoadingOverall(false);
     }
 
     const loadTopJobsData = async (days) => {
+        setLoadingTopJobs(true);
         const { data, error } = await getTopJobsStatistics(days)
         if (data) {
             const updatedData = {
@@ -162,9 +169,12 @@ const Dashboard = () => {
         else {
             console.log(error)
         }
+        setLoadingTopJobs(false);
+
     }
 
     const loadTopApplicationsData = async (days) => {
+        setLoadingTopApplications(true);
         const { data, error } = await getTopApplicationsStatistics(days)
         if (data) {
             const updatedData = {
@@ -183,9 +193,11 @@ const Dashboard = () => {
         else {
             console.log(error)
         }
+        setLoadingTopApplications(false);
     }
 
     const loadApplicationStatusStatistics = async (days) => {
+        setLoadingApplicationStatus(true);
         const labelMap = {
             PENDING: 'Đang chờ',
             REJECTED: 'Bị từ chối',
@@ -199,7 +211,6 @@ const Dashboard = () => {
             INTERVIEWING: 0,
             ACCEPTED: 0,
         };
-
 
         const { data, error } = await getCountStatusApplications(days)
         if (data) {
@@ -224,7 +235,83 @@ const Dashboard = () => {
         else {
             console.log(error)
         }
+        setLoadingApplicationStatus(false);
     }
+
+    const loadDataThroughTime = async (days) => {
+        setLoadingThroughTime(true);
+        const { data, error } = await getDataThroughTime(days)
+
+        if (data) {
+            const applications = data[0].map(item => item.count);
+            const jobs = data[1].map(item => item.count);
+
+
+            console.log(applications)
+
+            const label = data[0].map(item => item.object);
+
+            const dataK = {
+                labels: label,
+                datasets: [
+                    {
+                        label: "Số đơn ứng tuyển",
+                        data: [...applications],
+                        borderColor: "rgba(75,192,192,1)",
+                        backgroundColor: "rgba(75,192,192,0.2)",
+                        tension: 0.2
+                    },
+                    {
+                        label: "Số tin tuyển dụng",
+                        data: [...jobs],
+                        borderColor: "rgba(153,102,255,1)",
+                        backgroundColor: "rgba(153,102,255,0.2)",
+                        tension: 0.2
+                    }
+                ]
+            };
+
+            const newOptions = {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: "top",
+                    },
+
+                },
+                layout: {
+                    padding: {
+                        top: 10,
+                        bottom: 30,
+                    },
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: (value, index) => {
+                                const array = label
+                                return array[index];
+                            },
+                        },
+                        title: {
+                            display: true,
+                            text: "Thời gian",
+                        },
+                    },
+                },
+            };
+
+            setDataThroughTime(dataK);
+            setOptions(newOptions);
+        }
+        else {
+            console.log(error)
+        }
+        setLoadingThroughTime(false);
+
+    }
+
 
 
     useEffect(() => {
@@ -232,6 +319,7 @@ const Dashboard = () => {
         loadTopJobsData(timeRange)
         loadTopApplicationsData(timeRange)
         loadApplicationStatusStatistics(timeRange)
+        loadDataThroughTime(timeRange)
 
     }, [timeRange])
 
@@ -240,80 +328,77 @@ const Dashboard = () => {
         setTimeRange(selectedRange);
     };
 
+    // console.log(dataThroughTime)
     return (
         <Box sx={{ padding: 2 }}>
             <TimeSelector onTimeRangeChange={handleTimeRangeChange} />
-            {/* Header Cards */}
             <Grid container spacing={2}>
-                {cardData.map((card, index) => (
-                    <Grid item xs={12} sm={6} md={3} key={index}>
-                        <Card>
-                            <CardContent>
-                                <Typography variant="h4" align="center">
-                                    {card.value}
-                                </Typography>
-                                <Typography variant="subtitle1" align="center" color="textSecondary">
-                                    {card.label}
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                ))}
+                {/* Overall Stats */}
+                {loadingOverall ? (
+                    <CircularProgress />
+                ) : (
+                    cardData.map((card, index) => (
+                        <Grid item xs={12} sm={6} md={3} key={index}>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant="h4" align="center">
+                                        {card.value}
+                                    </Typography>
+                                    <Typography variant="subtitle1" align="center" color="textSecondary">
+                                        {card.label}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    ))
+                )}
             </Grid>
 
-            {/* Charts */}
             <Grid container spacing={2} sx={{ marginTop: 2 }}>
-
-                {/* Bar Chart */}
+                {/* Top Applications */}
                 <Grid item xs={12} md={6}>
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
                                 Ngành được ứng tuyển nhiều nhất
                             </Typography>
-                            <Bar data={topApplications} />
+                            {loadingTopApplications ? <CircularProgress /> : <Bar data={topApplications} />}
                         </CardContent>
                     </Card>
                 </Grid>
 
-
-                {/* Most Active Classes */}
+                {/* Top Jobs */}
                 <Grid item xs={12} md={6}>
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
                                 Ngành được tuyển dụng nhiều nhất
                             </Typography>
-                            <Bar
-                                data={{
-                                    labels: topJobs.labels,
-                                    datasets: topJobs.datasets,
-                                }}
-                                options={{ indexAxis: 'y' }}
-                            />
+                            {loadingTopJobs ? <CircularProgress /> : <Bar data={topJobs} options={{ indexAxis: 'y' }} />}
                         </CardContent>
                     </Card>
                 </Grid>
-                {/* Progress Breakdown */}
+
+                {/* Application Status */}
                 <Grid item xs={12} md={6}>
                     <Card>
-                        <CardContent >
+                        <CardContent>
                             <Typography variant="h6" gutterBottom>
                                 Tỉ lệ tình trạng nộp đơn
                             </Typography>
-                            <Doughnut data={applicationStatus} />
+                            {loadingApplicationStatus ? <CircularProgress /> : <Doughnut data={applicationStatus} />}
                         </CardContent>
                     </Card>
                 </Grid>
-                {/* Doughnut Chart */}
+
+                {/* Data Through Time */}
                 <Grid item xs={12} md={6}>
                     <Card>
-                        <CardContent style={{ height: "518px", width: "100%" }}>
+                        <CardContent>
                             <Typography variant="h6" gutterBottom>
-                                Time on Site Breakdown
+                                Xu hướng tuyển dụng và việc làm
                             </Typography>
-                            {/* <Doughnut data={doughnutData} /> */}
-                            <Line data={data} options={options} />
+                            {loadingThroughTime ? <CircularProgress /> : <Line data={dataThroughTime} options={options} />}
                         </CardContent>
                     </Card>
                 </Grid>
