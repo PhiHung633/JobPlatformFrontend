@@ -9,7 +9,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect, useRef } from "react";
 import { fetchAllJobs } from "../../utils/ApiFunctions";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Searchbar = () => {
   const cities = [
@@ -168,6 +168,16 @@ const Searchbar = () => {
   const [jobSuggestions, setJobSuggestions] = useState([]);
   const [searchTitle, setSearchTitle] = useState('');
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    navigate("/tim-viec-lam", {
+      state: {
+        searchTitle: searchTitle,
+        jobSuggestions: jobSuggestions,
+      },
+    });
+  };
 
 
   const [filterOption, setFilterOption] = useState("1");
@@ -199,7 +209,7 @@ const Searchbar = () => {
     if (searchTitle) {
       fetchJobs();
     } else {
-      setJobSuggestions([]); // Clear jobs when search title is empty
+      setJobSuggestions([]);
     }
   }, [searchTitle]);
   const fetchData = (value) => {
@@ -374,7 +384,11 @@ const Searchbar = () => {
 
         <div className="border-l border-gray-300 h-10 mx-1 hidden-on-small"></div>
 
-        <button className="ml-auto bg-green-500 text-white rounded-full py-3 px-6 flex items-center hover:bg-green-700 transition-colors duration-300">
+        <button 
+          className="ml-auto bg-green-500 text-white rounded-full py-3 px-6 
+                    flex items-center hover:bg-green-700 transition-colors duration-300"
+          onClick={handleSearch}
+                    >
           <FontAwesomeIcon icon={faSearch} />
           <span className="ml-1">Tìm kiếm</span>
         </button>
@@ -398,7 +412,7 @@ const Searchbar = () => {
                   />
                   <label htmlFor="type-keyword-search-1">Tên việc làm</label>
                 </div>
-                <div className="flex items-center gap-1">
+                {/* <div className="flex items-center gap-1">
                   <input
                     id="type-keyword-search-2"
                     type="radio"
@@ -421,7 +435,7 @@ const Searchbar = () => {
                     className="form-radio h-5 w-5"
                   />
                   <label htmlFor="type-keyword-search-3">Cả hai</label>
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -441,32 +455,31 @@ const Searchbar = () => {
           <div className="flex flex-col ml-5 hidden-on-small:ml-0">
             <div className="font-semibold mb-2">Việc làm bạn có thể quan tâm</div>
             <div className="flex flex-col">
-              {Array.from(new Set(jobSuggestions.map(job => job.company.name))).map((companyName) => {
-                // Lọc các job có company.name tương ứng
-                const jobsForCompany = jobSuggestions.filter(job => job.company.name === companyName);
+              {Array.from(new Set(jobSuggestions.map(job => job.companyName))).map((companyName) => {
+                const jobsForCompany = jobSuggestions.filter(job => job.companyName === companyName);
 
                 return (
                   <Link
-                    to={`/viec-lam/${jobsForCompany[0].id}`} // Lấy id của job đầu tiên
+                    to={`/viec-lam/${jobsForCompany[0].id}`} 
                     className="flex items-center p-2 hover:bg-[#e0e7ff] transition-colors w-[600px] relative group"
                     key={companyName}
                   >
                     <div className="mr-2">
                       <img
-                        src={jobsForCompany[0].company.images} // Lấy ảnh của job đầu tiên
+                        src={jobsForCompany[0].companyImages} 
                         alt={"Image"}
                         className="w-24 h-auto"
                       />
                     </div>
                     <div className="flex-1">
                       <p className="text-[#263a4d] font-semibold truncate">
-                        {jobsForCompany[0].title} {/* Hiển thị tiêu đề của job đầu tiên */}
+                        {jobsForCompany[0].title} 
                       </p>
                       <p className="text-gray-600 text-sm truncate">
-                        {companyName} {/* Hiển thị tên công ty */}
+                        {companyName}
                       </p>
                       <div className="text-green-600 text-sm font-semibold">
-                        {jobsForCompany[0].salary} {/* Hiển thị lương của job đầu tiên */}
+                        {jobsForCompany[0].salary.toLocaleString()}
                       </div>
                     </div>
                     <div className="ml-4 text-green-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100">

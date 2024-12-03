@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import Carousel from 'react-grid-carousel';
+import { useEffect, useState } from "react";
+import Carousel from "react-grid-carousel";
 
-const LocationCarousel = () => {
+const LocationCarousel = ({ selectedOption, onItemSelect }) => {
   const locations = [
     "Thành phố Hồ Chí Minh",
     "Hà Nội",
@@ -10,29 +10,55 @@ const LocationCarousel = () => {
     "Huế",
     "Cần Thơ",
     "Hải Phòng",
-    "Quảng Ninh"
+    "Quảng Ninh",
   ];
 
-  const [selectedLocation, setSelectedLocation] = useState("Thành phố Hồ Chí Minh");
+  const industries = [
+    "Công nghệ thông tin",
+    "Kế toán",
+    "Marketing / Truyền Thông / Quảng Cáo",
+    "Giáo dục",
+    "Y tế",
+    "Kỹ thuật",
+    "Thời trang",
+    "Bất động sản",
+  ];
 
-  const handleLocationClick = (location) => {
-    setSelectedLocation(location);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  const dataToDisplay =
+    selectedOption === "Địa điểm"
+      ? locations
+      : selectedOption === "Ngành nghề"
+      ? industries
+      : [];
+
+  useEffect(() => {
+    // Only update if selectedItem is not in the new dataToDisplay
+    if (!dataToDisplay.includes(selectedItem)) {
+      setSelectedItem(dataToDisplay[0]);
+    }
+  }, [selectedOption, dataToDisplay, selectedItem]);
+
+  const handleItemClick = (item) => {
+    setSelectedItem(item);
+    onItemSelect(item);
   };
 
   return (
     <div className="py-4">
       <Carousel cols={4} rows={1} gap={10} loop>
-        {locations.map((location, index) => (
+        {dataToDisplay.map((item, index) => (
           <Carousel.Item key={index}>
-            <button 
-              onClick={() => handleLocationClick(location)}
+            <button
+              onClick={() => handleItemClick(item)}
               className={`${
-                selectedLocation === location
+                selectedItem === item
                   ? "bg-green-500 text-white cursor-default"
                   : "bg-gray-200 text-black hover:bg-white hover:border-green-400 hover:text-green-500"
               } text-sm font-semibold rounded-3xl px-2 w-full h-full flex items-center justify-center border border-transparent`}
             >
-              {location}
+              {item}
             </button>
           </Carousel.Item>
         ))}

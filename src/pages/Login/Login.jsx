@@ -2,15 +2,16 @@ import { useState } from 'react';
 import { faLock, faEye, faEyeSlash, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link, useNavigate } from 'react-router-dom';
+import { jwtDecode } from "jwt-decode";
 
 import { loginUser } from '../../utils/ApiFunctions';
 
 const LoginForm = () => {
     const [showPassword, setShowPassword] = useState({ password: false });
     const [formData, setFormData] = useState({ email: '', password: '' });
-    const [error, setError] = useState(null); // Thêm state để lưu thông báo lỗi
+    const [error, setError] = useState(null);
 
-    const navigate=useNavigate();
+    const navigate = useNavigate();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -19,23 +20,33 @@ const LoginForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError("")
-        //console.log('Login data:', formData);
-        
+        setError("");
+
         const result = await loginUser(formData);
-        console.log("Đây nè",result.error);
+        console.log("RESUWQQW",result);
+        
         if (result.data) {
-            console.log('Login successful:', result.data);
-            localStorage.setItem('accessToken', result.data.accessToken);
-            localStorage.setItem('refreshToken', result.data.refreshToken);
-            navigate('/');
-        } else if (result.error) {
-            setError('Email hoặc mật khẩu của bạn không đúng!');
-        }else if(result.status==403){
+            const { accessToken, refreshToken } = result.data;
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('refreshToken', refreshToken);
+
+            const decodedToken = jwtDecode(accessToken);
+            const userRole = decodedToken.role;
+
+            if (userRole === 'ROLE_JOB_SEEKER') {
+                navigate('/');
+            } else if (userRole === 'ROLE_RECRUITER') {
+                navigate('/dashboard');
+            } else if (userRole === 'ROLE_ADMIN') {
+                navigate('/admin');
+            }
+        } else if (result.status === 403) {
             setError('Bạn vui lòng xác thực email!');
         }
+        else if (result.error) {
+            setError('Email hoặc mật khẩu của bạn không đúng!');
+        }
     };
-    
 
     const togglePasswordVisibility = (field) => {
         setShowPassword((prev) => ({ ...prev, [field]: !prev[field] }));

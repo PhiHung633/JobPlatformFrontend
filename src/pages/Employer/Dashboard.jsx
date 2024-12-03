@@ -1,12 +1,24 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { FaBell, FaUserCircle } from 'react-icons/fa';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { jwtDecode } from "jwt-decode";
+import { useEffect } from 'react';
+
 import Header from './Header';
 
 const Dashboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  // Kiểm tra xem đường dẫn hiện tại có trùng với đường dẫn của mục nào trong sidebar không
   const isActive = (path) => location.pathname === path;
+  const accessToken = localStorage.getItem("accessToken");
+  const decodedToken = jwtDecode(accessToken);
+
+  const idCompany = "1000"; 
+
+  useEffect(() => {
+    if (!idCompany) {
+      navigate('/dashboard/them-cong-ti');
+    }
+  }, [idCompany, navigate]); 
 
   return (
     <>
@@ -19,7 +31,7 @@ const Dashboard = () => {
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
               <div>
-                <div className="font-bold text-gray-800">Nguyễn Phú Khanh</div>
+                <div className="font-bold text-gray-800">{decodedToken.sub}</div>
                 <div className="text-sm text-gray-500">Employer</div>
               </div>
             </div>
@@ -30,9 +42,8 @@ const Dashboard = () => {
             <li>
               <Link
                 to="/dashboard"
-                className={`${
-                  isActive('/dashboard') ? 'text-blue-600 font-semibold bg-gray-100' : 'text-gray-800'
-                } block px-4 py-2 rounded-lg hover:bg-gray-100`}
+                className={`${isActive('/dashboard') ? 'text-blue-600 font-semibold bg-gray-100' : 'text-gray-800'
+                  } block px-4 py-2 rounded-lg hover:bg-gray-100`}
               >
                 Bảng tin
               </Link>
@@ -40,9 +51,8 @@ const Dashboard = () => {
             <li>
               <Link
                 to="/dashboard/quan-li-cong-viec"
-                className={`${
-                  isActive('/dashboard/quan-li-cong-viec') ? 'text-blue-600 font-semibold bg-gray-100' : 'text-gray-800'
-                } block px-4 py-2 rounded-lg hover:bg-gray-100`}
+                className={`${isActive('/dashboard/quan-li-cong-viec') ? 'text-blue-600 font-semibold bg-gray-100' : 'text-gray-800'
+                  } block px-4 py-2 rounded-lg hover:bg-gray-100`}
               >
                 Quản lý tuyển dụng
               </Link>
@@ -50,9 +60,8 @@ const Dashboard = () => {
             <li>
               <Link
                 to="/dashboard/tao-cong-viec"
-                className={`${
-                  isActive('/dashboard/tao-cong-viec') ? 'text-blue-600 font-semibold bg-gray-100' : 'text-gray-800'
-                } block px-4 py-2 rounded-lg hover:bg-gray-100`}
+                className={`${isActive('/dashboard/tao-cong-viec') ? 'text-blue-600 font-semibold bg-gray-100' : 'text-gray-800'
+                  } block px-4 py-2 rounded-lg hover:bg-gray-100`}
               >
                 Tạo tin tuyển dụng mới
               </Link>
@@ -60,13 +69,21 @@ const Dashboard = () => {
             <li>
               <Link
                 to="/dashboard/quan-li-cv"
-                className={`${
-                  isActive('/dashboard/quan-li-cv') ? 'text-blue-600 font-semibold bg-gray-100' : 'text-gray-800'
-                } block px-4 py-2 rounded-lg hover:bg-gray-100`}
+                className={`${isActive('/dashboard/quan-li-cv') ? 'text-blue-600 font-semibold bg-gray-100' : 'text-gray-800'
+                  } block px-4 py-2 rounded-lg hover:bg-gray-100`}
               >
                 Quản lý CV ứng viên
               </Link>
             </li>
+            {/* <li>
+              <Link
+                to={`/dashboard/them-cong-ti/${idCompany}`}
+                className={`${isActive('/dashboard/them-cong-ti') ? 'text-blue-600 font-semibold bg-gray-100' : 'text-gray-800'
+                  } block px-4 py-2 rounded-lg hover:bg-gray-100`}
+              >
+                Công ti của tôi
+              </Link>
+            </li> */}
           </ul>
         </div>
 

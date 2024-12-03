@@ -1,76 +1,196 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaPlus, FaSearch } from 'react-icons/fa';
-
-const sampleJobs = [
-  { id: 1, title: 'Frontend Developer', status: 'Đang tuyển', cvCount: 5 },
-  { id: 2, title: 'Backend Developer', status: 'Hết hạn', cvCount: 3 },
-];
+import { useNavigate } from 'react-router-dom';
+import Button from '@mui/material/Button';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import { jwtDecode } from "jwt-decode";
+import { fetchJobs } from '../../utils/ApiFunctions';
 
 const ManageJobs = () => {
-  const [jobs, setJobs] = useState(sampleJobs);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [jobs, setJobs] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [userId, setUserId] = useState('');
+  const navigate = useNavigate();
+
+  const loadJobs = async (page = 0) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        const decodedToken = jwtDecode(token);
+        setUserId(decodedToken.user_id);
+      }
+
+      const result = await fetchJobs(userId, page, 10, searchTerm);
+
+      if (result.data) {
+        setJobs(result.data);
+        setTotalPages(result.totalPages);
+        setTotalElements(result.totalElements);
+      } else {
+        console.error('Error fetching jobs:', result.error);
+      }
+    } catch (error) {
+      console.error('Error in loadJobs:', error);
+    }
+  };
 
   const handleDelete = (id) => {
-    const updatedJobs = jobs.filter(job => job.id !== id);
+    const updatedJobs = jobs.filter((job) => job.id !== id);
     setJobs(updatedJobs);
   };
 
-  const filteredJobs = jobs.filter(job =>
-    job.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleEdit = (job) => {
+    navigate('/dashboard/tao-cong-viec', {
+      state: {
+        id: job.id,
+        title: job.title,
+        description: job.description,
+        workExperience: job.workExperience,
+        benefits: job.benefits,
+        salary: job.salary,
+        industry:job.industry,
+        level:job.level,
+        workType:job.workType,
+        numberOfRecruits:job.numberOfRecruits,
+        deadline: job.deadline,
+      },
+    });
+  };
 
+  const handleAdd = () => {
+    navigate('/dashboard/tao-cong-viec');
+  };
+
+  const handleManageCV = (jobTitle, jobId) => {
+    navigate('/dashboard/quan-li-cv', {
+      state: {
+        jobTitle,
+        jobId,
+      },
+    });
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    loadJobs(newPage);  // Gọi lại loadJobs khi thay đổi trang
+  };
+
+  useEffect(() => {
+    loadJobs(currentPage);  
+  }, [currentPage, searchTerm]);
+  console.log("JOBNE",jobs)
   return (
-    <div className="p-8 mt-10 bg-white">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold">Quản lý tin tuyển dụng</h2>
-        <button className="flex items-center py-2 px-4 bg-green-500 text-white rounded-lg">
+    <div className="p-8 mt-10 bg-white shadow rounded-lg">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold text-gray-800">Quản lý tin tuyển dụng</h2>
+        <Button
+          variant="outlined"
+          onClick={handleAdd}
+          className="flex items-center py-2 px-4 bg-green-500 text-white rounded-xl shadow-md hover:shadow-lg transition duration-300"
+        >
           <FaPlus className="mr-2" />
           Thêm tin tuyển dụng mới
-        </button>
+        </Button>
       </div>
 
       {/* Search bar with icon */}
-      <div className="relative mb-4">
+      <div className="relative mb-6">
         <input
           type="text"
           placeholder="Tìm kiếm tên công việc..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-2 pl-4 pr-10 border rounded-lg"
+          onChange={(e) => setSearchTerm(e.target.value)}  // Cập nhật searchTerm khi người dùng nhập
+          className="w-full p-3 pl-4 pr-12 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none transition duration-200"
         />
-        <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer" />
+        <FaSearch className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500" />
       </div>
 
       {/* Jobs table */}
-      <div className="overflow-x-auto border rounded-lg">
+      <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
         <table className="min-w-full bg-white">
           <thead>
-            <tr>
-              <th className="py-3 px-6 text-left text-gray-700 font-semibold border-b">Tên công việc</th>
-              <th className="py-3 px-6 text-left text-gray-700 font-semibold border-b">Trạng thái</th>
-              <th className="py-3 px-6 text-left text-gray-700 font-semibold border-b">CV ứng tuyển</th>
-              <th className="py-3 px-6 text-left text-gray-700 font-semibold border-b">Hành động</th>
+            <tr className="bg-gray-100">
+              <th className="py-3 px-6 text-left text-gray-700 font-semibold">Tên công việc</th>
+              <th className="py-3 px-6 text-left text-gray-700 font-semibold">Trạng thái</th>
+              <th className="py-3 px-6 text-left text-gray-700 font-semibold">CV ứng tuyển</th>
+              <th className="py-3 px-6 text-left text-gray-700 font-semibold">Hành động</th>
             </tr>
           </thead>
           <tbody>
-            {filteredJobs.map((job) => (
-              <tr key={job.id} className="hover:bg-gray-100">
-                <td className="py-4 px-6 border-b">{job.title}</td>
-                <td className="py-4 px-6 border-b">{job.status}</td>
-                <td className="py-4 px-6 border-b">{job.cvCount} CV</td>
-                <td className="py-4 px-6 border-b flex space-x-2">
-                  <button className="py-1 px-3 bg-yellow-500 text-white rounded-lg">Sửa</button>
-                  <button
-                    onClick={() => handleDelete(job.id)}
-                    className="py-1 px-3 bg-red-500 text-white rounded-lg"
-                  >
-                    Xóa
-                  </button>
+            {jobs.length > 0 ? (
+              jobs.map((job) => (
+                <tr key={job.id} className="hover:bg-gray-50 transition duration-200">
+                  <td className="py-4 px-6 border-b">{job.title}</td>
+                  <td className="py-4 px-6 border-b">
+                    {new Date(job.deadline) > new Date() ? 'Đang tuyển' : 'Hết hạn'}
+                  </td>
+                  <td className="py-4 px-6 border-b">
+                    <Button
+                      variant="outlined"
+                      startIcon={<FolderOpenIcon />}
+                      onClick={() => handleManageCV(job.title, job.id)}
+                      className="py-1 px-4 bg-blue-500 text-white rounded-lg transition duration-200"
+                    >
+                      {job.cvCount} CV ứng tuyển
+                    </Button>
+                  </td>
+                  <td className="py-4 px-6 border-b flex space-x-2">
+                    <Button
+                      variant="contained"
+                      startIcon={<EditOutlinedIcon />}
+                      onClick={() => handleEdit(job)}
+                      className="py-1 px-4 bg-yellow-500 text-white rounded-lg transition duration-200"
+                    >
+                      Sửa
+                    </Button>
+                    <Button
+                      variant="contained"
+                      startIcon={<DeleteOutlineOutlinedIcon />}
+                      color="error"
+                      onClick={() => handleDelete(job.id)}
+                      className="py-1 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200"
+                    >
+                      Xóa
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" className="py-6 px-6 text-center text-gray-500">
+                  Không có tin tuyển dụng nào
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-between items-center mt-6">
+        <span className="text-gray-600">Tổng số công việc: {totalElements}</span>
+        <div className="flex space-x-2">
+          <button
+            disabled={currentPage === 0}
+            onClick={() => handlePageChange(currentPage - 1)}
+            className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50"
+          >
+            Trước
+          </button>
+          <span className="px-4 py-2">Trang {currentPage + 1} / {totalPages}</span>
+          <button
+            disabled={currentPage === totalPages - 1}
+            onClick={() => handlePageChange(currentPage + 1)}
+            className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50"
+          >
+            Sau
+          </button>
+        </div>
       </div>
     </div>
   );

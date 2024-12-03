@@ -1,17 +1,30 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart } from '@fortawesome/free-solid-svg-icons';
 import JobHoverDetail from './JobHoverDetail';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { addJobSave, deleteJobSave } from '../../utils/ApiFunctions';
+import { addJobSave, deleteJobSave, fetchJobSavesByUser } from '../../utils/ApiFunctions';
 
 const JobItem = ({ job }) => {
     const [showHoverInfo, setShowHoverInfo] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
 
+    useEffect(() => {
+        const checkJobSaveStatus = async () => {
+            const { data, error } = await fetchJobSavesByUser();
+            if (error) {
+                console.error("Error fetching job saves:", error);
+                return;
+            }
+            const isSaved = data.some((save) => save.jobId === job.id);
+            setIsFavorite(isSaved);
+        };
+
+        checkJobSaveStatus();
+    }, [job.id]);
+
     const handleFavoriteClick = async () => {
         if (isFavorite) {
-            // Nếu đã lưu, xóa job save
             await deleteJobSave(job.id);
             setIsFavorite(false);
         } else {
@@ -28,7 +41,7 @@ const JobItem = ({ job }) => {
                     <div className="mr-3">
                         <div className="avatar w-[70px] h-[70px] rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center overflow-hidden">
                             <img
-                                src={job.company.images || "https://via.placeholder.com/70"}
+                                src={job.companyImages || "https://via.placeholder.com/70"}
                                 alt="Company Logo"
                                 className="w-full h-full object-cover"
                             />
@@ -58,16 +71,16 @@ const JobItem = ({ job }) => {
                     }
                     <Link to={"/cong-ti"}>
                         <span className="text-gray-500 text-sm block overflow-hidden text-ellipsis whitespace-nowrap mt-1">
-                            {job.company.name || "Company Name"}
+                            {job.companyName || "Company Name"}
                         </span>
                     </Link>
                     <div className="flex mt-3">
                         <div className="flex gap-3">
                             <div className="font-semibold text-sm px-4 py-1 bg-green-100 rounded-full text-green-600">
-                                <span>{job.salary}</span>
+                                <span>{job.salary.toLocaleString()} VNĐ</span>
                             </div>
                             <div className="font-semibold text-sm px-4 py-1 bg-blue-100 rounded-full text-blue-600">
-                                <span>{job.company.location || "Location"}</span>
+                                <span>{job.companyLocation || "Location"}</span>
                             </div>
                         </div>
                         <button

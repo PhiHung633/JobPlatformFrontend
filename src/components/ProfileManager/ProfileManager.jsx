@@ -1,12 +1,40 @@
 import { faFile } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import CVSelectionPopup from './CvSelectionPopup';
+import { fetchCvs, fetchCvsFile } from '../../utils/ApiFunctions';
 
-const ProfileManager = () => {
+const ProfileManager = ({ userId=2 }) => {
     const [isJobSearchOn, setIsJobSearchOn] = useState(false);
     const [isAllowedNTD, setIsAllowedNTD] = useState(false);
-    
     const [showPopup, setShowPopup] = useState(false);
+
+    const [onlineCVs, setOnlineCVs] = useState([]);
+    const [uploadedCVs, setUploadedCVs] = useState([]);
+    const [selectedCVCount, setSelectedCVCount] = useState(0);
+    const [resetSelection, setResetSelection] = useState(false); 
+
+
+    useEffect(() => {
+        const fetchCVsData = async () => {
+            try {
+                const onlineResponse = await fetchCvs(userId, 0, 10);
+                const uploadedResponse = await fetchCvsFile(userId);
+
+                if (onlineResponse.data) {
+                    setOnlineCVs(onlineResponse.data.cvs);
+                }
+
+                if (uploadedResponse.data) {
+                    setUploadedCVs(uploadedResponse.data.cvs);
+                }
+            } catch (error) {
+                console.error("Error fetching CVs:", error);
+            }
+        };
+
+        fetchCVsData();
+    }, [userId]);
 
     const handleToggleJobSearch = () => {
         if (!isJobSearchOn) {
@@ -29,11 +57,32 @@ const ProfileManager = () => {
         setShowPopup(false);
     };
 
+    const handleConfirm = () => {
+        console.log("Bật tìm việc ngay!");
+        enableJobSearch();
+    };
+
+    const handleSelectionChange = (selectedCVs) => {
+        const totalSelected = selectedCVs.online.length + selectedCVs.uploaded.length;
+        setSelectedCVCount(totalSelected);
+    };
+
+    const handleNoNeed = () => {
+        setSelectedCVCount(0);
+        setResetSelection(true);  
+        closePopup();           
+    };
+    useEffect(() => {
+        if (resetSelection) {
+            setResetSelection(false);
+        }
+    }, [resetSelection]);
+
     return (
         <div className='bg-white p-2 rounded-xl shadow-lg w-80'>
             <h2 className='text-xl font-bold text-gray-900 mb-4'>Quản lý Hồ Sơ</h2>
 
-            <div className={`mb-6 border-2 ${isJobSearchOn ? 'border-green-400':'border-gray-400'}  rounded-xl py-6`}>
+            <div className={`mb-6 border-2 ${isJobSearchOn ? 'border-green-400' : 'border-gray-400'}  rounded-xl py-6`}>
                 <label className="inline-flex items-center cursor-pointer px-3">
                     <input type="checkbox" className="sr-only peer" checked={isJobSearchOn} onChange={handleToggleJobSearch} />
                     <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer-checked:bg-green-600 dark:bg-gray-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600"></div>
@@ -51,15 +100,15 @@ const ProfileManager = () => {
                         <div className="flex-shrink-0">
                             <FontAwesomeIcon icon={faFile} className='text-gray-500' />
                         </div>
-                        <label className='ml-2 text-sm text-gray-700'>1 CV đang được chọn</label>
+                        <label className='ml-2 text-sm text-gray-700'>{selectedCVCount} CV đang được chọn</label>
                     </div>
-                    <button className='bg-gray-100 text-sm text-gray-700 rounded-[9%] hover:bg-gray-200'>
+                    <button className='bg-gray-100 text-sm text-gray-700 rounded-[9%] hover:bg-gray-200' onClick={handleToggleJobSearch}>
                         Thay đổi
                     </button>
                 </div>
             </div>
 
-            <div className={`mb-4 border-2 ${isAllowedNTD ? 'border-green-400':'border-gray-400'}  rounded-xl py-6`}>
+            <div className={`mb-4 border-2 ${isAllowedNTD ? 'border-green-400' : 'border-gray-400'}  rounded-xl py-6`}>
                 <label className="inline-flex items-center cursor-pointer px-3">
                     <input type="checkbox" className="sr-only peer" checked={isAllowedNTD} onChange={handleToggleNTD} />
                     <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
@@ -75,26 +124,17 @@ const ProfileManager = () => {
                     <li>2. Email và Số điện thoại của bạn</li>
                 </ul>
             </div>
-            {showPopup && (
-                <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-                    <div className="bg-white rounded-lg shadow-lg p-6">
-                        <h2 className="text-lg font-semibold mb-4">Chọn CV của bạn</h2>
-                        <div className="flex items-center mb-4">
-                            <FontAwesomeIcon icon={faFile} className="text-gray-500" />
-                            <label className='ml-2 text-sm text-gray-700'>CV bạn đã chọn</label>
-                        </div>
 
-                        <div className="flex justify-end space-x-3">
-                            <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300" onClick={closePopup}>
-                                Tôi không có nhu cầu
-                            </button>
-                            <button className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600" onClick={enableJobSearch}>
-                                Bật tìm việc ngay
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <CVSelectionPopup
+                show={showPopup}
+                onClose={closePopup}
+                onConfirm={handleConfirm}
+                cvOnline={onlineCVs}
+                cvUpload={uploadedCVs}
+                onSelectionChange={handleSelectionChange}
+                onNoNeed={handleNoNeed}
+                resetSelection={resetSelection}  
+            />
         </div>
     );
 };

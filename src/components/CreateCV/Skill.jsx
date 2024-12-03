@@ -10,10 +10,30 @@ const Skill = () => {
 
     // Tải dữ liệu kỹ năng từ localStorage khi component được render
     useEffect(() => {
-        const storedSkills = localStorage.getItem('skillsData');
-        if (storedSkills) {
-            setSkills(JSON.parse(storedSkills));
+        // Retrieve `selectedCvData` and check if skills data is available
+        const selectedCvData = JSON.parse(localStorage.getItem('selectedCvData'));
+        let skillsFromSelectedCv = [];
+        
+        if (selectedCvData && selectedCvData.skills) {
+            skillsFromSelectedCv = selectedCvData.skills.split('; ').map(skill => {
+                const [name, rating] = skill.split(' - ');
+                return { name, rating: Number(rating) };
+            });
         }
+    
+        // Retrieve `skillsData` directly from localStorage
+        const storedSkills = localStorage.getItem('skillsData');
+        let skillsFromStorage = [];
+        
+        if (storedSkills) {
+            skillsFromStorage = storedSkills.split('; ').map(skill => {
+                const [name, rating] = skill.split(' - ');
+                return { name, rating: Number(rating) };
+            });
+        }
+    
+        // Combine both sources, prioritizing `selectedCvData` if both are present
+        setSkills(skillsFromSelectedCv.length > 0 ? skillsFromSelectedCv : skillsFromStorage);
     }, []);
 
     const handleSkillChange = (index, event) => {
@@ -38,8 +58,10 @@ const Skill = () => {
     };
 
     const handleNext = () => {
-        // Lưu dữ liệu kỹ năng vào localStorage
-        localStorage.setItem('skillsData', JSON.stringify(skills));
+        const skillsString = skills.map(skill => `${skill.name} - ${skill.rating}`).join('; ');
+    
+        localStorage.setItem('skillsData', skillsString);
+    
         navigate('/summary');
     };
 
