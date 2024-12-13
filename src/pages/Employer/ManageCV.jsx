@@ -4,7 +4,7 @@ import { faEllipsis, faSearch } from '@fortawesome/free-solid-svg-icons';
 import TextField from "@mui/material/TextField";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
 import { fetchJobs, fetchApplications, fetchUserById, fetchJobById, getCvFile, getCv, updateApplicationStatus } from '../../utils/ApiFunctions';
 import StatusModal from './StatusModal';
@@ -22,6 +22,8 @@ const ManageCV = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [currentCv, setCurrentCv] = useState(null);
+  const navigate = useNavigate();
+
 
   const loadJobs = async () => {
     const token = localStorage.getItem('accessToken');
@@ -30,10 +32,11 @@ const ManageCV = () => {
       setUserId(decodedToken.user_id);
     }
     const result = await fetchJobs(userId);
+    console.log("RESUWWWWW", result)
     if (result && result.data) {
       setJobs(result.data);
     } else {
-      console.error("Lỗi khi gọi API:", result.error);
+      console.error("Lỗi khi gọi API:", result.error, result.status);
     }
   };
 
@@ -52,15 +55,16 @@ const ManageCV = () => {
 
     queryParams.status = status || undefined;
     queryParams.name = searchTerm || undefined;
-
+    console.log("QUERYY", queryParams)
     const result = await fetchApplications(queryParams);
     console.log("Result", result);
 
     if (result.data) {
       const updatedCVs = await Promise.all(
         result.data.map(async (cv) => {
-          console.log("CVNE", cv)
+          console.log("CVNE123", cv)
           const userResult = await fetchUserById(cv.userId);
+          console.log("KiTa", userResult)
           const userInfo = userResult.data
             ? {
               name: userResult.data.fullName,
@@ -115,7 +119,7 @@ const ManageCV = () => {
   }, []);
 
   const handleCvClick = async (cv) => {
-    console.log("CVNE", cv)
+    console.log("CVNE456", cv)
     if (cv.cvType === "UPLOADED_CV") {
       try {
         const result = await getCvFile(cv.cvId);
@@ -133,7 +137,7 @@ const ManageCV = () => {
         const result = await getCv(cv.cvId);
         if (result.data) {
           localStorage.setItem("selectedCvData", JSON.stringify(result.data));
-          window.open("/tao-cv", "_blank");
+          navigate("/tao-cv");
         } else {
           console.error("Không tìm thấy CV tạo:", result.error);
           alert("Không thể mở CV tạo.");
@@ -171,6 +175,7 @@ const ManageCV = () => {
       } else {
         console.log("Status updated successfully:", data);
         alert("Cập nhật trạng thái thành công!");
+        window.location.reload();
       }
     } catch (err) {
       console.error("Unexpected error:", err);
@@ -221,9 +226,10 @@ const ManageCV = () => {
           className="w-48"
         >
           <MenuItem value="">Nhập trạng thái</MenuItem>
-          <MenuItem value="pending">Đang chờ xử lý</MenuItem>
-          <MenuItem value="approved">Đã duyệt</MenuItem>
-          <MenuItem value="rejected">Đã từ chối</MenuItem>
+          <MenuItem value="PENDING">Đang chờ xử lý</MenuItem>
+          <MenuItem value="ACCEPTED">Đã duyệt</MenuItem>
+          <MenuItem value="REJECTED">Đã từ chối</MenuItem>
+          <MenuItem value="INTERVIEWING">Phỏng vấn</MenuItem>
         </Select>
       </div>
 
@@ -305,8 +311,7 @@ const ManageCV = () => {
                         <FontAwesomeIcon icon={faEllipsis} />
                       </button>
                       {openMenuId === cv.id && (
-                        <div className="absolute right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-9999"
-                        >
+                        <div className="absolute right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                           <button
                             onClick={() => handleCvClick(cv)}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

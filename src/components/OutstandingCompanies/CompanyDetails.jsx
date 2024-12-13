@@ -3,8 +3,10 @@ import { FaSearch, FaMapMarkerAlt, FaRegHeart, FaHeart } from "react-icons/fa";
 import { Link, useParams } from "react-router-dom";
 import { parseISO, differenceInDays } from 'date-fns';
 import { jwtDecode } from "jwt-decode";
-import { addJobSave, deleteJobSave, fetchJobSavesByUser, getCompanyById } from "../../utils/ApiFunctions";
+import { addJobSave, deleteJobSave, fetchJobSavesByUser, fetchJobsByCompany, getCompanyById } from "../../utils/ApiFunctions";
 import JobApplicationPopup from "../JobDetail/JobApplicationPopup";
+import { ClipLoader } from "react-spinners";
+import { toast } from "react-toastify";
 
 function calculateDaysRemaining(deadline) {
     const deadlineDate = parseISO(deadline);
@@ -28,8 +30,11 @@ const CompanyDetails = () => {
     const [savedJobs, setSavedJobs] = useState([]);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [selectedJob, setSelectedJob] = useState(null);
+    const [jobs, setJobs] = useState(null);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const pageSize = 10;
 
-    console.log("ID:", id);
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
@@ -39,13 +44,36 @@ const CompanyDetails = () => {
         }
     }, []);
 
+    const fetchJobs = async (page) => {
+        setLoading(true);
+        try {
+            const response = await fetchJobsByCompany(id, page, pageSize);
+            const filteredJobs = response.data.filter(job => job.status === "SHOW");
+            setJobs(filteredJobs);
+            if(!jobs.length)
+                setTotalPages(0);
+            setTotalPages(response.totalPages);
+            setError(null);
+        } catch (err) {
+            console.error("Error fetching jobs:", err);
+            setError("Có lỗi xảy ra khi tải danh sách công việc.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchJobs(currentPage);
+    }, [currentPage]);
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
                 const companyResponse = await getCompanyById(id);
                 setCompany(companyResponse.data);
-
+                // const jobResponse = await fetchJobsByCompany(id);
+                // setJobs(jobResponse.data)
                 const savedJobsResponse = await fetchJobSavesByUser();
                 setSavedJobs(savedJobsResponse.data.map(job => job.jobId));
                 setError(null);
@@ -60,11 +88,35 @@ const CompanyDetails = () => {
         fetchData();
     }, [id]);
 
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error.message || "Something went wrong"}</div>;
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    useEffect(() => {
+        if (error) {
+            toast.error(`Lỗi: ${error}`, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+        }
+    }, [error]);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <ClipLoader color="#4caf50" size={40} />
+            </div>
+        );
+    }    
+    // if (error) return <div>Error: {error.message || "Something went wrong"}</div>;
     if (!company) return <div>No company data available</div>;
 
-    const filteredJobs = company?.jobs?.filter(
+    const filteredJobs = jobs?.filter(
         (job) =>
             job.title.toLowerCase().includes(searchJob.toLowerCase()) &&
             (locationFilter === "" || job.location.includes(locationFilter))
@@ -164,16 +216,6 @@ const CompanyDetails = () => {
                             onChange={(e) => setSearchJob(e.target.value)}
                         />
                     </div>
-                    <div className="relative flex-1">
-                        <FaMapMarkerAlt className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Tất cả tỉnh/thành phố"
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg shadow-sm focus:outline-none"
-                            value={locationFilter}
-                            onChange={(e) => setLocationFilter(e.target.value)}
-                        />
-                    </div>
                     <button className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700">
                         <FaSearch />
                         Tìm kiếm
@@ -243,6 +285,7 @@ const CompanyDetails = () => {
                                     )}
                                 </div>
                             </div>
+
                         </div>
                     ))
                 ) : (
@@ -256,6 +299,21 @@ const CompanyDetails = () => {
                         userId={userId}
                     />
                 )}
+                <div className="flex justify-center mt-4 space-x-2">
+                    {[...Array(totalPages)].map((_, index) => (
+                        <button
+                            key={index}
+                            className={`px-3 py-1 border rounded ${index === currentPage
+                                ? "bg-blue-500 text-white"
+                                : "bg-gray-100 hover:bg-gray-200"
+                                }`}
+                            onClick={() => handlePageChange(index)}
+                            disabled={index === currentPage}
+                        >
+                            {index + 1}
+                        </button>
+                    ))}
+                </div>
             </div>
         </div>
     );

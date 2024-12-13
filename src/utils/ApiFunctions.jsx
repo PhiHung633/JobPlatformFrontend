@@ -12,6 +12,14 @@ function setAccessToken(token) {
     localStorage.setItem('accessToken', token);
 }
 
+function getRefreshToken() {
+    return localStorage.getItem('refreshToken');
+}
+
+function setRefreshToken(token) {
+    return localStorage.setItem('refreshToken', token);
+}
+
 api.interceptors.request.use(
     (config) => {
         const token = getAccessToken();
@@ -25,46 +33,99 @@ api.interceptors.request.use(
     }
 );
 
-// api.interceptors.response.use(
-//     (response) => {
-//         return response;
-//     },
-//     async (error) => {
-//         const originalRequest = error.config;
+api.interceptors.request.use(
+    (config) => {
+        const publicUrls = ['/auth/login', '/auth/register', 'dang-ki-danh-cho-nha-tuyen-dung']; // Danh sách API công khai
+        if (publicUrls.some((url) => config.url.includes(url))) {
+            return config; // Bỏ qua nếu là API công khai
+        }
 
-//         if (error.response && error.response.status === 401 && !originalRequest._retry) {
-//             originalRequest._retry = true;
+        const token = getAccessToken();
+        if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
 
-//             const refreshToken = localStorage.getItem('refreshToken');
-//             if (!refreshToken) {
-//                 console.error('No refresh token available');
-//                 localStorage.removeItem('accessToken');
-//                 localStorage.removeItem('refreshToken');
-//                 window.location.href = '/dang-nhap';
-//                 return Promise.reject(error);
-//             }
+const publicPaths = [
+    '/dang-nhap',
+    '/dang-ki',
+    '/dang-ki-danh-cho-nha-tuyen-dung',
+    '/loginGoogle',
+    '/',
+    '/viec-lam',
+    '/viec-lam/:id', // Placeholder cho dynamic routes
+    '/cong-ti',
+    '/cong-ti/:id',
+    '/tim-viec-lam',
+    '/tao-cv'
+];
 
-//             try {
-//                 const response = await refreshAccessToken(refreshToken);
+// Hàm kiểm tra nếu path hiện tại là công khai
+function isPublicPath(pathname) {
+    return publicPaths.some((publicPath) => {
+        // Kiểm tra nếu có dynamic route (:id)
+        const regex = new RegExp(`^${publicPath.replace(':id', '[^/]+')}$`);
+        return regex.test(pathname);
+    });
+}
 
-//                 const newAccessToken = response.data.accessToken;
-//                 setAccessToken(newAccessToken);
+api.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    async (error) => {
+        const originalRequest = error.config;
 
-//                 originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+        // Nếu lỗi 401 (Unauthorized) và chưa thử refresh token
+        if (error.response && error.response.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true; // Đánh dấu đã retry
 
-//                 return api(originalRequest);
-//             } catch (refreshError) {
-//                 console.error('Token refresh failed', refreshError);
-//                 localStorage.removeItem('accessToken');
-//                 localStorage.removeItem('refreshToken');
-//                 window.location.href = '/dang-nhap';
-//                 return Promise.reject(refreshError);
-//             }
-//         }
+            const refreshToken = getRefreshToken();
+            if (!refreshToken) {
+                console.error('No refresh token available');
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
 
-//         return Promise.reject(error);
-//     }
-// );
+                // Nếu đường dẫn hiện tại không phải là công khai, chuyển hướng đến trang đăng nhập
+                if (!isPublicPath(window.location.pathname)) {
+                    window.location.href = '/dang-nhap';
+                }
+                return Promise.reject(error);
+            }
+
+            try {
+                const response = await refreshAccessToken(refreshToken);
+                const newAccessToken = response.data.accessToken;
+                const newRefreshToken = response.data.refreshToken;
+
+                setAccessToken(newAccessToken);
+                setRefreshToken(newRefreshToken);
+
+                originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                return api(originalRequest);
+            } catch (refreshError) {
+                console.error('Token refresh failed', refreshError);
+
+                if (refreshError.response && refreshError.response.status === 401) {
+                    console.error('Refresh token expired or invalid');
+                }
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+
+                // Nếu đường dẫn hiện tại không phải là công khai, chuyển hướng đến trang đăng nhập
+                if (!isPublicPath(window.location.pathname)) {
+                    window.location.href = '/dang-nhap';
+                }
+                return Promise.reject(refreshError);
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
 
 export async function loginUser(login) {
     try {
@@ -86,10 +147,32 @@ export async function signUpUser(signup) {
         return response.data;
     } catch (error) {
         console.log("Error", error.response.data)
+        console.log("Error", error.response.data)
         if (error.response && error.response.data) {
             throw error.response.data;
         } else {
             throw new Error(`User signup error: ${error.message}`);
+        }
+    }
+}
+
+export async function changePassword(id, oldPassword, newPassword) {
+    try {
+        const payload = {
+            oldPassword: oldPassword,
+            newPassword: newPassword
+        };
+
+        const response = await api.post(`/users/${id}/change-password`, payload);
+
+        return response.data;
+    } catch (error) {
+        console.log("Error", error.response ? error.response.data : error.message);
+
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        } else {
+            throw new Error(`Change password error: ${error.message}`);
         }
     }
 }
@@ -99,9 +182,9 @@ export async function refreshAccessToken(refreshToken) {
         const response = await api.post('/auth/refresh-token', { refreshToken });
         return { data: response.data, error: null };
     } catch (error) {
-        console.log('Refresh token error', error.response);
+        console.error('Refresh token error', error.response);
         if (error.response) {
-            return { data: null, error: error.response.data, status: error.status };
+            return { data: null, error: error.response.data, status: error.response.status };
         }
     }
 }
@@ -121,13 +204,14 @@ export async function resetPasswordRequest(email) {
 }
 
 
-export async function fetchAllJobs(page = 0, size = 10, title = '', related = false, industry = '') {
+export async function fetchAllJobs(page = 0, size = 10, title = '', related = false, industry = '', address = '') {
     try {
         const params = { page, size };
 
         if (title) params.title = title;
         if (related !== false) params.related = related;
         if (industry) params.industry = industry;
+        if (address) params.address = address;
 
         const response = await api.get(`/jobs`, { params });
 
@@ -193,6 +277,33 @@ export async function fetchCompanyById(id) {
         console.log("Error fetching company by ID", error.response);
         if (error.response) {
             return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function fetchJobsByCompany(id, page = 0, size = 10) {
+    try {
+        const params = { page, size };
+
+        const response = await api.get(`/companies/${id}/jobs`, { params });
+
+        const data = response.data;
+        const totalPages = response.headers['x-total-pages'];
+        const totalElements = response.headers['x-total-elements'];
+
+        return {
+            data,
+            totalPages: parseInt(totalPages, 10),
+            totalElements: parseInt(totalElements, 10),
+            error: null
+        };
+    } catch (error) {
+        console.log("Error fetching jobs by company", error.response || error);
+
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        } else {
+            return { data: null, error: "An unexpected error occurred", status: null };
         }
     }
 }
@@ -491,10 +602,13 @@ export const getCompanyById = async (id) => {
     }
 };
 
-export async function fetchAllCompanies(companyName = '') {
+export async function fetchAllCompanies(companyName = '', status = undefined) {
     try {
         const response = await api.get(`/companies`, {
-            params: { companyName: companyName || undefined },
+            params: {
+                companyName: companyName || undefined,
+                status: status || undefined,
+            },
         });
         return { data: response.data, error: null };
     } catch (error) {
@@ -693,8 +807,9 @@ export async function fetchNotifications(userId = null, page = 0, size = 10) {
         if (userId) {
             params.id = userId;
         }
+        console.log("USERID", userId)
 
-        const response = await api.get(`/users/${userId}/notifications`, { params });
+        const response = await api.get(`users/${userId}/notifications`, { params });
 
         const notifications = response.data;
         const totalPages = response.headers['x-total-pages'];
@@ -720,3 +835,207 @@ export async function fetchNotifications(userId = null, page = 0, size = 10) {
     }
 }
 
+export async function getAllUsers(page, size, role, email) {
+    try {
+        const response = await api.get('/users', {
+            params: { page, size, role, email }
+        });
+        return { data: response.data, error: null, headers: response.headers };
+    } catch (error) {
+        console.log("Error fetching users data", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function getOverallStatistics(days) {
+    try {
+        const response = await api.get('/statistics/overall', {
+            params: { days }
+        });
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error fetching overall statistics", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function getTopJobsStatistics(days) {
+    try {
+        const response = await api.get('/statistics/top-5-industry-jobs', {
+            params: { days }
+        });
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error fetching top-5-industry-jobs statistics", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function getTopApplicationsStatistics(days) {
+    try {
+        const response = await api.get('/statistics/top-5-industry-applications', {
+            params: { days }
+        });
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error fetching top-5-industry-applications", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function getCountStatusApplications(days) {
+    try {
+        const response = await api.get('/statistics/application-status', {
+            params: { days }
+        });
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error fetching application status count", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function getDataThroughTime(days) {
+    try {
+        const response = await api.get('/statistics/statistic-by-time', {
+            params: { days }
+        });
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error fetching statistic", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function addFCMToken(FCMToken) {
+    try {
+        const response = await api.post('/users/fcm-token', { FCMToken });
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error adding FCM Token", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function updateStatusJobs(jobs, status) {
+    const results = [];
+
+    for (const job of jobs) {
+        try {
+            const response = await api.patch(`/jobs/${job}`, { "status": status });
+            results.push({ jobId: job, data: response.data, error: null });
+        } catch (error) {
+            console.log("Error updating job status", error.response);
+
+            results.push({
+                jobId: job,
+                data: null,
+                error: error.response?.data || error.message,
+                status: error.response?.status || 500,
+            });
+        }
+    }
+
+    return results;
+}
+
+export async function getAllJobs(page = 0, size = 10, title = '', related = false, status = true) {
+    try {
+        const response = await api.get(`/jobs`, {
+            params: { page, size, title, related, status }
+        });
+        return { data: response.data, error: null, headers: response.headers };
+    } catch (error) {
+        console.log("Error fetching jobs", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function googleLogin(code) {
+    try {
+        const response = await api.get("/auth/google-login", {
+            params: { code },
+        });
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error login google ", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+        return { data: null, error: "Unexpected error", status: 500 };
+    }
+}
+
+export async function processMomoPayment(paymentData) {
+    try {
+        const response = await api.post("/momo-payment", paymentData);
+        
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.error("Error processing MoMo payment", error.response);
+        
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+        return { data: null, error: error.message, status: null };
+    }
+}
+
+export async function handleMomoCallback(params) {
+    try {
+        const response = await api.get("/momo-payment/verify", { params });
+
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.error("Error processing MoMo callback", error.response);
+
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+        return { data: null, error: "Unexpected error", status: 500 };
+    }
+}
+
+export async function evaluateCv(id) {
+    try {
+        const response = await api.get(`/cvs/${id}/evaluation`);
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error fetching evaluation", error);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        } else {
+            return { data: null, error: "Network Error", status: null };
+        }
+    }
+}
+
+export async function evaluateCvFile(id) {
+    try {
+        const response = await api.get(`/uploadedCv/${id}/evaluation`);
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error fetching evaluation", error);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        } else {
+            return { data: null, error: "Network Error", status: null };
+        }
+    }
+}

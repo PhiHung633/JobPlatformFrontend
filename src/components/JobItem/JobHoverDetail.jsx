@@ -5,33 +5,15 @@ import { useNavigate } from 'react-router-dom';
 // import { fetchCompanyById } from '../../utils/ApiFunctions';
 // import dayjs from 'dayjs';
 
+const calculateRemainingDays = (deadline) => {
+    const currentDate = new Date();
+    const deadlineDate = new Date(deadline);
+    const differenceInTime = deadlineDate - currentDate;
+    const differenceInDays = Math.ceil(differenceInTime / (1000 * 60 * 60 * 24));
+    return differenceInDays > 0 ? `Còn ${differenceInDays} ngày` : "Đã hết hạn";
+};
+
 const JobHoverDetail = ({ job }) => {
-    // const [company, setCompany] = useState(null);
-    // const [daysLeft, setDaysLeft] = useState(null);
-
-    // useEffect(() => {
-    //     async function getCompanyDetails() {
-    //         const result = await fetchCompanyById(job.companyId);
-    //         if (result.error) {
-    //             console.error("Error fetching company details:", result.error);
-    //         } else {
-    //             setCompany(result.data);
-    //         }
-    //     }
-    //     if (job.companyId) {
-    //         getCompanyDetails();
-    //     }
-    //     if (job.deadline) {
-    //         const deadlineDate = dayjs(job.deadline, 'DD-MM-YYYY HH:mm:ss').startOf('day'); // Bắt đầu ngày
-    //         const currentDate = dayjs().startOf('day'); // Lấy thời gian hiện tại, bắt đầu ngày
-
-    //         // Tính số ngày còn lại
-    //         const remainingDays = deadlineDate.diff(currentDate, 'day');
-
-    //         // Cập nhật số ngày còn lại, hiển thị 0 nếu hạn đã qua
-    //         setDaysLeft(remainingDays > 0 ? remainingDays : 0);
-    //     }
-    // }, [job.companyId, job.deadline]);
 
     const navigate = useNavigate();
 
@@ -79,7 +61,7 @@ const JobHoverDetail = ({ job }) => {
                     <FontAwesomeIcon icon={faClock} className="text-green-500 mr-2" />
                     <span>
                         {/* {daysLeft !== null ? `Còn ${daysLeft} ngày` : "Hạn nộp"} */}
-                        {job.deadline}
+                        {calculateRemainingDays(job.deadline)}
                     </span>
                 </div>
             </div>
@@ -100,7 +82,7 @@ const JobHoverDetail = ({ job }) => {
                 <div className="border-t border-gray-200 pt-4">
                     <span className="font-bold text-lg text-gray-800">Địa điểm làm việc</span>
                     {/*  */}
-                    <p className="text-gray-600 mt-2">{job.companyLocation || "Vị trí làm việc..."}</p>
+                    <p className="text-gray-600 mt-2">{job.address || "Vị trí làm việc..."}</p>
                 </div>
             </div>
 

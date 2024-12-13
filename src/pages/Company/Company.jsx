@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import CompanyOutstanding from '../../components/OutstandingCompanies/OutstandingCompanies';
 import { fetchAllCompanies } from '../../utils/ApiFunctions';
+import { ClipLoader } from 'react-spinners';
+import { toast } from 'react-toastify';
 
 const Company = () => {
     const [activeTab, setActiveTab] = useState('list');
@@ -16,7 +18,7 @@ const Company = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const { data, error } = await fetchAllCompanies(searchTerm);
+            const { data, error } = await fetchAllCompanies(searchTerm, 1);
             if (error) {
                 setError(error);
             } else {
@@ -34,6 +36,20 @@ const Company = () => {
         loadCompanies();
     }, []);
 
+    useEffect(() => {
+        if (error) {
+            toast.error(`Lỗi: ${error}`, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+        }
+    }, [error]);
+
     const handleSearch = () => {
         loadCompanies(searchTerm);
     };
@@ -42,9 +58,8 @@ const Company = () => {
             {/* Tab navigation */}
             <div className="flex mb-6">
                 <button
-                    className={`mx-4 py-2 font-semibold ${
-                        activeTab === 'list' ? 'border-b-4 border-green-600 text-black' : 'text-gray-500'
-                    }`}
+                    className={`mx-4 py-2 font-semibold ${activeTab === 'list' ? 'border-b-4 border-green-600 text-black' : 'text-gray-500'
+                        }`}
                     onClick={() => setActiveTab('list')}
                 >
                     Danh sách công ty
@@ -79,8 +94,12 @@ const Company = () => {
             <div>
                 {activeTab === 'list' && (
                     <div>
-                        {isLoading && <p>Đang tải dữ liệu...</p>}
-                        {error && <p className="text-red-500">{error}</p>}
+                        {isLoading &&
+                            <div className="flex justify-center items-center min-h-screen">
+                                <ClipLoader color="#4caf50" size={40} />
+                            </div>
+                        }
+                        {/* {error && <p className="text-red-500">{error}</p>} */}
                         {!isLoading && !error && <CompanyOutstanding companies={companies} />}
                     </div>
                 )}

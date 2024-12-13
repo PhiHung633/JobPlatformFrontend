@@ -198,7 +198,13 @@ const Searchbar = () => {
   }, []);
   useEffect(() => {
     const fetchJobs = async () => {
-      const { data, error } = await fetchAllJobs(0, 10, searchTitle, true);
+      if(selectedJob==="Tất cả ngành nghề")
+        setSelectedJob("");
+      else if(selectedCity==="Tất cả tỉnh/thành phố")
+        setSelectedCity("")
+      console.log("JOBNE",selectedJob);
+      console.log("CITYNE",selectedCity);
+      const { data, error } = await fetchAllJobs(0, 10, searchTitle, true, selectedJob, selectedCity);
       if (!error) {
         setJobSuggestions(data);
       } else {
@@ -211,7 +217,7 @@ const Searchbar = () => {
     } else {
       setJobSuggestions([]);
     }
-  }, [searchTitle]);
+  }, [searchTitle, selectedJob, selectedCity]);
   const fetchData = (value) => {
     fetch("https://jsonplaceholder.typicode.com/users")
       .then((response) => response.json())
@@ -241,6 +247,7 @@ const Searchbar = () => {
       )
     );
     setIsCityOpen(true);
+    setIsInputFocused(false);
   };
 
   const handleJobChange = (e) => {
@@ -251,6 +258,13 @@ const Searchbar = () => {
       )
     );
     setIsJobOpen(true);
+    setIsInputFocused(false);
+  };
+
+  const handleInputFocus = () => {
+    setIsInputFocused(true);
+    setIsJobOpen(false);
+    setIsCityOpen(false);
   };
 
   const handleCitySelect = (option) => {
@@ -261,10 +275,13 @@ const Searchbar = () => {
   const handleJobSelect = (option) => {
     setSelectedJob(option.label);
     setIsJobOpen(false);
+    setIsCityOpen(false);
   };
 
   const handleFilterChange = (e) => {
     setFilterOption(e.target.value);
+    setIsJobOpen(false);
+    setIsCityOpen(false)
   };
   const handleInputBlur = (e) => {
     if (!e.currentTarget.contains(e.relatedTarget)) {
@@ -282,7 +299,7 @@ const Searchbar = () => {
             placeholder="Vị trí tuyển dụng"
             value={searchTitle}
             onChange={(e) => setSearchTitle(e.target.value)}
-            onFocus={() => setIsInputFocused(true)}
+            onFocus={handleInputFocus}
             onBlur={handleInputBlur}
           />
           <FontAwesomeIcon
@@ -388,7 +405,7 @@ const Searchbar = () => {
           className="ml-auto bg-green-500 text-white rounded-full py-3 px-6 
                     flex items-center hover:bg-green-700 transition-colors duration-300"
           onClick={handleSearch}
-                    >
+        >
           <FontAwesomeIcon icon={faSearch} />
           <span className="ml-1">Tìm kiếm</span>
         </button>

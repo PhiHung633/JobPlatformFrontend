@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { addApplication, fetchCvs, fetchCvsFile } from "../../utils/ApiFunctions";
 import { Link } from "react-router-dom";
+import { ClipLoader } from "react-spinners";
 
 const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => {
-    console.log("HULAA",job.title)
+    console.log("HULAA", job.title)
     const [onlineCVs, setOnlineCVs] = useState([]);
     const [uploadedCVs, setUploadedCVs] = useState([]);
     const [selectedCV, setSelectedCV] = useState(null);
@@ -39,7 +40,7 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
 
     const handleCvClick = (cv) => {
         localStorage.setItem("selectedCvData", JSON.stringify(cv));
-        window.open("/tao-cv", "_blank"); 
+        window.open("/tao-cv", "_blank");
     };
 
     const handleSelectCV = (cv) => {
@@ -54,13 +55,13 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
         const cvType = selectedCV.type === "CV Online" ? "CREATED_CV" : "UPLOADED_CV";
 
         const applicationData = {
-            jobId: job.id,         
-            status: "PENDING",     
-            cvId: selectedCV.id,   
+            jobId: job.id,
+            status: "PENDING",
+            cvId: selectedCV.id,
             cvType: cvType
         };
-        
-        console.log("CREAAANE",applicationData)
+
+        console.log("CREAAANE", applicationData)
         const { data, error } = await addApplication(applicationData);
 
         if (data) {
@@ -77,8 +78,10 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
             isPopupOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white w-full max-w-lg p-6 rounded-xl shadow-lg relative">
-                        <p className="text-gray-600 text-center">Đang tải...</p>
-                    </div>
+                        <div className="flex justify-center items-center min-h-screen">
+                            <ClipLoader color="#4caf50" size={40} />
+                        </div>
+                   </div>
                 </div>
             )
         );
@@ -89,7 +92,7 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
             <div className="mt-20 fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white w-full max-w-lg p-6 rounded-xl shadow-lg relative">
                     <h2 className="text-xl font-bold mb-4 text-green-600">
-                        Ứng tuyển <span className="font-bold">{job.title || job[0].title } tại {job.companyLocation || job[0].companyLocation}</span>
+                        Ứng tuyển <span className="font-bold">{job.title || job[0].title} tại {job.companyLocation || job[0].companyLocation}</span>
                     </h2>
 
                     <div className="mb-6">

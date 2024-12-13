@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaPlus, FaStar, FaDownload, FaTrash, FaUpload } from "react-icons/fa";
+import { FaPlus, FaStar, FaDownload, FaTrash, FaUpload, FaRobot } from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
-import { fetchCvs, deleteCv, uploadCv, fetchCvsFile, deleteCvUpload } from "../../utils/ApiFunctions";
+import Modal from "react-modal";
+import { fetchCvs, deleteCv, uploadCv, fetchCvsFile, deleteCvUpload, evaluateCv, evaluateCvFile } from "../../utils/ApiFunctions";
 
 function CvList() {
     const [cvs, setCvs] = useState([]);
@@ -12,6 +13,10 @@ function CvList() {
     let fileInput = null;
     const [currentPage, setCurrentPage] = useState(0);
     const [userId, setUserId] = useState("");
+    const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [evaluationContent, setEvaluationContent] = useState("");
+    const [modalIsOpenFile, setModalIsOpenFile] = useState(false);
+    const [evaluationContentFile, setEvaluationContentFile] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -37,7 +42,7 @@ function CvList() {
 
         const getUploadedCvs = async () => {
             const response = await fetchCvsFile(userId);
-            console.log("rESSNE",response)
+            console.log("rESSNE", response)
             if (!response.error) {
                 setUploadedCvs(response.data.cvs || []);
             } else {
@@ -67,6 +72,32 @@ function CvList() {
             } else {
                 console.log("Error deleting CV:", response.error);
             }
+        }
+    };
+
+    const handleEvaluateCv = async (id) => {
+        const { data, error } = await evaluateCv(id);
+
+        if (error) {
+            console.error("Error evaluating CV:", error);
+            alert("Đã xảy ra lỗi khi đánh giá CV. Vui lòng thử lại.");
+        } else {
+            const content = data?.candidates[0]?.content?.parts[0]?.text || "Không có dữ liệu.";
+            setEvaluationContent(content);
+            setModalIsOpen(true);
+        }
+    };
+
+    const handleEvaluateCvFile = async (id) => {
+        const { data, error } = await evaluateCvFile(id);
+        console.log("DATANE",data)
+        if (error) {
+            console.error("Error evaluating CV:", error);
+            alert("Đã xảy ra lỗi khi đánh giá CV. Vui lòng thử lại.");
+        } else {
+            const content = data?.candidates[0]?.content?.parts[0]?.text || "Không có dữ liệu.";
+            setEvaluationContentFile(content);
+            setModalIsOpenFile(true);
         }
     };
 
@@ -121,7 +152,7 @@ function CvList() {
                     <h2 className="text-lg font-semibold">CV đã tạo trên JobSearch</h2>
                     <button
                         onClick={() => handleAddCv()}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600">
                         <FaPlus className="w-5 h-5" />
                         <span>Tạo mới</span>
                     </button>
@@ -130,11 +161,11 @@ function CvList() {
                     {cvs.map((cv) => (
                         <div key={cv.id} className="bg-white p-4 rounded-lg shadow-md">
                             <div className="flex items-center gap-4">
-                                <div className=" w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
+                                <div className=" w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
                                     <img
                                         src={cv.imageCV}
                                         alt="Ảnh"
-                                        className="w-16 h-16"
+                                        className="w-16 h-16 rounded-full object-cover"
                                     />
                                 </div>
                                 <div className="flex-1">
@@ -151,10 +182,48 @@ function CvList() {
                             </div>
                             <div className="mt-4 flex justify-between items-center text-gray-600">
                                 <div className="flex gap-2">
-                                    <button className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300">
+                                    {/* <button className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300">
                                         <FaStar />
                                         <span>Đặt làm CV chính</span>
+                                    </button> */}
+
+                                    <button
+                                        className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300"
+                                        onClick={() => handleEvaluateCv(cv.id)}
+                                    >
+                                        <FaRobot />
+                                        <span>Đánh giá CV bằng AI</span>
                                     </button>
+                                    <Modal
+                                        isOpen={modalIsOpen}
+                                        onRequestClose={() => setModalIsOpen(false)}
+                                        style={{
+                                            content: {
+                                                maxWidth: "600px",
+                                                margin: "auto",
+                                                marginTop: "50px",
+                                                padding: "20px",
+                                                borderRadius: "10px",
+                                                border: "1px solid #ccc",
+                                                height:"500px",
+                                                boxShadow: "0px 4px 6px rgba(0,0,0,0.1)"
+                                            },
+                                            overlay: {
+                                                backgroundColor: "rgba(0, 0, 0, 0.5)"
+                                            }
+                                        }}
+                                    >
+                                        <h2>Đánh giá CV</h2>
+                                        <div className="whitespace-pre-line">{evaluationContent}</div>
+                                        <button
+                                            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                            onClick={() => setModalIsOpen(false)}
+                                        >
+                                            Đóng
+                                        </button>
+                                    </Modal>
+                                </div>
+                                <div>
                                     <button
                                         className="flex items-center gap-1 px-2 py-1 text-xs bg-red-200 text-red-600 rounded hover:bg-red-300"
                                         onClick={() => handleDeleteCv(cv.id)}
@@ -174,7 +243,7 @@ function CvList() {
                     <h2 className="text-lg font-semibold">CV đã tải lên JobSearch</h2>
                     <button
                         onClick={handleUploadClick}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600">
                         <FaUpload className="w-5 h-5" />
                         <span>Tải CV lên</span>
                     </button>
@@ -221,6 +290,43 @@ function CvList() {
                                         <FaTrash />
                                         <span>Xóa</span>
                                     </button>
+                                </div>
+                                <div>
+                                    <button
+                                        className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300"
+                                        onClick={() => handleEvaluateCvFile(cv.id)}
+                                    >
+                                        <FaRobot />
+                                        <span>Đánh giá CV bằng AI</span>
+                                    </button>
+                                    <Modal
+                                        isOpen={modalIsOpenFile}
+                                        onRequestClose={() => setModalIsOpenFile(false)}
+                                        style={{
+                                            content: {
+                                                maxWidth: "600px",
+                                                margin: "auto",
+                                                marginTop: "50px",
+                                                padding: "12px",
+                                                borderRadius: "10px",
+                                                border: "1px solid #ccc",
+                                                height:"500px",
+                                                boxShadow: "0px 4px 6px rgba(0,0,0,0.1)"
+                                            },
+                                            overlay: {
+                                                backgroundColor: "rgba(0, 0, 0, 0.5)"
+                                            }
+                                        }}
+                                    >
+                                        <h2>Đánh giá CV</h2>
+                                        <div className="whitespace-pre-line">{evaluationContentFile}</div>
+                                        <button
+                                            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                            onClick={() => setModalIsOpenFile(false)}
+                                        >
+                                            Đóng
+                                        </button>
+                                    </Modal>
                                 </div>
                             </div>
                         </div>

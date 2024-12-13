@@ -14,7 +14,7 @@ const JobsSearch = () => {
     const navigate = useNavigate();
     const { searchTitle, jobSuggestions } = location.state || { searchTitle: "", jobSuggestions: [] };
     const [isPopupOpen, setIsPopupOpen] = useState(false);
-    const [favorites, setFavorites] = useState({}); // Đối tượng lưu trạng thái lưu công việc
+    const [favorites, setFavorites] = useState({});
 
     const handleSortChange = (event) => {
         setSortOption(event.target.value);
@@ -44,7 +44,6 @@ const JobsSearch = () => {
         }
     };
 
-    // Kiểm tra xem công việc đã được lưu hay chưa
     const handleFavoriteClick = async (jobId) => {
         if (favorites[jobId]) {
             await deleteJobSave(jobId);
@@ -55,7 +54,6 @@ const JobsSearch = () => {
         }
     };
 
-    // Chỉ gọi fetch job saves khi trang tải hoặc khi jobSuggestions thay đổi
     useEffect(() => {
         const checkJobSaveStatus = async () => {
             const { data, error } = await fetchJobSavesByUser();
@@ -64,21 +62,20 @@ const JobsSearch = () => {
                 return;
             }
 
-            // Cập nhật trạng thái lưu cho tất cả các công việc
-            const savedJobs = new Set(data.map((save) => save.jobId)); // Lưu các jobId đã được lưu
+            const savedJobs = new Set(data.map((save) => save.jobId));
             const updatedFavorites = jobSuggestions.reduce((acc, job) => {
                 acc[job.id] = savedJobs.has(job.id);
                 return acc;
             }, {});
 
-            setFavorites(updatedFavorites); // Lưu trạng thái cho tất cả công việc
+            setFavorites(updatedFavorites);
         };
 
         if (jobSuggestions.length > 0) {
             checkJobSaveStatus();
         }
-    }, [jobSuggestions]); // Chạy lại khi jobSuggestions thay đổi
-
+    }, [jobSuggestions]);
+    console.log("JOBBNe",jobSuggestions)
     return (
         <>
             {/* Search Bar */}
@@ -89,46 +86,8 @@ const JobsSearch = () => {
             <div className="container mx-auto max-w-6xl mt-8 px-6">
                 {/* Title based on search */}
                 <h1 className="text-2xl font-bold text-gray-800 mb-4">
-                    Kết quả tìm kiếm cho: <span className="text-green-500">{searchTitle || "Tất cả công việc"}</span>
+                    Tuyển dụng {jobSuggestions.length} việc làm: <span className="text-green-500">{searchTitle || "Tất cả công việc"}</span>
                 </h1>
-
-                {/* Sort Options */}
-                <div className="flex items-center gap-4">
-                    <span className="text-gray-400 font-semibold">Ưu tiên hiển thị theo:</span>
-                    <label className="flex items-center gap-2 text-gray-700">
-                        <input
-                            type="radio"
-                            name="sort"
-                            value="newest"
-                            checked={sortOption === "newest"}
-                            onChange={handleSortChange}
-                            className="form-radio text-green-500 w-5 h-5 focus:ring-0 focus:ring-offset-0"
-                        />
-                        Mới nhất
-                    </label>
-                    <label className="flex items-center gap-2 text-gray-700">
-                        <input
-                            type="radio"
-                            name="sort"
-                            value="highSalary"
-                            checked={sortOption === "highSalary"}
-                            onChange={handleSortChange}
-                            className="form-radio text-green-500 w-5 h-5 focus:ring-0 focus:ring-offset-0"
-                        />
-                        Lương cao đến thấp
-                    </label>
-                    <label className="flex items-center gap-2 text-gray-700">
-                        <input
-                            type="radio"
-                            name="sort"
-                            value="relevance"
-                            checked={sortOption === "relevance"}
-                            onChange={handleSortChange}
-                            className="form-radio text-green-500 w-5 h-5 focus:ring-0 focus:ring-offset-0"
-                        />
-                        Ngày đăng
-                    </label>
-                </div>
             </div>
 
             <div className="container mx-auto px-6 py-4 max-w-6xl">

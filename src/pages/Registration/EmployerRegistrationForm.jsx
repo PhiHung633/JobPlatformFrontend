@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faEnvelope, faLock, faEye, faEyeSlash, faPhone, faBuilding, faHospital, faHouseFlag, faIndustry, faGlobe, faInfoCircle, faImage } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faEnvelope, faLock, faEye, faEyeSlash, faPhone, faBuilding, faHospital, faHouseFlag, faIndustry, faGlobe, faInfoCircle, faImage, faLocationArrow, faLocationDot } from '@fortawesome/free-solid-svg-icons';
 
 import { provinces } from "../../components/Province/Provinces";
 import { addCompany, getCompanies, signUpUser, uploadImage } from "../../utils/ApiFunctions";
@@ -20,6 +20,7 @@ const EmployerRegistrationForm = () => {
   const [selectedProvince, setSelectedProvince] = useState("");
   const [districts, setDistricts] = useState([]);
   const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [address, setAddress] = useState("");
   const [loading, setLoading] = useState("")
   const [showAddCompanyForm, setShowAddCompanyForm] = useState(false);
   const selectRef = useRef(null)
@@ -56,7 +57,7 @@ const EmployerRegistrationForm = () => {
     setLoadingCompanies(true);
     try {
       const { data, error } = await getCompanies();
-      console.log("DATADAYNE",data)
+      console.log("DATADAYNE", data)
       if (data) {
         const filteredCompanies = data.filter((company) => company.status === true);
         setCompanies(filteredCompanies);
@@ -125,14 +126,29 @@ const EmployerRegistrationForm = () => {
       phone: formData.phone,
       role: "ROLE_RECRUITER",
       companyId: selectedCompany,
-      businessLicense:imagesCompany
+      businessLicense: imagesCompany
     };
 
     try {
       const result = await signUpUser(dataToSubmit);
       alert("Đăng ký thành công!");
       selectRef.current.disabled = false;
-      setFormData("");
+      setFormData({
+        fullName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        phone: '',
+        role: 'ROLE_RECRUITER',
+        companyName: '',
+        companySize: '',
+        industry: '',
+        website: '',
+        description: '',
+        province: '',
+        district: '',
+        companyLogo: '',
+      });
       console.log("Response:", result);
     } catch (error) {
       console.error("Error:", error);
@@ -150,7 +166,7 @@ const EmployerRegistrationForm = () => {
     try {
       const newCompany = {
         name: companyName,
-        location: `${selectedProvince}, ${selectedDistrict}`,
+        location: `${address}, ${selectedDistrict},${selectedProvince}`,
         images,
         description,
         website,
@@ -174,6 +190,7 @@ const EmployerRegistrationForm = () => {
       setWebsite("")
       setIndustry("")
       setCompanySize("")
+      setAddress("")
     } catch (error) {
       console.error("Lỗi khi thêm công ty:", error);
       alert("Có lỗi xảy ra, vui lòng thử lại!");
@@ -197,7 +214,7 @@ const EmployerRegistrationForm = () => {
         alert(`Upload failed: ${result.error}`);
       } else {
         setImages(result.data);
-        alert("Upload successful!");
+        alert("Upload successfull!");
       }
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -219,7 +236,7 @@ const EmployerRegistrationForm = () => {
         alert(`Upload failed: ${result.error}`);
       } else {
         setImageCompany(result.data);
-        alert("Upload successful!");
+        alert("Upload successfull!");
       }
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -227,7 +244,7 @@ const EmployerRegistrationForm = () => {
     }
   };
 
-  console.log("COMPANY",companies)
+  console.log("COMPANY", companies)
   return (
     <div className="flex min-h-screen overflow-hidden">
       <div className="flex flex-col justify-start items-center w-full md:w-2/3 lg:w-2/3 bg-white p-8 pt-12 overflow-y-auto">
@@ -432,6 +449,20 @@ const EmployerRegistrationForm = () => {
                     ))}
                   </select>
                 </div>
+              </div>
+              <div className="relative">
+                <FontAwesomeIcon
+                  icon={faLocationDot}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Địa chỉ cụ thể"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="pl-10 p-3 border rounded-lg text-sm w-full"
+                  required
+                />
               </div>
 
               <div className="relative">

@@ -6,6 +6,7 @@ import JobItem from "../../components/JobItem/JobItem";
 import LocationCarousel from '../../components/LocationCarousel/LocationCarousel';
 import ImageSlider from '../../components/ImageSlider/ImageSlider';
 import { fetchAllJobs } from '../../utils/ApiFunctions';
+import { ClipLoader } from 'react-spinners';
 
 const images = [
     { src: 'register.webp', alt: 'Image 3' },
@@ -38,12 +39,22 @@ const Home = () => {
         setIsOpen(!isOpen);
     };
 
-    const loadJobs = async (currentPage, industry = "") => {
+    const loadJobs = async (currentPage, industry = "", address = "") => {
         setLoading(true);
         console.log("INDUSTRY", industry)
-        const response = await fetchAllJobs(currentPage, 9, '', false, industry);
+        const response = await fetchAllJobs(currentPage, 9, '', false, industry, address);
         if (response && response.data) {
-            setJobs(response.data);
+            const filteredJobs = response.data.filter(job => job.status === "SHOW");
+            setJobs(filteredJobs);
+            if (!jobs.length)
+                setLoading(false);
+            // setJobs(response.data);
+            // if (!jobs.length) {
+            //     setTotalPages(0);
+            //     setTotalElements(0);
+            //     setLoading(false);
+            //     return;
+            // }
             setTotalPages(response.totalPages);
             setTotalElements(response.totalElements);
         } else if (response && response.error) {
@@ -54,19 +65,27 @@ const Home = () => {
 
     useEffect(() => {
         if (selectedOption === "Ngành nghề") {
-            console.log("selectedItem", selectedItem)
-            loadJobs(page, selectedItem);
+            loadJobs(page, selectedItem, "");
+        } else if (selectedOption === "Địa điểm") {
+            console.log("THANHPHO", selectedItem)
+            if (selectedItem === "Thành phố Hồ Chí Minh")
+                setSelectedItem("Hồ Chí Minh");
+            loadJobs(page, "", selectedItem);
         } else {
             loadJobs(page);
         }
     }, [page, selectedItem, selectedOption]);
 
     const handleNextPage = () => {
-        setPage((prevPage) => prevPage + 1);
+        if (jobs.length > 0) {
+            setPage((prevPage) => prevPage + 1);
+        }
     };
 
     const handlePrevPage = () => {
-        if (page > 0) setPage((prevPage) => prevPage - 1);
+        if (page > 0 && jobs.length > 0) {
+            setPage((prevPage) => prevPage - 1);
+        }
     };
 
     const handleItemSelected = (item) => {
@@ -160,7 +179,9 @@ const Home = () => {
                         <div className="mt-12">
                             <div className="pb-1">
                                 {loading ? (
-                                    <p>Loading jobs...</p>
+                                    <div className="flex justify-center items-center min-h-screen">
+                                        <ClipLoader color="#4caf50" size={40} />
+                                    </div>
                                 ) : jobs.length === 0 ? (
                                     <p>Hiện tại chưa có công việc phù hợp với yêu cầu của bạn</p>
                                 ) : (

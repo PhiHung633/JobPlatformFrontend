@@ -30,15 +30,16 @@ const LocationCarousel = ({ selectedOption, onItemSelect }) => {
     selectedOption === "Địa điểm"
       ? locations
       : selectedOption === "Ngành nghề"
-      ? industries
-      : [];
+        ? industries
+        : [];
 
+  // Chỉ thiết lập giá trị mặc định khi `selectedOption` thay đổi
   useEffect(() => {
-    // Only update if selectedItem is not in the new dataToDisplay
-    if (!dataToDisplay.includes(selectedItem)) {
-      setSelectedItem(dataToDisplay[0]);
+    if (dataToDisplay.length) {
+      setSelectedItem(dataToDisplay[0]); // Đặt giá trị mặc định
+      onItemSelect(dataToDisplay[0]); // Truyền giá trị mặc định ra ngoài
     }
-  }, [selectedOption, dataToDisplay, selectedItem]);
+  }, [selectedOption]); // Chỉ chạy khi `selectedOption` thay đổi
 
   const handleItemClick = (item) => {
     setSelectedItem(item);
@@ -52,11 +53,10 @@ const LocationCarousel = ({ selectedOption, onItemSelect }) => {
           <Carousel.Item key={index}>
             <button
               onClick={() => handleItemClick(item)}
-              className={`${
-                selectedItem === item
+              className={`${selectedItem === item
                   ? "bg-green-500 text-white cursor-default"
                   : "bg-gray-200 text-black hover:bg-white hover:border-green-400 hover:text-green-500"
-              } text-sm font-semibold rounded-3xl px-2 w-full h-full flex items-center justify-center border border-transparent`}
+                } text-sm font-semibold rounded-3xl px-2 w-full h-full flex items-center justify-center border border-transparent`}
             >
               {item}
             </button>

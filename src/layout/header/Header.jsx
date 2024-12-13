@@ -22,11 +22,16 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Link, useLocation } from "react-router-dom";
 import { format } from 'date-fns';
+import { toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+import { jwtDecode } from "jwt-decode";
 
+import { onMessage } from "firebase/messaging";
+import { messaging } from '../../utils/firebase.js'
 
 import DropdownItem from "../../components/DropdownItem/DropdownItem";
-import { jwtDecode } from "jwt-decode";
-import { fetchNotifications } from "../../utils/ApiFunctions";
+import { fetchNotifications, fetchUserById } from "../../utils/ApiFunctions";
+
 
 function formatDate(dateString) {
   const date = new Date(dateString);
@@ -37,6 +42,7 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState({});
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -44,6 +50,7 @@ const Header = () => {
   const [error, setError] = useState(null);
   const [userId, setUserId] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
+  const [errortb, setErrorTB] = useState(null);
 
 
   const [pagination, setPagination] = useState({
@@ -54,12 +61,32 @@ const Header = () => {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) {
       const decodedToken = jwtDecode(token);
       setUserId(decodedToken.user_id);
+      setIsLoggedIn(true);
+      setUserEmail(decodedToken.sub);
+    } else {
+      setIsLoggedIn(false);
+      setUserId("");
+      setUserEmail("");
+      setNotifications([]);
+      setUnreadCount(0);
     }
   }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      setIsLoggedIn(true);
+      const decodedToken = jwtDecode(token);
+      setUserEmail(decodedToken.sub);
+      setUserId(decodedToken.user_id);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, [localStorage.getItem("accessToken")]);
 
   const toggleDropdown = (menu) => {
     setDropdownOpen((prev) => ({
@@ -79,16 +106,16 @@ const Header = () => {
   const isActive = (path, subPaths = []) => {
     return location.pathname === path || subPaths.includes(location.pathname) ? "text-green-600" : "";
   };
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      setIsLoggedIn(true);
-      const decodedToken = jwtDecode(token)
-      setUserEmail(decodedToken.sub);
+
+  const fetchUser = async () => {
+    const { data, error } = await fetchUserById(userId);
+    if (data) {
+      setUserName(data.fullName)
     } else {
-      setIsLoggedIn(false);
+      setError(error);
     }
-  }, []);
+  }
+
 
   const fetchData = async () => {
     const { data, error } = await fetchNotifications(userId, pagination.page, pagination.size);
@@ -100,15 +127,10 @@ const Header = () => {
         totalElements: data.totalElements,
       }));
     } else {
-      setError(error);
+      setErrorTB(error);
     }
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchData();
-    }
-  }, [isOpen, pagination.page]);
 
   useEffect(() => {
     const count = notifications.filter((notification) => !notification.isRead).length;
@@ -124,6 +146,54 @@ const Header = () => {
       }));
     }
   };
+
+
+  useEffect(() => {
+    const unsubscribe = onMessage(messaging, (payload) => {
+      console.log("Message received: ", payload.data.message);
+      toast.info(payload.data.message, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      setIsLoggedIn(true);
+      const decodedToken = jwtDecode(token);
+      setUserEmail(decodedToken.sub);
+      fetchUser();
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn && userId) {
+      fetchUser();
+      fetchData();
+    } else {
+      setUserName("");
+      setNotifications([]);
+      setUnreadCount(0);
+      setPagination({
+        page: 0,
+        size: 10,
+        totalPages: 0,
+        totalElements: 0,
+      });
+    }
+  }, [isLoggedIn, userId]);
+
+  console.log("USERNAME", userName)
+
   return (
     <header className="w-full bg-white sticky top-0 z-50 shadow-sm px-4">
       <div className="flex items-center justify-between">
@@ -181,18 +251,6 @@ const Header = () => {
         <ul className="hidden lx:flex items-center space-x-5">
           {isLoggedIn ? (
             <>
-              {/* <li className="relative group ml-4">
-                <div className="text-sm text-opacity-50 text-center">
-                  Bạn là nhà tuyển dụng?
-                </div>
-                <Link
-                  to={"/dang-ki-danh-cho-nha-tuyen-dung"}
-                  className="text-black font-semibold hover:text-green-600 transition ease-in-out duration-300 text-base"
-                >
-                  Đăng tuyển ngay
-                  <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
-                </Link>
-              </li> */}
               <li className="relative">
                 <button
                   onClick={togglePopup}
@@ -208,7 +266,7 @@ const Header = () => {
 
                 {/* Notification Popup */}
                 {isOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-lg border border-gray-200 z-50">
+                  <div className="absolute right-0 mt-2 w-80 h-44 overflow-y-auto bg-white shadow-lg rounded-lg border border-gray-200 z-50">
                     <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
                       <span className="font-semibold text-gray-800">Thông báo</span>
                       <button
@@ -219,7 +277,7 @@ const Header = () => {
                       </button>
                     </div>
                     <div className="p-4">
-                      {error && (
+                      {errortb && (
                         <div className="text-red-500 text-sm">
                           Không thể tải thông báo. Vui lòng thử lại.
                         </div>
@@ -271,7 +329,7 @@ const Header = () => {
                       className="mr-2 w-10 h-10 rounded-full object-cover"
                     />
                     <div>
-                      <p className="font-semibold">Phi Hùng</p>
+                      <p className="font-semibold">{userName}</p>
                       <p className="text-xs text-gray-500">
                         {userEmail}
                       </p>
@@ -279,8 +337,7 @@ const Header = () => {
                   </div>
                   <ul>
                     <DropdownItem icon={faGear} text="Cài đặt thông tin cá nhân" to={"/cai-dat-thong-tin-ca-nhan"} />
-                    <DropdownItem icon={faSquare} text="Thông báo" />
-                    <DropdownItem icon={faShield} text="Đổi mật khẩu" />
+                    <DropdownItem icon={faShield} text="Đổi mật khẩu" to={"/doi-mat-khau"} />
                     <DropdownItem icon={faArrowRightFromBracket} text="Đăng xuất" />
                   </ul>
                 </div>

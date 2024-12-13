@@ -24,9 +24,9 @@ const ManageJobs = () => {
         const decodedToken = jwtDecode(token);
         setUserId(decodedToken.user_id);
       }
-
+      console.log("UACOMA",userId)
       const result = await fetchJobs(userId, page, 10, searchTerm);
-
+      console.log("RESULTT",result)
       if (result.data) {
         setJobs(result.data);
         setTotalPages(result.totalPages);
@@ -56,6 +56,7 @@ const ManageJobs = () => {
         industry:job.industry,
         level:job.level,
         workType:job.workType,
+        address:job.address,
         numberOfRecruits:job.numberOfRecruits,
         deadline: job.deadline,
       },
@@ -77,7 +78,7 @@ const ManageJobs = () => {
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
-    loadJobs(newPage);  // Gọi lại loadJobs khi thay đổi trang
+    loadJobs(newPage); 
   };
 
   useEffect(() => {

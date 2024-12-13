@@ -8,7 +8,7 @@ import { addJobSave, deleteJobSave, fetchJobSavesByUser } from '../../utils/ApiF
 const JobItem = ({ job }) => {
     const [showHoverInfo, setShowHoverInfo] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
-
+    console.log("JOBBNE", job)
     useEffect(() => {
         const checkJobSaveStatus = async () => {
             const { data, error } = await fetchJobSavesByUser();
@@ -33,6 +33,8 @@ const JobItem = ({ job }) => {
             setIsFavorite(true);
         }
     };
+    const fullAddress = job.address || "Location";
+    const city = fullAddress.split(", ").pop();
 
     return (
         <div className="p-6 w-[400px] bg-white rounded-xl shadow-lg mb-6 border-2 border-transparent transition-transform duration-300 hover:border-gray-300 hover:shadow-2xl hover:scale-105 group">
@@ -79,8 +81,11 @@ const JobItem = ({ job }) => {
                             <div className="font-semibold text-sm px-4 py-1 bg-green-100 rounded-full text-green-600">
                                 <span>{job.salary.toLocaleString()} VNĐ</span>
                             </div>
-                            <div className="font-semibold text-sm px-4 py-1 bg-blue-100 rounded-full text-blue-600">
-                                <span>{job.companyLocation || "Location"}</span>
+                            <div className="relative font-semibold text-xs px-5 py-1 bg-blue-100 rounded-full text-blue-600">
+                                <span>{city}</span>
+                                <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-max max-w-xs p-2 text-xs bg-gray-700 text-white rounded-lg opacity-0 hover:opacity-100 transition-opacity">
+                                    {fullAddress}
+                                </div>
                             </div>
                         </div>
                         <button

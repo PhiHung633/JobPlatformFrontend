@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { FaBars, FaBell, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
 import { format } from 'date-fns';
+import { toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+import { onMessage } from "firebase/messaging";
+import { messaging } from '../../utils/firebase.js'
 import { fetchNotifications } from "../../utils/ApiFunctions";
 
 function formatDate(dateString) {
@@ -67,10 +71,8 @@ const Header = () => {
   };
 
   useEffect(() => {
-    if (isNotificationPopupOpen) {
-      fetchData();
-    }
-  }, [isNotificationPopupOpen, pagination.page]);
+    fetchData();
+  }, [userId,pagination.page]);
 
   const loadMore = () => {
     if (pagination.page + 1 < pagination.totalPages) {
@@ -85,6 +87,21 @@ const Header = () => {
     const count = notifications.filter((notification) => !notification.isRead).length;
     setUnreadCount(count);
   }, [notifications]);
+
+  useEffect(() => {
+    const unsubscribe = onMessage(messaging, (payload) => {
+      console.log("Message received: ", payload.data.message);
+      toast.info(payload.data.message, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    });
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="flex justify-between items-center bg-blue-900 text-white p-4 shadow-md relative">

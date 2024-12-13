@@ -7,6 +7,7 @@ import { jwtDecode } from "jwt-decode";
 import Button from '@mui/material/Button';
 import JobApplicationPopup from "../../components/JobDetail/JobApplicationPopup";
 import { fetchJobSavesByUser, fetchJobById, deleteJobSave } from "../../utils/ApiFunctions";
+import { ClipLoader } from "react-spinners";
 
 function calculateDaysRemaining(deadline) {
     const deadlineDate = parseISO(deadline);
@@ -70,8 +71,14 @@ const JobSaved = () => {
         setIsPopupOpen(false);
     }
 
-    if (loading) return <p className="text-center">Đang tải...</p>;
-    console.log("SAVEJOB", savedJobs)
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <ClipLoader color="#4caf50" size={40} />
+            </div>
+        );
+    }
+    // console.log("SAVEJOB", savedJobs)
     return (
         <div className="flex max-w-5xl mx-auto gap-6 mt-10">
             <div className="w-full bg-white rounded-xl shadow-md overflow-hidden self-start">
