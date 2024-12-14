@@ -24,8 +24,8 @@ const Home = () => {
     const [loading, setLoading] = useState(false);
     const options = [
         "Địa điểm",
-        "Mức lương",
-        "Kinh nghiệm",
+        // "Mức lương",
+        // "Kinh nghiệm",
         "Ngành nghề"
     ];
     const [selectedItem, setSelectedItem] = useState("")

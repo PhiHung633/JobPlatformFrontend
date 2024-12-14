@@ -81,6 +81,10 @@ const App = () => {
     fetchUserRole();
   }, [isAuthenticated, updateRole]);
 
+  useEffect(() => {
+    requestNotificationPermission();
+  }, [])
+
   const noHeaderRoutes = ['/dang-ki', '/dang-nhap', '/quen-mat-khau', '/dang-ki-danh-cho-nha-tuyen-dung', '/dashboard', '/admin'];
 
   const shouldHideHeader = noHeaderRoutes.some(route => location.pathname.startsWith(route));
@@ -220,6 +224,7 @@ onMessage(messaging, (payload) => {
 const RootApp = () => (
   <AuthProvider>
     <Router>
+      <ToastContainer />
       <App />
     </Router>
   </AuthProvider>

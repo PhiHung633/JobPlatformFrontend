@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { onMessage } from "firebase/messaging";
 import { messaging } from '../../utils/firebase.js'
 import { fetchNotifications } from "../../utils/ApiFunctions";
+import { useNavigate } from "react-router-dom";
 
 function formatDate(dateString) {
   const date = new Date(dateString);
@@ -27,7 +28,7 @@ const Header = () => {
   const [error, setError] = useState(null);
   const [userId, setUserId] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
-
+  const navigate = useNavigate();
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -47,11 +48,14 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    alert("Bạn đã đăng xuất");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    navigate("/dang-nhap");
     setIsUserPopupOpen(false);
   };
 
   const fetchData = async () => {
+    if (!userId) return;
     setLoading(true);
     const { data, error } = await fetchNotifications(userId, pagination.page, pagination.size);
     if (data) {
@@ -71,8 +75,10 @@ const Header = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [userId,pagination.page]);
+    if (userId) {
+      fetchData();
+    }
+  }, [userId, pagination.page]);
 
   const loadMore = () => {
     if (pagination.page + 1 < pagination.totalPages) {
@@ -90,18 +96,23 @@ const Header = () => {
 
   useEffect(() => {
     const unsubscribe = onMessage(messaging, (payload) => {
-      console.log("Message received: ", payload.data.message);
-      toast.info(payload.data.message, {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      if (payload && payload.data && payload.data.message) {
+        console.log("Message received: ", payload.data.message);
+        toast.info(payload.data.message, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      } else {
+        console.error("Invalid payload: ", payload);
+      }
     });
     return () => unsubscribe();
   }, []);
+  
 
   return (
     <div className="flex justify-between items-center bg-blue-900 text-white p-4 shadow-md relative">

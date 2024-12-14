@@ -76,6 +76,7 @@ const JobsSearch = () => {
         }
     }, [jobSuggestions]);
     console.log("JOBBNe",jobSuggestions)
+    console.log("STATENE",location.state)
     return (
         <>
             {/* Search Bar */}

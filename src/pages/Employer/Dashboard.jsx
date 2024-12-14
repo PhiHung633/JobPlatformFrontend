@@ -51,7 +51,7 @@ const Dashboard = () => {
           console.error("Error decoding token or fetching user:", err);
           setError("Failed to fetch user data.");
         } finally {
-          setIsLoading(false); // Đánh dấu hoàn tất quá trình tải
+          setIsLoading(false);
         }
       }
     };

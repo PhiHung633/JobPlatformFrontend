@@ -20,7 +20,7 @@ import {
   faGear,
   faMagnifyingGlass,
 } from "@fortawesome/free-solid-svg-icons";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { format } from 'date-fns';
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -51,7 +51,7 @@ const Header = () => {
   const [userId, setUserId] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const [errortb, setErrorTB] = useState(null);
-
+  const navigate = useNavigate();
 
   const [pagination, setPagination] = useState({
     page: 0,
@@ -338,7 +338,11 @@ const Header = () => {
                   <ul>
                     <DropdownItem icon={faGear} text="Cài đặt thông tin cá nhân" to={"/cai-dat-thong-tin-ca-nhan"} />
                     <DropdownItem icon={faShield} text="Đổi mật khẩu" to={"/doi-mat-khau"} />
-                    <DropdownItem icon={faArrowRightFromBracket} text="Đăng xuất" />
+                    <DropdownItem icon={faArrowRightFromBracket} text="Đăng xuất" onClick={() => {
+                      localStorage.removeItem("accessToken");
+                      localStorage.removeItem("refreshToken");
+                      navigate("/dang-nhap");
+                    }} />
                   </ul>
                 </div>
               </li>

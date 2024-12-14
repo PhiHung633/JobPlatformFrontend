@@ -29,7 +29,7 @@ const CompanyOutstanding = ({companies}) => {
                                 <img
                                     src={company.images}
                                     alt={`${company.name} logo`}
-                                    className="w-12 h-12 mr-3 rounded-full object-cover"
+                                    className="w-12 h-12 mr-3 rounded-full object-contain"
                                 />
                                 <h3 className="text-lg font-semibold">{company.name}</h3>
                             </div>
