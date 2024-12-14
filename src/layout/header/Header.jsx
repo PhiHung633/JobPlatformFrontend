@@ -51,6 +51,7 @@ const Header = () => {
   const [userId, setUserId] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const [errortb, setErrorTB] = useState(null);
+  const [avatar, setAvatar] = useState("");
   const navigate = useNavigate();
 
   const [pagination, setPagination] = useState({
@@ -111,6 +112,7 @@ const Header = () => {
     const { data, error } = await fetchUserById(userId);
     if (data) {
       setUserName(data.fullName)
+      setAvatar(data.avatarUrl)
     } else {
       setError(error);
     }
@@ -191,8 +193,6 @@ const Header = () => {
       });
     }
   }, [isLoggedIn, userId]);
-
-  console.log("USERNAME", userName)
 
   return (
     <header className="w-full bg-white sticky top-0 z-50 shadow-sm px-4">
@@ -317,16 +317,26 @@ const Header = () => {
               </li>
               <li className="relative group">
                 <img
-                  src="https://www.topcv.vn/images/avatar-default.jpg"
+                  src={avatar}
                   alt="User Avatar"
                   className="w-9 h-9 rounded-full object-cover cursor-pointer"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src =
+                      "https://media4.giphy.com/media/xTk9ZvMnbIiIew7IpW/giphy.gif?cid=6c09b952souzn361oda9jrwdqfbhyupzrijte9zxczqrfh69&ep=v1_internal_gif_by_id&rid=giphy.gif&ct=g";
+                  }}
                 />
                 <div className="absolute right-0 mt-1 w-80 bg-white rounded-lg py-4 px-5 opacity-0 invisible transform -translate-y-5 transition ease-in-out duration-300 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
                   <div className="flex items-center mb-4">
                     <img
-                      src="https://www.topcv.vn/images/avatar-default.jpg"
+                      src={avatar}
                       alt="User Avatar"
                       className="mr-2 w-10 h-10 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src =
+                          "https://media4.giphy.com/media/xTk9ZvMnbIiIew7IpW/giphy.gif?cid=6c09b952souzn361oda9jrwdqfbhyupzrijte9zxczqrfh69&ep=v1_internal_gif_by_id&rid=giphy.gif&ct=g";
+                      }}
                     />
                     <div>
                       <p className="font-semibold">{userName}</p>
@@ -382,9 +392,15 @@ const Header = () => {
             <div className="mt-4">
               <div className="flex items-center mb-4" onClick={() => toggleDropdown("profile")}>
                 <img
-                  src="https://www.topcv.vn/images/avatar-default.jpg"
+                  src={avatar}
                   alt="Avatar"
                   className="mr-2 w-10 h-10 rounded-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src =
+                      "https://media4.giphy.com/media/xTk9ZvMnbIiIew7IpW/giphy.gif?cid=6c09b952souzn361oda9jrwdqfbhyupzrijte9zxczqrfh69&ep=v1_internal_gif_by_id&rid=giphy.gif&ct=g";
+                  }
+                }
                 />
                 <div>
                   <p className="font-semibold">Phi Hùng</p>

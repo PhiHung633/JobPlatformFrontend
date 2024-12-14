@@ -32,7 +32,6 @@ import CreateJob from './pages/Employer/CreateJob.jsx';
 import ManageJobs from './pages/Employer/ManageJobs.jsx';
 import ManageCV from './pages/Employer/ManageCV.jsx';
 import Admin from './pages/Admin/AdminPage.jsx';
-import ChatApp from './pages/Admin/ChatApp.jsx';
 import { useEffect, useState } from 'react';
 import CvList from './pages/JobSeeker/CVList.jsx';
 import { matchPath } from 'react-router-dom';
@@ -119,7 +118,6 @@ const App = () => {
               </PrivateRoute>
             }
           />
-          <Route path="/chat" element={<ChatApp />} />
           <Route
             path="/dashboard/*"
             element={
