@@ -1,11 +1,10 @@
-import * as React from 'react';
 import { useEffect, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import CircularProgress from '@mui/material/CircularProgress';
 import TablePagination from '@mui/material/TablePagination';
-import { fetchAllJobs } from '../../utils/ApiFunctions';
+import { getAllJobs } from '../../utils/ApiFunctions';
 
 import { JobTable } from '../../components/Admin/Job/job-table';
 
@@ -24,7 +23,7 @@ export default function Page() {
   // Function to fetch jobs
   const loadJob = async (page, rowsPerPage) => {
     setLoading(true);
-    const { data, error, status, headers } = await fetchAllJobs(page, rowsPerPage, null, null, 'PENDING_APPROVAL');
+    const { data, error, status, headers } = await getAllJobs(page, rowsPerPage, null, null, 'PENDING_APPROVAL');
     if (data) {
       setJobs(data);
       console.log(data)

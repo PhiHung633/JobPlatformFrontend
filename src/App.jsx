@@ -3,6 +3,7 @@ import { getToken, onMessage } from "firebase/messaging";
 import { messaging } from './utils/firebase.js'
 
 import { addFCMToken } from './utils/ApiFunctions.jsx';
+// import { BrowserRouter as  Routes, Route, useLocation, BrowserRouter } from 'react-router-dom';
 
 import Home from "./pages/Home/Home.jsx";
 import RegistrationForm from "./pages/Registration/RegistrationForm.jsx";
@@ -14,6 +15,7 @@ import ForgotPassword from './pages/ForgotPassword/ForgotPassword.jsx';
 import Header from './layout/header/Header.jsx';
 import JobSaved from './pages/JobSaved/JobSaved.jsx';
 import JobDetail from './components/JobDetail/JobDetail.jsx';
+import CompanyDetails from './components/OutstandingCompanies/CompanyDetails.jsx';
 import JobsSearch from './pages/JobsSearch/JobsSearch.jsx';
 import CVBuilder from './components/CreateCV/CVBuilder.jsx';
 import Education from './components/CreateCV/Education.jsx';
@@ -31,63 +33,127 @@ import ManageJobs from './pages/Employer/ManageJobs.jsx';
 import ManageCV from './pages/Employer/ManageCV.jsx';
 import Admin from './pages/Admin/AdminPage.jsx';
 import ChatApp from './pages/Admin/ChatApp.jsx';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import CvList from './pages/JobSeeker/CVList.jsx';
+import { matchPath } from 'react-router-dom';
+import PersonalInformation from './pages/PersonalInformation/PersonalInformation.jsx';
+import ChangePassword from './pages/ChangePassword/ChangePassword.jsx';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { jwtDecode } from "jwt-decode";
+import PrivateRoute from './service/PrivateRoute/PrivateRoute.jsx';
+import Forbidden from './service/PrivateRoute/Forbidden.jsx';
+import PrivateRouteForJobSeeker from './service/PrivateRoute/PrivateRouteForJobSeeker.jsx';
+import LoginGoogleCallback from './pages/Login/LoginGoogleCallback.jsx';
+import { AuthProvider, useAuth } from './service/AuthProvider.jsx';
+import MomoCallback from './pages/Employer/MomoCallback.jsx';
+
+
 
 const App = () => {
   const location = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Set loading to true initially
+  const { currentUserRole, updateRole } = useAuth();
 
-  // const noHeaderRoutes = ['/dang-ki', '/dang-nhap', '/quen-mat-khau',
-  //   '/dang-ki-danh-cho-nha-tuyen-dung', '/dashboard', '/dashboard/quan-li-cong-viec',
-  //   '/dashboard/tao-cong-viec', '/dashboard/quan-li-cv', '/admin'];
-  const noHeaderRoutes = ['/dang-ki', '/dang-nhap', '/quen-mat-khau',
-    '/dang-ki-danh-cho-nha-tuyen-dung', '/dashboard', '/admin'];
+  // Load the role from localStorage once at the start
+  useEffect(() => {
+    const cachedRole = localStorage.getItem("currentUserRole");
+    if (cachedRole) {
+      updateRole(cachedRole);
+    }
+    setIsLoading(false); // Set loading to false once role is determined
+  }, [updateRole]);
 
-  const shouldHideHeader = noHeaderRoutes.some(route => location.pathname.startsWith(route))
+  // Fetch user role from token if available
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        const role = await getRoleFromToken(); // Fetch role from token
+        updateRole(role);
+      } else {
+        updateRole(null);
+      }
+      setIsAuthenticated(!!token);
+    };
+
+    fetchUserRole();
+  }, [isAuthenticated, updateRole]);
 
   useEffect(() => {
-    requestNotificationPermission()
-  
+    requestNotificationPermission();
   }, [])
+
+  const noHeaderRoutes = ['/dang-ki', '/dang-nhap', '/quen-mat-khau', '/dang-ki-danh-cho-nha-tuyen-dung', '/dashboard', '/admin'];
+
+  const shouldHideHeader = noHeaderRoutes.some(route => location.pathname.startsWith(route));
+
+  // Wait until loading is false to render the app
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="bg-gray-100 min-h-screen w-full">
       {!shouldHideHeader && <Header />}
-
+      <ToastContainer />
       <div className="w-full mx-auto">
         <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='/dang-ki' element={<RegistrationForm />} />
-          <Route path='/dang-ki-danh-cho-nha-tuyen-dung' element={<EmployerRegistrationForm />} />
-          <Route path='/dang-nhap' element={<LoginForm />} />
-          <Route path='/quen-mat-khau' element={<ForgotPassword />} />
-          <Route path='/cong-ti' element={<Company />} />
-          <Route path='/viec-lam-da-ung-tuyen' element={<JobApplied />} />
-          <Route path='/viec-lam-da-luu' element={<JobSaved />} />
-          <Route path='/viec-lam/:id' element={<JobDetail />} />
-          <Route path='/tim-viec-lam' element={<JobsSearch />} />
-          <Route path='/viec-lam-phu-hop' element={<JobsFit />} />
-          <Route path='/cv' element={<CVBuilder />} />
-          <Route path="/education" element={<Education />} />
-          <Route path="/education/list" element={<EducationList />} />
-          <Route path="/work-history" element={<WorkHistory />} />
-          <Route path="/work-history/list" element={<WorkHistoryList />} />
-          <Route path="/skill" element={<Skill />} />
-          <Route path="/summary" element={<Summary />} />
-          <Route path="/extra" element={<Extra />} />
-          <Route path="/preview" element={<Preview />} />
-          <Route path='/admin/*' element={<Admin />} />
-          <Route path='/chat' element={<ChatApp />} />
-
-          <Route path="/dashboard" element={<Dashboard />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/dang-ki" element={<RegistrationForm />} />
+          <Route path="/dang-ki-danh-cho-nha-tuyen-dung" element={<EmployerRegistrationForm />} />
+          <Route path="/dang-nhap" element={<LoginForm />} />
+          <Route path="/loginGoogle" element={<LoginGoogleCallback />} />
+          <Route path="/quen-mat-khau" element={<ForgotPassword />} />
+          <Route path="/cong-ti" element={<Company />} />
+          <Route path="/cong-ti/:id" element={<CompanyDetails />} />
+          <Route path="/viec-lam/:id" element={<JobDetail />} />
+          <Route path="/tim-viec-lam" element={<JobsSearch />} />
+          <Route path="/403" element={<Forbidden />} />
+          <Route
+            path="/admin/*"
+            element={
+              <PrivateRoute roles={["ROLE_ADMIN"]} userRole={currentUserRole}>
+                <Admin />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/chat" element={<ChatApp />} />
+          <Route
+            path="/dashboard/*"
+            element={
+              <PrivateRoute roles={["ROLE_RECRUITER", "ROLE_ADMIN"]} userRole={currentUserRole}>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          >
             <Route path="quan-li-cong-viec" element={<ManageJobs />} />
             <Route path="tao-cong-viec" element={<CreateJob />} />
             <Route path="quan-li-cv" element={<ManageCV />} />
           </Route>
+          {/* User routes */}
+          <Route path='/viec-lam-da-ung-tuyen' element={<PrivateRouteForJobSeeker element={<JobApplied />} />} />
+          <Route path='/viec-lam-da-luu' element={<PrivateRouteForJobSeeker element={<JobSaved />} />} />
+          <Route path='/cai-dat-thong-tin-ca-nhan' element={<PrivateRouteForJobSeeker element={<PersonalInformation />} />} />
+          <Route path='/doi-mat-khau' element={<PrivateRouteForJobSeeker element={<ChangePassword />} />} />
+          <Route path='/viec-lam-phu-hop' element={<PrivateRouteForJobSeeker element={<JobsFit />} />} />
+          <Route path='/tao-cv' element={<PrivateRouteForJobSeeker element={<CVBuilder />} />} />
+          <Route path='/cv-cua-toi' element={<PrivateRouteForJobSeeker element={<CvList />} />} />
+          <Route path="/education" element={<PrivateRouteForJobSeeker element={<Education />} />} />
+          <Route path="/education/list" element={<PrivateRouteForJobSeeker element={<EducationList />} />} />
+          <Route path="/work-history" element={<PrivateRouteForJobSeeker element={<WorkHistory />} />} />
+          <Route path="/work-history/list" element={<PrivateRouteForJobSeeker element={<WorkHistoryList />} />} />
+          <Route path="/momo-payment/verify" element={<PrivateRouteForJobSeeker element={<MomoCallback />} />} />
+          <Route path="/skill" element={<PrivateRouteForJobSeeker element={<Skill />} />} />
+          <Route path="/summary" element={<PrivateRouteForJobSeeker element={<Summary />} />} />
+          <Route path="/extra" element={<PrivateRouteForJobSeeker element={<Extra />} />} />
+          <Route path="/preview" element={<PrivateRouteForJobSeeker element={<Preview />} />} />
         </Routes>
       </div>
     </div>
   );
-}
+};
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker
@@ -101,6 +167,18 @@ if ('serviceWorker' in navigator) {
 } else {
   console.error('Service Worker not supported in this browser.');
 }
+
+const getRoleFromToken = async () => {
+  const token = localStorage.getItem("accessToken");
+  if (!token) return null;
+  try {
+    const decodedToken = jwtDecode(token);
+    return decodedToken.role || null;
+  } catch (error) {
+    console.error("Invalid token", error);
+    return null;
+  }
+};
 
 const requestNotificationPermission = async () => {
   try {
@@ -144,9 +222,12 @@ onMessage(messaging, (payload) => {
 
 
 const RootApp = () => (
-  <Router>
-    <App />
-  </Router>
+  <AuthProvider>
+    <Router>
+      <ToastContainer />
+      <App />
+    </Router>
+  </AuthProvider>
 );
 
 export default RootApp;

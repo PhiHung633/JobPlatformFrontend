@@ -9,7 +9,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect, useRef } from "react";
 import { fetchAllJobs } from "../../utils/ApiFunctions";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Searchbar = () => {
   const cities = [
@@ -87,73 +87,73 @@ const Searchbar = () => {
 
   const jobs = [
     { label: "Tất cả ngành nghề", value: "" },
-    { label: "An toàn lao động", value: 10101 },
-    { label: "Bán hàng kỹ thuật", value: 10102 },
-    { label: "Bán lẻ / bán sỉ", value: 10103 },
-    { label: "Báo chí / Truyền hình", value: 10004 },
-    { label: "Bảo hiểm", value: 10006 },
-    { label: "Bảo trì / Sửa chữa", value: 10104 },
+    // { label: "An toàn lao động", value: 10101 },
+    { label: "Kỹ thuật", value: 10102 },
+    // { label: "Bán lẻ / bán sỉ", value: 10103 },
+    // { label: "Báo chí / Truyền hình", value: 10004 },
+    // { label: "Bảo hiểm", value: 10006 },
+    // { label: "Bảo trì / Sửa chữa", value: 10104 },
     { label: "Bất động sản", value: 10007 },
-    { label: "Biên / Phiên dịch", value: 10003 },
-    { label: "Bưu chính - Viễn thông", value: 10005 },
-    { label: "Chứng khoán / Vàng / Ngoại tệ", value: 10008 },
-    { label: "Cơ khí / Chế tạo / Tự động hóa", value: 10010 },
-    { label: "Công nghệ cao", value: 10009 },
-    { label: "Công nghệ Ô tô", value: 10052 },
+    // { label: "Biên / Phiên dịch", value: 10003 },
+    // { label: "Bưu chính - Viễn thông", value: 10005 },
+    // { label: "Chứng khoán / Vàng / Ngoại tệ", value: 10008 },
+    // { label: "Cơ khí / Chế tạo / Tự động hóa", value: 10010 },
+    // { label: "Công nghệ cao", value: 10009 },
+    // { label: "Công nghệ Ô tô", value: 10052 },
     { label: "Công nghệ thông tin", value: 10131 },
-    { label: "Dầu khí/Hóa chất", value: 10012 },
-    { label: "Dệt may / Da giày", value: 10013 },
-    { label: "Địa chất / Khoáng sản", value: 10111 },
-    { label: "Dịch vụ khách hàng", value: 10014 },
-    { label: "Điện / Điện tử / Điện lạnh", value: 10016 },
-    { label: "Điện tử viễn thông", value: 10015 },
-    { label: "Du lịch", value: 10011 },
-    { label: "Dược phẩm / Công nghệ sinh học", value: 10110 },
-    { label: "Giáo dục / Đào tạo", value: 10017 },
-    { label: "Hàng cao cấp", value: 10113 },
-    { label: "Hàng gia dụng", value: 10020 },
-    { label: "Hàng hải", value: 10021 },
-    { label: "Hàng không", value: 10022 },
-    { label: "Hàng tiêu dùng", value: 10117 },
-    { label: "Hành chính / Văn phòng", value: 10023 },
-    { label: "Hoá học / Sinh học", value: 10018 },
-    { label: "Hoạch định/Dự án", value: 10019 },
-    { label: "In ấn / Xuất bản", value: 10024 },
-    { label: "IT Phần cứng / Mạng", value: 10025 },
-    { label: "IT phần mềm", value: 10026 },
-    { label: "Kế toán / Kiểm toán", value: 10028 },
-    { label: "Khách sạn / Nhà hàng", value: 10027 },
-    { label: "Kiến trúc", value: 10120 },
-    { label: "Kinh doanh / Bán hàng", value: 10001 },
-    { label: "Logistics", value: 10048 },
-    { label: "Luật/Pháp lý", value: 10036 },
+    // { label: "Dầu khí/Hóa chất", value: 10012 },
+    // { label: "Dệt may / Da giày", value: 10013 },
+    // { label: "Địa chất / Khoáng sản", value: 10111 },
+    // { label: "Dịch vụ khách hàng", value: 10014 },
+    // { label: "Điện / Điện tử / Điện lạnh", value: 10016 },
+    // { label: "Điện tử viễn thông", value: 10015 },
+    // { label: "Du lịch", value: 10011 },
+    // { label: "Dược phẩm / Công nghệ sinh học", value: 10110 },
+    { label: "Giáo dục", value: 10017 },
+    // { label: "Hàng cao cấp", value: 10113 },
+    // { label: "Hàng gia dụng", value: 10020 },
+    // { label: "Hàng hải", value: 10021 },
+    // { label: "Hàng không", value: 10022 },
+    // { label: "Hàng tiêu dùng", value: 10117 },
+    // { label: "Hành chính / Văn phòng", value: 10023 },
+    // { label: "Hoá học / Sinh học", value: 10018 },
+    // { label: "Hoạch định/Dự án", value: 10019 },
+    // { label: "In ấn / Xuất bản", value: 10024 },
+    // { label: "IT Phần cứng / Mạng", value: 10025 },
+    // { label: "IT phần mềm", value: 10026 },
+    { label: "Kế toán", value: 10028 },
+    // { label: "Khách sạn / Nhà hàng", value: 10027 },
+    // { label: "Kiến trúc", value: 10120 },
+    // { label: "Kinh doanh / Bán hàng", value: 10001 },
+    // { label: "Logistics", value: 10048 },
+    // { label: "Luật/Pháp lý", value: 10036 },
     { label: "Marketing / Truyền thông / Quảng cáo", value: 10029 },
-    { label: "Môi trường / Xử lý chất thải", value: 10030 },
-    { label: "Mỹ phẩm / Trang sức", value: 10031 },
-    { label: "Mỹ thuật / Nghệ thuật / Điện ảnh", value: 10032 },
-    { label: "Ngân hàng / Tài chính", value: 10033 },
-    { label: "Ngành nghề khác", value: 11000 },
-    { label: "NGO / Phi chính phủ / Phi lợi nhuận", value: 10132 },
-    { label: "Nhân sự", value: 10034 },
-    { label: "Nông / Lâm / Ngư nghiệp", value: 10035 },
-    { label: "Phi chính phủ / Phi lợi nhuận", value: 10124 },
-    { label: "Quản lý chất lượng (QA/QC)", value: 10037 },
-    { label: "Quản lý điều hành", value: 10038 },
-    { label: "Sản phẩm công nghiệp", value: 10125 },
-    { label: "Sản xuất", value: 10126 },
-    { label: "Spa / Làm đẹp", value: 10130 },
-    { label: "Tài chính / Đầu tư", value: 10127 },
-    { label: "Thiết kế đồ họa", value: 10039 },
-    { label: "Thiết kế nội thất", value: 10128 },
+    // { label: "Môi trường / Xử lý chất thải", value: 10030 },
+    // { label: "Mỹ phẩm / Trang sức", value: 10031 },
+    // { label: "Mỹ thuật / Nghệ thuật / Điện ảnh", value: 10032 },
+    // { label: "Ngân hàng / Tài chính", value: 10033 },
+    // { label: "Ngành nghề khác", value: 11000 },
+    // { label: "NGO / Phi chính phủ / Phi lợi nhuận", value: 10132 },
+    // { label: "Nhân sự", value: 10034 },
+    // { label: "Nông / Lâm / Ngư nghiệp", value: 10035 },
+    // { label: "Phi chính phủ / Phi lợi nhuận", value: 10124 },
+    // { label: "Quản lý chất lượng (QA/QC)", value: 10037 },
+    // { label: "Quản lý điều hành", value: 10038 },
+    // { label: "Sản phẩm công nghiệp", value: 10125 },
+    // { label: "Sản xuất", value: 10126 },
+    // { label: "Spa / Làm đẹp", value: 10130 },
+    // { label: "Tài chính / Đầu tư", value: 10127 },
+    // { label: "Thiết kế đồ họa", value: 10039 },
+    // { label: "Thiết kế nội thất", value: 10128 },
     { label: "Thời trang", value: 10042 },
-    { label: "Thư ký / Trợ lý", value: 10129 },
-    { label: "Thực phẩm / Đồ uống", value: 10043 },
-    { label: "Tổ chức sự kiện / Quà tặng", value: 10046 },
-    { label: "Tư vấn", value: 10045 },
-    { label: "Vận tải / Kho vận", value: 10047 },
-    { label: "Xây dựng", value: 10050 },
-    { label: "Xuất nhập khẩu", value: 10049 },
-    { label: "Y tế / Dược", value: 10051 },
+    // { label: "Thư ký / Trợ lý", value: 10129 },
+    // { label: "Thực phẩm / Đồ uống", value: 10043 },
+    // { label: "Tổ chức sự kiện / Quà tặng", value: 10046 },
+    // { label: "Tư vấn", value: 10045 },
+    // { label: "Vận tải / Kho vận", value: 10047 },
+    // { label: "Xây dựng", value: 10050 },
+    // { label: "Xuất nhập khẩu", value: 10049 },
+    { label: "Y tế", value: 10051 },
   ];
 
   const [input, setInput] = useState("");
@@ -168,6 +168,16 @@ const Searchbar = () => {
   const [jobSuggestions, setJobSuggestions] = useState([]);
   const [searchTitle, setSearchTitle] = useState('');
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    navigate("/tim-viec-lam", {
+      state: {
+        searchTitle: searchTitle,
+        jobSuggestions: jobSuggestions,
+      },
+    });
+  };
 
 
   const [filterOption, setFilterOption] = useState("1");
@@ -188,7 +198,13 @@ const Searchbar = () => {
   }, []);
   useEffect(() => {
     const fetchJobs = async () => {
-      const { data, error } = await fetchAllJobs(0, 10, searchTitle, true);
+      if(selectedJob==="Tất cả ngành nghề")
+        setSelectedJob("");
+      else if(selectedCity==="Tất cả tỉnh/thành phố")
+        setSelectedCity("")
+      console.log("JOBNE",selectedJob);
+      console.log("CITYNE",selectedCity);
+      const { data, error } = await fetchAllJobs(0, 10, searchTitle, true, selectedJob, selectedCity);
       if (!error) {
         setJobSuggestions(data);
       } else {
@@ -199,9 +215,9 @@ const Searchbar = () => {
     if (searchTitle) {
       fetchJobs();
     } else {
-      setJobSuggestions([]); // Clear jobs when search title is empty
+      setJobSuggestions([]);
     }
-  }, [searchTitle]);
+  }, [searchTitle, selectedJob, selectedCity]);
   const fetchData = (value) => {
     fetch("https://jsonplaceholder.typicode.com/users")
       .then((response) => response.json())
@@ -231,6 +247,7 @@ const Searchbar = () => {
       )
     );
     setIsCityOpen(true);
+    setIsInputFocused(false);
   };
 
   const handleJobChange = (e) => {
@@ -241,6 +258,13 @@ const Searchbar = () => {
       )
     );
     setIsJobOpen(true);
+    setIsInputFocused(false);
+  };
+
+  const handleInputFocus = () => {
+    setIsInputFocused(true);
+    setIsJobOpen(false);
+    setIsCityOpen(false);
   };
 
   const handleCitySelect = (option) => {
@@ -251,10 +275,13 @@ const Searchbar = () => {
   const handleJobSelect = (option) => {
     setSelectedJob(option.label);
     setIsJobOpen(false);
+    setIsCityOpen(false);
   };
 
   const handleFilterChange = (e) => {
     setFilterOption(e.target.value);
+    setIsJobOpen(false);
+    setIsCityOpen(false)
   };
   const handleInputBlur = (e) => {
     if (!e.currentTarget.contains(e.relatedTarget)) {
@@ -272,7 +299,7 @@ const Searchbar = () => {
             placeholder="Vị trí tuyển dụng"
             value={searchTitle}
             onChange={(e) => setSearchTitle(e.target.value)}
-            onFocus={() => setIsInputFocused(true)}
+            onFocus={handleInputFocus}
             onBlur={handleInputBlur}
           />
           <FontAwesomeIcon
@@ -374,7 +401,11 @@ const Searchbar = () => {
 
         <div className="border-l border-gray-300 h-10 mx-1 hidden-on-small"></div>
 
-        <button className="ml-auto bg-green-500 text-white rounded-full py-3 px-6 flex items-center hover:bg-green-700 transition-colors duration-300">
+        <button 
+          className="ml-auto bg-green-500 text-white rounded-full py-3 px-6 
+                    flex items-center hover:bg-green-700 transition-colors duration-300"
+          onClick={handleSearch}
+        >
           <FontAwesomeIcon icon={faSearch} />
           <span className="ml-1">Tìm kiếm</span>
         </button>
@@ -398,7 +429,7 @@ const Searchbar = () => {
                   />
                   <label htmlFor="type-keyword-search-1">Tên việc làm</label>
                 </div>
-                <div className="flex items-center gap-1">
+                {/* <div className="flex items-center gap-1">
                   <input
                     id="type-keyword-search-2"
                     type="radio"
@@ -421,7 +452,7 @@ const Searchbar = () => {
                     className="form-radio h-5 w-5"
                   />
                   <label htmlFor="type-keyword-search-3">Cả hai</label>
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -441,32 +472,31 @@ const Searchbar = () => {
           <div className="flex flex-col ml-5 hidden-on-small:ml-0">
             <div className="font-semibold mb-2">Việc làm bạn có thể quan tâm</div>
             <div className="flex flex-col">
-              {Array.from(new Set(jobSuggestions.map(job => job.company.name))).map((companyName) => {
-                // Lọc các job có company.name tương ứng
-                const jobsForCompany = jobSuggestions.filter(job => job.company.name === companyName);
+              {Array.from(new Set(jobSuggestions.map(job => job.companyName))).map((companyName) => {
+                const jobsForCompany = jobSuggestions.filter(job => job.companyName === companyName);
 
                 return (
                   <Link
-                    to={`/viec-lam/${jobsForCompany[0].id}`} // Lấy id của job đầu tiên
+                    to={`/viec-lam/${jobsForCompany[0].id}`} 
                     className="flex items-center p-2 hover:bg-[#e0e7ff] transition-colors w-[600px] relative group"
                     key={companyName}
                   >
                     <div className="mr-2">
                       <img
-                        src={jobsForCompany[0].company.images} // Lấy ảnh của job đầu tiên
+                        src={jobsForCompany[0].companyImages} 
                         alt={"Image"}
                         className="w-24 h-auto"
                       />
                     </div>
                     <div className="flex-1">
                       <p className="text-[#263a4d] font-semibold truncate">
-                        {jobsForCompany[0].title} {/* Hiển thị tiêu đề của job đầu tiên */}
+                        {jobsForCompany[0].title} 
                       </p>
                       <p className="text-gray-600 text-sm truncate">
-                        {companyName} {/* Hiển thị tên công ty */}
+                        {companyName}
                       </p>
                       <div className="text-green-600 text-sm font-semibold">
-                        {jobsForCompany[0].salary} {/* Hiển thị lương của job đầu tiên */}
+                        {jobsForCompany[0].salary.toLocaleString()}
                       </div>
                     </div>
                     <div className="ml-4 text-green-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100">

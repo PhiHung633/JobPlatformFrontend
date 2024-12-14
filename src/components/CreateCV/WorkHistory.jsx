@@ -21,13 +21,24 @@ const WorkHistory = () => {
     const location = useLocation();
 
     useEffect(() => {
-        // Tải dữ liệu từ localStorage
         const data = localStorage.getItem('workHistories');
         if (data) {
-            setWorkHistories(JSON.parse(data));
+            const parsedData = data.split(';').map(item => {
+                const parts = item.trim().split(' - ');
+                return {
+                    startMonth: parts[0]?.split(' ')[0] || '',
+                    startYear: parts[0]?.split(' ')[1] || '',
+                    jobTitle: parts[1] || '',
+                    employer: parts[2] || '',
+                    location: parts[3] || '',
+                    endMonth: parts[4]?.includes('Hiện tại') ? '' : parts[4]?.split(' ')[0] || '',
+                    endYear: parts[4]?.includes('Hiện tại') ? '' : parts[4]?.split(' ')[1] || '',
+                    jobDescription: ''
+                };
+            }).filter(item => item.jobTitle);
+            setWorkHistories(parsedData);
         }
 
-        // Kiểm tra xem có đang chỉnh sửa một công việc đã có không
         if (location.state && location.state.entry) {
             setFormData(location.state.entry);
             setCurrentlyWorking(!location.state.entry.endMonth && !location.state.entry.endYear);
@@ -53,22 +64,45 @@ const WorkHistory = () => {
         }
     };
 
-    const handleNext = () => {
-        const updatedHistories = [...workHistories];
+    const formatWorkHistoryData = (workHistoriesArray) => {
+        return workHistoriesArray
+            .map(entry => {
+                const start = `${entry.startMonth || ''} ${entry.startYear || ''}`.trim();
+                const end = entry.endMonth && entry.endYear
+                    ? `${entry.endMonth || ''} ${entry.endYear || ''}`.trim()
+                    : 'Hiện tại';
+                return `${start} - ${entry.jobTitle || ''} - ${entry.employer || ''} - ${entry.location || ''} - ${end}`;
+            })
+            .join(';');
+    };
 
+
+    const handleNext = () => {
+        const updatedEntry = {
+            startMonth: formData.startMonth || '',
+            startYear: formData.startYear || '',
+            jobTitle: formData.jobTitle || '',
+            employer: formData.employer || '',
+            location: formData.location || '',
+            endMonth: currentlyWorking ? '' : (formData.endMonth || ''),
+            endYear: currentlyWorking ? '' : (formData.endYear || ''),
+            jobDescription: formData.jobDescription || ''
+        };
+
+        const updatedHistories = [...workHistories];
         if (location.state && typeof location.state.index === 'number') {
-            // Cập nhật công việc đã có
-            updatedHistories[location.state.index] = formData;
+            updatedHistories[location.state.index] = updatedEntry;
         } else {
-            // Thêm công việc mới
-            updatedHistories.push(formData);
+            updatedHistories.push(updatedEntry);
         }
 
-        // Lưu dữ liệu đã cập nhật vào localStorage
-        localStorage.setItem('workHistories', JSON.stringify(updatedHistories));
-        setWorkHistories(updatedHistories);
+        const workHistoryString = formatWorkHistoryData(updatedHistories);
+        console.log("WoHIS", workHistoryString);  
+        localStorage.setItem('workHistories', workHistoryString);
+        console.log("HUHUHU",localStorage.getItem('workHistories'));  
 
-        // Làm sạch dữ liệu biểu mẫu cho mục mới
+
+        setWorkHistories(updatedHistories);
         setFormData({
             jobTitle: '',
             employer: '',
@@ -80,8 +114,11 @@ const WorkHistory = () => {
             jobDescription: ''
         });
         setCurrentlyWorking(false);
+
         navigate('/work-history/list');
     };
+
+
 
     return (
         <div className="flex min-h-screen">
@@ -95,14 +132,14 @@ const WorkHistory = () => {
 
                 <div className="grid grid-cols-2 gap-6 mb-8">
                     <InputField
-                        label="Chức vụ *"
+                        label="Chức vụ"
                         placeholder="Ví dụ: Nhân viên bán hàng"
                         name="jobTitle"
                         value={formData.jobTitle}
                         onChange={handleChange}
                     />
                     <InputField
-                        label="Nhà tuyển dụng *"
+                        label="Công ty"
                         placeholder="Ví dụ: H&M"
                         name="employer"
                         value={formData.employer}

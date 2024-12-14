@@ -12,24 +12,76 @@ const Extra = () => {
     const [certifications, setCertifications] = useState([]);
     const [portfolios, setPortfolios] = useState([]);
 
-    // Tải dữ liệu lưu từ localStorage khi component được render
     useEffect(() => {
-        const savedLanguages = JSON.parse(localStorage.getItem('languagesData')) || [];
-        const savedHobbies = JSON.parse(localStorage.getItem('hobbiesData')) || [];
-        const savedCertifications = JSON.parse(localStorage.getItem('certificationsData')) || [];
-        const savedPortfolios = JSON.parse(localStorage.getItem('portfoliosData')) || [];
+        const selectedCVdata = localStorage.getItem('selectedCvData')
+            ? JSON.parse(localStorage.getItem('selectedCvData'))
+            : null;
 
-        setLanguages(savedLanguages);
-        setHobbies(savedHobbies);
-        setCertifications(savedCertifications);
-        setPortfolios(savedPortfolios);
+        const savedLanguages = localStorage.getItem('languagesData')?.split(';') || [];
+        const savedHobbies = localStorage.getItem('hobbiesData')?.split(';') || [];
+        const savedCertifications = localStorage.getItem('certificationsData')
+            ? localStorage.getItem('certificationsData').split(';').map(item => {
+                const [date, title] = item.split('-');
+                return { date, title };
+            })
+            : [];
+        const savedPortfolios = localStorage.getItem('portfoliosData')?.split(';') || [];
+
+        const combinedLanguages = [
+            ...new Set([
+                ...savedLanguages,
+                ...(selectedCVdata?.languageSkill?.split(';') || []),
+            ]),
+        ];
+        const combinedHobbies = [
+            ...new Set([
+                ...savedHobbies,
+                ...(selectedCVdata?.hobby ? [selectedCVdata.hobby] : []),
+            ]),
+        ];
+        const combinedCertifications = savedCertifications;
+
+        // Nếu dữ liệu từ `selectedCVdata` tồn tại và không bị trùng lặp, thì mới thêm vào.
+        if (
+            selectedCVdata?.certifications &&
+            !savedCertifications.some(
+                cert =>
+                    cert.date === selectedCVdata.certifications.split('-')[0] &&
+                    cert.title === selectedCVdata.certifications.split('-')[1]
+            )
+        ) {
+            combinedCertifications.push({
+                date: selectedCVdata.certifications.split('-')[0],
+                title: selectedCVdata.certifications.split('-')[1],
+            });
+        }
+
+        const combinedPortfolios = [
+            ...new Set([
+                ...savedPortfolios,
+                ...(selectedCVdata?.portfolio ? [selectedCVdata.portfolio] : []),
+            ]),
+        ];
+
+        setLanguages(combinedLanguages);
+        setHobbies(combinedHobbies);
+        setCertifications(combinedCertifications);
+        setPortfolios(combinedPortfolios);
     }, []);
 
+
     const saveToLocalStorage = () => {
-        localStorage.setItem('languagesData', JSON.stringify(languages));
-        localStorage.setItem('hobbiesData', JSON.stringify(hobbies));
-        localStorage.setItem('certificationsData', JSON.stringify(certifications));
-        localStorage.setItem('portfoliosData', JSON.stringify(portfolios));
+        const languagesString = languages.join(';');
+        const hobbiesString = hobbies.join(';');
+        const certificationsString = certifications
+            .map(cert => `${cert.date}-${cert.title}`)
+            .join(';');
+        const portfoliosString = portfolios.join(';');
+
+        localStorage.setItem('languagesData', languagesString);
+        localStorage.setItem('hobbiesData', hobbiesString);
+        localStorage.setItem('certificationsData', certificationsString);
+        localStorage.setItem('portfoliosData', portfoliosString);
     };
 
     const handleNext = () => {

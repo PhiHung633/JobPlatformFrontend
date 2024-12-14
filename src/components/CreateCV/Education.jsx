@@ -20,12 +20,25 @@ const Education = () => {
     useEffect(() => {
         const data = localStorage.getItem('educationData');
         if (data) {
-            setFormData(JSON.parse(data));
+            const parsedData = data.split(';').map(item => item.trim()).filter(item => item !== '');
+            setFormData(parsedData); 
+        } else {
+            setFormData([]); 
         }
+    }, []);
 
-        // Kiểm tra nếu đang chỉnh sửa một mục đã có
+    useEffect(() => {
         if (location.state && location.state.entry) {
             setCurrentEntry(location.state.entry);
+        } else {
+            setCurrentEntry({
+                schoolName: '',
+                schoolLocation: '',
+                degree: '',
+                fieldOfStudy: '',
+                graduationMonth: '',
+                graduationYear: ''
+            });
         }
     }, [location.state]);
 
@@ -38,18 +51,28 @@ const Education = () => {
     };
 
     const handleNext = () => {
-        const updatedFormData = [...formData];
-
-        if (location.state && typeof location.state.index === 'number') {
-            // Cập nhật mục đã có
-            updatedFormData[location.state.index] = currentEntry;
-        } else {
-            // Thêm mới mục
-            updatedFormData.push(currentEntry);
+        const requiredFields = ['schoolName', 'schoolLocation', 'degree', 'fieldOfStudy', 'graduationMonth', 'graduationYear'];
+    
+        for (let field of requiredFields) {
+            if (!currentEntry[field]) {
+                alert(`Vui lòng nhập đầy đủ thông tin: ${
+                    field === 'schoolName' ? 'Tên trường' :
+                    field === 'schoolLocation' ? 'Địa chỉ trường' :
+                    field === 'degree' ? 'Bằng cấp' :
+                    field === 'fieldOfStudy' ? 'Ngành học' :
+                    field === 'graduationMonth' ? 'Tháng tốt nghiệp' :
+                    'Năm tốt nghiệp'}.`);
+                return;
+            }
         }
-
-        // Lưu vào localStorage
-        localStorage.setItem('educationData', JSON.stringify(updatedFormData));
+    
+        const formattedEntry = `${currentEntry.graduationMonth} ${currentEntry.graduationYear} - ${currentEntry.degree}: ${currentEntry.fieldOfStudy} - ${currentEntry.schoolName}, ${currentEntry.schoolLocation}`;
+    
+        const existingData = localStorage.getItem('educationData');
+        const updatedData = existingData ? `${existingData}; ${formattedEntry}` : formattedEntry;
+    
+        localStorage.setItem('educationData', updatedData);
+    
         navigate('/education/list');
     };
 

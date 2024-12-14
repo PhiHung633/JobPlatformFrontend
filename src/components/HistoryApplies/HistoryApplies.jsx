@@ -1,17 +1,39 @@
-import { faCheck, faEye, faMessage } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faEye } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ClipLoader } from 'react-spinners';
+import { toast } from 'react-toastify';
+import { fetchJobById, getCv, getCvFile } from '../../utils/ApiFunctions';
 
-const HistoryApplies = () => {
+
+const HistoryApplies = ({ applications, loading, error, onStatusChange }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isSelected, setIsSelected] = useState('Trạng thái');
+    const [jobDetails, setJobDetails] = useState([]);
     const dropDownRef = useRef(null);
+
+    const statusMap = {
+        "Trạng thái": "",
+        "Đang chờ": "PENDING",
+        "Từ chối": "REJECTED",
+        "Chấp nhận": "ACCEPTED",
+        "Phỏng vấn": "INTERVIEWING",
+    };
+
+    const reverseStatusMap = {
+        "": "Trạng thái",
+        "PENDING": "Đang chờ",
+        "REJECTED": "Từ chối",
+        "ACCEPTED": "Chấp nhận",
+        "INTERVIEWING": "Phỏng vấn",
+    };
 
     const toggleDropdown = () => {
         setIsOpen(!isOpen);
     };
 
-    const handleClickoutSide = (event) => {
+    const handleClickOutside = (event) => {
         if (dropDownRef.current && !dropDownRef.current.contains(event.target)) {
             setIsOpen(false);
         }
@@ -20,146 +42,193 @@ const HistoryApplies = () => {
     const handleSelect = (item) => {
         setIsSelected(item);
         setIsOpen(false);
+        const selectedStatus = statusMap[item];
+        onStatusChange(selectedStatus);
+    };
+
+    const handleViewCv = async (application, event) => {
+        event.preventDefault();
+        try {
+            if (application.cvType === 'UPLOADED_CV') {
+                const { data, error } = await getCvFile(application.cvId);
+                if (data) {
+                    const link = document.createElement('a');
+                    link.href = data.cvUrl;
+                    link.target = '_blank';
+                    link.download = 'uploaded-cv.pdf';
+                    link.click();
+                } else {
+                    console.error('Error fetching uploaded CV:', error);
+                }
+            } else if (application.cvType === 'CREATED_CV') {
+                const { data, error } = await getCv(application.cvId);
+                if (data) {
+                    localStorage.setItem("selectedCvData", JSON.stringify(data));
+                    window.open("/tao-cv", "_blank");
+                } else {
+                    console.error('Error fetching created CV:', error);
+                }
+            }
+        } catch (error) {
+            console.error('Error handling CV view:', error);
+        }
     };
 
     useEffect(() => {
-        document.addEventListener('mousedown', handleClickoutSide);
+        document.addEventListener('mousedown', handleClickOutside);
         return () => {
-            document.removeEventListener('mousedown', handleClickoutSide);
+            document.removeEventListener('mousedown', handleClickOutside);
         };
-    });
+    }, []);
+
+    useEffect(() => {
+        const fetchJobs = async () => {
+            const details = await Promise.all(
+                applications.map(async (application) => {
+                    const { data } = await fetchJobById(application.jobId);
+                    return { ...application, jobDetails: data };
+                })
+            );
+            setJobDetails(details);
+        };
+
+        if (applications.length > 0) {
+            fetchJobs();
+        }
+    }, [applications]);
+
+    useEffect(() => {
+        if (error) {
+            toast.error(`Lỗi: ${error}`, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+        }
+    }, [error]);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <ClipLoader color="#4caf50" size={40} />
+            </div>
+        );
+    }
+
+
+    // if (applications.length === 0) {
+    //     return <p>Bạn chưa ứng tuyển công việc nào.</p>;
+    // }
 
     return (
-        <div className='bg-gray-100 min-h-screen w-full'>
-            <div className='container mx-auto p-6 bg-white rounded-xl shadow-lg max-w-3xl ml-24'>
-                <div className='flex justify-between items-center mb-5'>
-                    <div className='text-lg font-bold'>
-                        Việc làm đã ứng tuyển
-                    </div>
-                    <div className='relative inline-block' ref={dropDownRef}>
+        <div className="bg-gray-100 min-h-screen w-full ml-12">
+            <div className="container mx-auto px-6 max-w-screen-lg bg-white rounded-xl shadow-lg pb-5">
+                <div className="flex justify-between items-center mb-5 pt-5">
+                    <div className="text-lg font-bold">Việc làm đã ứng tuyển</div>
+                    <div className="relative inline-block" ref={dropDownRef}>
                         <button
-                            className='bg-white border border-gray-300 rounded-md px-4 py-2 flex items-center justify-between w-52 transition duration-200 ease'
+                            className="bg-white border border-gray-300 rounded-md px-10 py-2 flex items-center justify-between w-full transition duration-200 ease"
                             onClick={toggleDropdown}
                         >
                             {isSelected}
-                            <span className='ml-2 text-gray-400'>&#9660;</span>
+                            <span className="ml-5 text-gray-400">&#9660;</span>
                         </button>
-                        <ul className={`absolute mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto w-full py-2 z-10 ${isOpen ? 'block' : 'hidden'}`}>
-                            {['Trạng thái', 'Đã ứng tuyển', 'NTD đã xem hồ sơ', 'Hồ sơ phù hợp', 'Hồ sơ chưa phù hợp'].map((item) => (
+                        <ul
+                            className={`absolute mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto w-full py-2 z-10 ${isOpen ? 'block' : 'hidden'}`}
+                        >
+                            {Object.keys(statusMap).map((item) => (
                                 <li
                                     key={item}
                                     className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${isSelected === item ? 'text-green-500 font-bold' : ''}`}
                                     onClick={() => handleSelect(item)}
                                 >
                                     {item}
-                                    {isSelected === item && (
-                                        <FontAwesomeIcon icon={faCheck} className='float-right text-green-500' />
-                                    )}
+                                    {isSelected === item && <FontAwesomeIcon icon={faCheck} className="float-right text-green-500" />}
                                 </li>
                             ))}
                         </ul>
                     </div>
                 </div>
 
-                {/* Job Listing 1 */}
-                <div className='border border-gray-200 rounded-md mb-4 p-4'>
-                    <div className='flex'>
-                        <div className='flex-shrink-0 bg-white rounded-lg h-24 w-24 border border-gray-200 p-2'>
-                            <img src="https://static.topcv.vn/company_logos/d4c67a384eb78e85932514b49bd1af54-6078f0c4ab999.jpg" className="h-full w-full object-contain" alt='Company Logo'/>
+                {
+                    applications.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-3/5 py-2">
+                            <img src="/empty.webp" alt="No jobs saved" className="w-36 h-28 mb-4" />
+                            <p className="text-gray-600 text-center mb-4">
+                                Hiện tại bạn chưa ứng tuyển công việc nào !
+                            </p>
+                            <Link to={"/"}>
+                                <button className="bg-green-500 text-white font-semibold py-2 px-4 rounded-xl hover:bg-green-600">
+                                    Tìm việc ngay
+                                </button>
+                            </Link>
                         </div>
-                        <div className='ml-5'>
-                            <div className='flex items-center justify-between mb-2'>
-                                <a href='#' className='text-base font-semibold text-gray-900 hover:underline'>
-                                    Game Developer
-                                </a>
-                                <label className='text-green-600 font-semibold text-base ml-50'>
-                                    20 - 60 triệu
-                                </label>
-                            </div>
-                            <div className='text-gray-600 mb-2'>
-                                <a href='#' className='text-gray-600 hover:underline'>
-                                    CÔNG TY TNHH TNT MEDIA & ISOCIAL
-                                </a>
-                            </div>
-                            <div className='text-sm text-gray-500 mb-2'>
-                                Thời gian ứng tuyển: 09-10-2024 16:04
-                            </div>
-                            <div className='flex items-center space-x-6'>
-                                <p className='text-sm text-gray-500'>
-                                    CV đã ứng tuyển: <a href='#' className='text-green-600 underline'>CV tải lên</a>
-                                </p>
-                                <div className='ml-auto space-x-3'>
-                                    <a href='#' className='inline-flex items-center bg-green-100 text-green-600 rounded-full px-3 py-1 text-sm transition duration-300 ease hover:bg-green-200'>
-                                        <FontAwesomeIcon icon={faMessage} className='mr-2' />
-                                        Nhắn tin
-                                    </a>
-                                    <a href='#' className='inline-flex items-center bg-green-100 text-green-600 rounded-full px-3 py-1 text-sm transition duration-300 ease hover:bg-green-200'>
-                                        <FontAwesomeIcon icon={faEye} className='mr-2' />
-                                        Xem CV
-                                    </a>
-                                </div>
-                            </div>
-                            <div className='border-t border-gray-300 mt-3 pt-3 flex justify-between'>
-                                <div className='text-sm text-gray-600'>
-                                    Trạng thái: <span className='text-blue-500'>Hồ sơ chưa phù hợp</span>
-                                </div>
-                                <div className='text-sm text-gray-600 text-right'>
-                                    Vào lúc: 09-10-2024 20:26
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    ) : (
+                        jobDetails.map((application) => (
+                            <div key={application.id} className="border border-gray-200 rounded-md mb-4 p-4">
+                                <div className="flex">
+                                    <div className="flex-shrink-0 bg-white rounded-lg h-24 w-24 border border-gray-200 p-2">
+                                        <img
+                                            src={application.jobDetails?.companyImages || 'default-logo.png'}
+                                            className="h-full w-full object-contain"
+                                            alt="Company Logo"
+                                        />
+                                    </div>
+                                    <div className="ml-5 flex-1">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <a href="#" className="text-base font-semibold text-gray-900 hover:underline">
+                                                {application.jobDetails?.title || 'N/A'}
+                                            </a>
+                                            <label className="text-green-600 font-semibold text-base">
+                                                {application.jobDetails?.salary.toLocaleString() || 'N/A'} VNĐ
+                                            </label>
+                                        </div>
+                                        <div className="text-gray-600 mb-2">
+                                            <a href="#" className="text-gray-600 hover:underline">
+                                                Công ty {application.jobDetails?.companyName || 'N/A'}
+                                            </a>
+                                        </div>
+                                        <div className="text-sm text-gray-500 mb-2">
+                                            Thời gian ứng tuyển: {new Date(application.appliedAt).toLocaleString()}
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-sm text-gray-500">
+                                                CV đã ứng tuyển:
+                                                <a
+                                                    href="#"
+                                                    className="text-green-600 underline"
+                                                    onClick={(event) => handleViewCv(application, event)}
+                                                >
+                                                    {application.cvType === 'UPLOADED_CV' ? 'CV tải lên' : 'CV tạo sẵn'}
+                                                </a>
+                                            </p>
+                                            <div className="space-x-3">
+                                                <a
+                                                    href="#"
+                                                    className="inline-flex items-center bg-green-100 text-green-600 rounded-full px-3 py-1 text-sm transition duration-300 ease hover:bg-green-200"
+                                                    onClick={(event) => handleViewCv(application, event)}
+                                                >
+                                                    <FontAwesomeIcon icon={faEye} className="mr-2" />
+                                                    Xem chi tiết
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div className="border-t border-gray-300 mt-3 pt-3 flex justify-between">
+                                            <div className="text-sm text-gray-600">
+                                                Trạng thái: <span className="text-blue-500">{reverseStatusMap[application.status]}</span>
+                                            </div>
+                                        </div>
 
-                {/* Job Listing 2 */}
-                <div className='border border-gray-200 rounded-md mb-4 p-4'>
-                    <div className='flex'>
-                        <div className='flex-shrink-0 bg-white rounded-lg h-24 w-24 border border-gray-200 p-2'>
-                            <img src="https://static.topcv.vn/company_logos/d4c67a384eb78e85932514b49bd1af54-6078f0c4ab999.jpg" className="h-full w-full object-contain" alt='Company Logo'/>
-                        </div>
-                        <div className='ml-5'>
-                            <div className='flex items-center justify-between mb-2'>
-                                <a href='#' className='text-base font-semibold text-gray-900 hover:underline'>
-                                    Thực tập sinh FrontEnd Developer
-                                </a>
-                                <label className='text-green-600 font-semibold text-base ml-50'>
-                                    3 - 5 triệu
-                                </label>
-                            </div>
-                            <div className='text-gray-600 mb-2'>
-                                <a href='#' className='text-gray-600 hover:underline'>
-                                    CÔNG TY CP ỨNG DỤNG DI ĐỘNG XANH
-                                </a>
-                            </div>
-                            <div className='text-sm text-gray-500 mb-2'>
-                                Thời gian ứng tuyển: 13-06-2024 10:10
-                            </div>
-                            <div className='flex items-center space-x-6'>
-                                <p className='text-sm text-gray-500'>
-                                    CV đã ứng tuyển: <a href='#' className='text-green-600 underline'>CV tải lên</a>
-                                </p>
-                                <div className='ml-auto space-x-3'>
-                                    <a href='#' className='inline-flex items-center bg-green-100 text-green-600 rounded-full px-3 py-1 text-sm transition duration-300 ease hover:bg-green-200'>
-                                        <FontAwesomeIcon icon={faMessage} className='mr-2' />
-                                        Nhắn tin
-                                    </a>
-                                    <a href='#' className='inline-flex items-center bg-green-100 text-green-600 rounded-full px-3 py-1 text-sm transition duration-300 ease hover:bg-green-200'>
-                                        <FontAwesomeIcon icon={faEye} className='mr-2' />
-                                        Xem CV
-                                    </a>
+                                    </div>
                                 </div>
                             </div>
-                            <div className='border-t border-gray-300 mt-3 pt-3 flex justify-between'>
-                                <div className='text-sm text-gray-600'>
-                                    Trạng thái: <span className='text-blue-500'>Đã ứng tuyển</span>
-                                </div>
-                                <div className='text-sm text-gray-600 text-right'>
-                                    Vào lúc: 13-06-2024 10:10
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                        ))
+                    )
+                }
             </div>
         </div>
     );

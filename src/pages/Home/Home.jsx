@@ -6,6 +6,7 @@ import JobItem from "../../components/JobItem/JobItem";
 import LocationCarousel from '../../components/LocationCarousel/LocationCarousel';
 import ImageSlider from '../../components/ImageSlider/ImageSlider';
 import { fetchAllJobs } from '../../utils/ApiFunctions';
+import { ClipLoader } from 'react-spinners';
 
 const images = [
     { src: 'register.webp', alt: 'Image 3' },
@@ -18,13 +19,16 @@ const Home = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [jobs, setJobs] = useState([]);
     const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
     const [loading, setLoading] = useState(false);
     const options = [
         "Địa điểm",
-        "Mức lương",
-        "Kinh nghiệm",
+        // "Mức lương",
+        // "Kinh nghiệm",
         "Ngành nghề"
     ];
+    const [selectedItem, setSelectedItem] = useState("")
 
     const handleChange = (option) => {
         setSelectedOption(option);
@@ -35,27 +39,58 @@ const Home = () => {
         setIsOpen(!isOpen);
     };
 
+    const loadJobs = async (currentPage, industry = "", address = "") => {
+        setLoading(true);
+        console.log("INDUSTRY", industry)
+        const response = await fetchAllJobs(currentPage, 9, '', false, industry, address);
+        if (response && response.data) {
+            const filteredJobs = response.data.filter(job => job.status === "SHOW");
+            setJobs(filteredJobs);
+            if (!jobs.length)
+                setLoading(false);
+            // setJobs(response.data);
+            // if (!jobs.length) {
+            //     setTotalPages(0);
+            //     setTotalElements(0);
+            //     setLoading(false);
+            //     return;
+            // }
+            setTotalPages(response.totalPages);
+            setTotalElements(response.totalElements);
+        } else if (response && response.error) {
+            console.log("Error fetching jobs:", response.error);
+        }
+        setLoading(false);
+    };
+
     useEffect(() => {
-        const loadJobs = async () => {
-            setLoading(true);
-            const response = await fetchAllJobs(page);
-            if (response && response.data) {
-                console.log("Fetched jobs:", response.data);
-                setJobs(response.data);
-            } else if (response && response.error) {
-                console.log("Error fetching jobs:", response.error);
-            }
-            setLoading(false);
-        };
-        loadJobs();
-    }, [page]);
+        if (selectedOption === "Ngành nghề") {
+            loadJobs(page, selectedItem, "");
+        } else if (selectedOption === "Địa điểm") {
+            console.log("THANHPHO", selectedItem)
+            if (selectedItem === "Thành phố Hồ Chí Minh")
+                setSelectedItem("Hồ Chí Minh");
+            loadJobs(page, "", selectedItem);
+        } else {
+            loadJobs(page);
+        }
+    }, [page, selectedItem, selectedOption]);
 
     const handleNextPage = () => {
-        setPage((prevPage) => prevPage + 1);
+        if (jobs.length > 0) {
+            setPage((prevPage) => prevPage + 1);
+        }
     };
 
     const handlePrevPage = () => {
-        if (page > 0) setPage((prevPage) => prevPage - 1);
+        if (page > 0 && jobs.length > 0) {
+            setPage((prevPage) => prevPage - 1);
+        }
+    };
+
+    const handleItemSelected = (item) => {
+        setSelectedItem(item);
+        // console.log("Item được chọn từ LocationCarousel:", item);
     };
 
     return (
@@ -134,20 +169,26 @@ const Home = () => {
                                 </div>
                             </div>
                             <div className='w-[700px]'>
-                                <LocationCarousel />
+                                <LocationCarousel
+                                    selectedOption={selectedOption}
+                                    onItemSelect={handleItemSelected}
+                                />
                             </div>
                         </div>
 
                         <div className="mt-12">
                             <div className="pb-1">
                                 {loading ? (
-                                    <p>Loading jobs...</p>
+                                    <div className="flex justify-center items-center min-h-screen">
+                                        <ClipLoader color="#4caf50" size={40} />
+                                    </div>
+                                ) : jobs.length === 0 ? (
+                                    <p>Hiện tại chưa có công việc phù hợp với yêu cầu của bạn</p>
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {Array.from(new Set(jobs.map(job => `${job.title}|${job.company.name}`))).map((uniqueJob) => {
+                                        {Array.from(new Set(jobs.map(job => `${job.title}|${job.companyName}`))).map((uniqueJob) => {
                                             const [title, companyName] = uniqueJob.split('|');
-                                            const jobToDisplay = jobs.find(job => job.title === title && job.company.name === companyName);
-
+                                            const jobToDisplay = jobs.find(job => job.title === title && job.companyName === companyName);
                                             return (
                                                 <div key={jobToDisplay.id} className="p-2">
                                                     <JobItem job={jobToDisplay} />
@@ -157,7 +198,30 @@ const Home = () => {
                                     </div>
                                 )}
                                 <div className="mt-4">
-                                    {/* Phân trang */}
+                                    <div className="mt-4 text-center flex items-center justify-center gap-2">
+                                        <button
+                                            onClick={handlePrevPage}
+                                            className={`border rounded-full w-8 h-8 flex items-center justify-center ${page === 0 ? "border-gray-300 text-gray-300" : "border-green-500 text-green-500"
+                                                }`}
+                                            disabled={page === 0}
+                                        >
+                                            <FontAwesomeIcon icon={faChevronLeft} />
+                                        </button>
+                                        <span className="text-gray-500">
+                                            <span className="text-green-500 font-bold">
+                                                {totalPages === 0 ? page : page + 1}
+                                            </span>
+                                            / {totalPages} trang
+                                        </span>
+                                        <button
+                                            onClick={handleNextPage}
+                                            className={`border rounded-full w-8 h-8 flex items-center justify-center ${page === totalPages - 1 ? "border-gray-300 text-gray-300" : "border-green-500 text-green-500"
+                                                }`}
+                                            disabled={page === totalPages - 1}
+                                        >
+                                            <FontAwesomeIcon icon={faChevronRight} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

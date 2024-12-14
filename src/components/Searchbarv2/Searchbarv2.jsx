@@ -2,9 +2,9 @@ import { faLocationDot, faSearch, faArrowRight } from '@fortawesome/free-solid-s
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
 
-const SearchBarv2 = () => {
+const SearchBarv2 = ({searchTitle = ''}) => {
     const [searchData, setSearchData] = useState({
-        jobTitle: '',
+        jobTitle: searchTitle,
         location: '',
         industry: ''
     });
