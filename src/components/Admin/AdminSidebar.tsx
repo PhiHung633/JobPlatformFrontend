@@ -46,53 +46,7 @@ const Sidebar = () => {
             <FiBarChart2 className="mr-3" />
             <Link to="/admin/statistics">Thống kê</Link>
           </li>
-          <li
-            className={`flex items-center mb-4 px-2 py-2 rounded-md ${
-              isActive('/admin/forms') ? 'text-white bg-gray-800 border-l-4 border-blue-500 font-bold' : 'text-gray-300 hover:text-white hover:bg-gray-800'
-            }`}
-          >
-            <FiFileText className="mr-3" />
-            <Link to="/admin/forms">Forms</Link>
-          </li>
-          <li
-            className={`flex items-center mb-4 px-2 py-2 rounded-md ${
-              isActive('/admin/tables') ? 'text-white bg-gray-800 border-l-4 border-blue-500 font-bold' : 'text-gray-300 hover:text-white hover:bg-gray-800'
-            }`}
-          >
-            <FiLayers className="mr-3" />
-            <Link to="/admin/tables">Tables</Link>
-          </li>
-          <li
-            className={`flex items-center mb-1 px-2 py-2 rounded-md ${
-              isActive('/admin/settings') ? 'text-white bg-gray-800 border-l-4 border-blue-500 font-bold' : 'text-gray-300 hover:text-white hover:bg-gray-800'
-            }`}
-          >
-            <FiSettings className="mr-3" />
-            <Link to="/admin/settings">Settings</Link>
-          </li>
-        </ul>
-      </div>
-
-      {/* Others Section */}
-      <div>
-        <p className="text-gray-500 uppercase text-sm mb-2">Others</p>
-        <ul>
-          <li
-            className={`flex items-center mb-4 px-3 py-2 rounded-md ${
-              isActive('/admin/chart') ? 'text-white bg-gray-800 border-l-4 border-blue-500 font-bold' : 'text-gray-300 hover:text-white hover:bg-gray-800'
-            }`}
-          >
-            <FiBarChart2 className="mr-3" />
-            <Link to="/admin/chart">Chart</Link>
-          </li>
-          <li
-            className={`flex items-center mb-4 px-3 py-2 rounded-md ${
-              isActive('/admin/ui-elements') ? 'text-white bg-gray-800 border-l-4 border-blue-500 font-bold' : 'text-gray-300 hover:text-white hover:bg-gray-800'
-            }`}
-          >
-            <FiLayers className="mr-3" />
-            <Link to="/admin/ui-elements">UI Elements</Link>
-          </li>
+          
         </ul>
       </div>
     </div>
