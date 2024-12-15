@@ -2,10 +2,13 @@ import { useState, useEffect } from "react";
 import { createInterviewInvitation, fetchInterviewInvitations, updateInterviewInvitation } from "../../utils/ApiFunctions";
 import { ClipLoader } from "react-spinners";
 import { Button } from "@mui/material";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const InterviewInviteModal = ({ isOpen, onClose, cv, onSuccess }) => {
     const [content, setContent] = useState("");
     const [loading, setLoading] = useState(false);
+    const [sending, setSending] = useState(false);
     const [invitationId, setInvitationId] = useState(null);
 
     useEffect(() => {
@@ -15,7 +18,7 @@ const InterviewInviteModal = ({ isOpen, onClose, cv, onSuccess }) => {
                 try {
                     const { data, error } = await fetchInterviewInvitations(cv.jobId, cv.userId);
                     if (error) {
-                        console.error("Error fetching interview invitations:", error);
+                        toast.error("Error fetching interview invitations: " + error.message);
                     } else if (data && data.length > 0) {
                         const invitation = data.find((inv) => inv.id === cv.id);
                         if (invitation) {
@@ -28,6 +31,7 @@ const InterviewInviteModal = ({ isOpen, onClose, cv, onSuccess }) => {
                     setInvitationId(null);
                 } catch (err) {
                     console.error("Error fetching content:", err);
+                    toast.error("An error occurred while fetching content.");
                     setContent("");
                     setInvitationId(null);
                 } finally {
@@ -42,24 +46,22 @@ const InterviewInviteModal = ({ isOpen, onClose, cv, onSuccess }) => {
         fetchContent();
     }, [isOpen, cv]);
 
-
     const handleSend = async () => {
         if (!content.trim()) {
-            alert("Vui lòng nhập nội dung thư mời.");
+            toast.warn("Vui lòng nhập nội dung thư mời.");
             return;
         }
 
+        setSending(true);
         try {
             if (invitationId) {
                 const interviewInvitationDto = { content: content.trim() };
                 const { data, error } = await updateInterviewInvitation(invitationId, interviewInvitationDto);
                 if (error) {
-                    alert("Cập nhật thư mời thất bại: " + error.message);
+                    toast.error("Cập nhật thư mời thất bại: " + error.message);
                     return;
                 }
-                alert("Thư mời đã được cập nhật thành công!");
-                setInvitationId(null);
-                onClose();
+                toast.success("Thư mời đã được cập nhật thành công!");
             } else {
                 const interviewInvitationDto = {
                     applicationId: cv.id,
@@ -67,19 +69,22 @@ const InterviewInviteModal = ({ isOpen, onClose, cv, onSuccess }) => {
                 };
                 const { data, error } = await createInterviewInvitation(interviewInvitationDto);
                 if (error) {
-                    alert("Gửi thư mời thất bại: " + error.message);
+                    toast.error("Gửi thư mời thất bại: " + error.message);
                     return;
                 }
-                alert("Thư mời đã được gửi thành công!");
-                onClose();
+                toast.success("Thư mời đã được gửi thành công!");
             }
+
             setContent("");
+            setInvitationId(null);
             onClose();
             onSuccess();
             window.location.reload();
         } catch (err) {
             console.error("Error handling interview invite:", err);
-            alert("Đã xảy ra lỗi khi xử lý thư mời. Vui lòng thử lại.");
+            toast.error("Đã xảy ra lỗi khi xử lý thư mời. Vui lòng thử lại.");
+        } finally {
+            setSending(false);
         }
     };
 
@@ -90,7 +95,6 @@ const InterviewInviteModal = ({ isOpen, onClose, cv, onSuccess }) => {
             <div className="bg-white rounded-xl p-6 w-96 shadow-lg">
                 <h2 className="text-lg font-bold mb-4">Gửi thư mời phỏng vấn</h2>
                 {loading ? (
-
                     <div className="flex justify-center items-center min-h-screen">
                         <ClipLoader color="#4caf50" size={40} />
                     </div>
@@ -106,19 +110,21 @@ const InterviewInviteModal = ({ isOpen, onClose, cv, onSuccess }) => {
                     <Button
                         className="bg-gray-300 text-gray-800 py-2 px-4 rounded-lg mr-2"
                         onClick={onClose}
+                        disabled={sending}
                     >
                         Hủy
                     </Button>
                     <Button
                         variant="contained"
-                        className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg"
+                        className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg flex items-center"
                         onClick={handleSend}
-                        disabled={loading}
+                        disabled={sending}
                     >
-                        {invitationId ? "Sửa" : "Gửi"}
+                        {sending ? <ClipLoader color="white" size={20} /> : (invitationId ? "Sửa" : "Gửi")}
                     </Button>
                 </div>
             </div>
+            <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
         </div>
     );
 };

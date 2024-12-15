@@ -7,6 +7,7 @@ import Header from './Header';
 import { fetchUserById, processMomoPayment } from '../../utils/ApiFunctions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FaUserCircle } from "react-icons/fa";
 import AddIcon from '@mui/icons-material/Add';
 import { Button } from '@mui/material';
 
@@ -99,20 +100,22 @@ const Dashboard = () => {
   return (
     <>
       <Header />
-      <div className="flex">
+      <div className="flex h-screen overflow-hidden">
         {/* Sidebar */}
-        <div className="w-72 min-h-screen bg-white p-6 shadow-lg border-r border-gray-200">
+        <div className="w-72 h-screen bg-white p-6 shadow-lg border-r border-gray-200 sticky top-0 overflow-hidden">
           {/* User Info Section */}
           <div className="mb-6">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                <FaUserCircle className="text-2x1 text-gray-800" />
+              </div>
               <div>
                 <div className="font-bold text-gray-800">{decodedToken.sub}</div>
-                <div className="text-sm text-gray-500">Employer</div>
+                <div className="text-sm text-gray-500">Nhà tuyển dụng</div>
               </div>
             </div>
-            <div className='flex items-center'>
-              Số lần còn lại để đăng tin:{" "}
+            <div className='flex items-center mt-2'>
+              Số tin tuyển dụng còn lại:{" "}
               {isLoading
                 ? "Đang tải..."
                 : userData?.availableJobPosts || "Không có dữ liệu"}
@@ -197,7 +200,7 @@ const Dashboard = () => {
           </div>
         )}
         {/* Main Content */}
-        <div className="flex-1 p-5 bg-gray-200">
+        <div className="flex-1 p-5 bg-gray-200  overflow-y-auto">
           <Outlet />
         </div>
       </div>
