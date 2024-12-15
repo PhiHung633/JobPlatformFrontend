@@ -33,7 +33,7 @@ const WorkHistory = () => {
                     location: parts[3] || '',
                     endMonth: parts[4]?.includes('Hiện tại') ? '' : parts[4]?.split(' ')[0] || '',
                     endYear: parts[4]?.includes('Hiện tại') ? '' : parts[4]?.split(' ')[1] || '',
-                    jobDescription: ''
+                    jobDescription: parts[5] || '' // Lấy mô tả công việc
                 };
             }).filter(item => item.jobTitle);
             setWorkHistories(parsedData);
@@ -44,6 +44,7 @@ const WorkHistory = () => {
             setCurrentlyWorking(!location.state.entry.endMonth && !location.state.entry.endYear);
         }
     }, [location.state]);
+
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -71,7 +72,7 @@ const WorkHistory = () => {
                 const end = entry.endMonth && entry.endYear
                     ? `${entry.endMonth || ''} ${entry.endYear || ''}`.trim()
                     : 'Hiện tại';
-                return `${start} - ${entry.jobTitle || ''} - ${entry.employer || ''} - ${entry.location || ''} - ${end}`;
+                return `${start} - ${entry.jobTitle || ''} - ${entry.employer || ''} - ${entry.location || ''} - ${end} - ${entry.jobDescription || ''}`;
             })
             .join(';');
     };
@@ -86,7 +87,7 @@ const WorkHistory = () => {
             location: formData.location || '',
             endMonth: currentlyWorking ? '' : (formData.endMonth || ''),
             endYear: currentlyWorking ? '' : (formData.endYear || ''),
-            jobDescription: formData.jobDescription || ''
+            jobDescription: formData.jobDescription || '' // Thêm mô tả công việc
         };
 
         const updatedHistories = [...workHistories];
@@ -97,10 +98,7 @@ const WorkHistory = () => {
         }
 
         const workHistoryString = formatWorkHistoryData(updatedHistories);
-        console.log("WoHIS", workHistoryString);  
         localStorage.setItem('workHistories', workHistoryString);
-        console.log("HUHUHU",localStorage.getItem('workHistories'));  
-
 
         setWorkHistories(updatedHistories);
         setFormData({
@@ -117,6 +115,7 @@ const WorkHistory = () => {
 
         navigate('/work-history/list');
     };
+
 
 
 

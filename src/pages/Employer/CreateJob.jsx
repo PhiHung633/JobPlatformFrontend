@@ -226,7 +226,7 @@ const CreateJob = () => {
 
   console.log("USERNE", userData)
   return (
-    <div className="p-8 mt-10 bg-white rounded-lg shadow-lg max-w-6xl mx-auto">
+    <div className="p-8 mt-5 bg-white rounded-lg shadow-lg max-w-6xl mx-auto">
       {error && (
         <div className="text-red-500 mb-4">
           {error.error?.title && <p>- {error.error.title}</p>}

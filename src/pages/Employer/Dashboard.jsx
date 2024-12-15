@@ -159,6 +159,15 @@ const Dashboard = () => {
                 Quản lý CV ứng viên
               </Link>
             </li>
+            <li>
+              <Link
+                to="/dashboard/cong-ti-cua-toi"
+                className={`${isActive('/dashboard/cong-ti-cua-toi') ? 'text-blue-600 font-semibold bg-gray-100' : 'text-gray-800'
+                  } block px-4 py-2 rounded-lg hover:bg-gray-100`}
+              >
+                Công ty của tôi
+              </Link>
+            </li>
           </ul>
         </div>
         {showModal && (
@@ -197,7 +206,7 @@ const Dashboard = () => {
           </div>
         )}
         {/* Main Content */}
-        <div className="flex-1 p-5 bg-gray-200">
+        <div className="flex-1 p-3 bg-gray-200">
           <Outlet />
         </div>
       </div>

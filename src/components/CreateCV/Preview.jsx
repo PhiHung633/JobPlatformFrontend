@@ -36,7 +36,7 @@ const Preview = () => {
         const hobbiesData = localStorage.getItem('hobbiesData') ? localStorage.getItem('hobbiesData').split('; ') : [];
         const languagesData = localStorage.getItem('languagesData') ? localStorage.getItem('languagesData').split('; ') : [];
         const portfoliosData = localStorage.getItem('portfoliosData') ? localStorage.getItem('portfoliosData').split('; ') : [];
-        const workHistoriesData = localStorage.getItem('workHistories') ? localStorage.getItem('workHistories') : [];
+        const workHistoriesData = localStorage.getItem('workHistories') || '';
         const formattedEducationData = storedEducationData
             ? storedEducationData.split('; ').map(item => {
                 const [date, title, institution] = item.split(' - ');
@@ -51,13 +51,13 @@ const Preview = () => {
         console.log("HISTORY", workHistoriesData)
         const formattedWorkExperience = workHistoriesData
             ? workHistoriesData.split('; ').map(item => {
-                const [startDate, jobTitle, employer, location, endDate] = item.split(' - ');
+                const [startDate, jobTitle, employer, location, endDate, jobDescription] = item.split(' - ');
 
                 const startDateParts = startDate.split(' ');
                 const formattedStartMonth = startDateParts.length >= 2
-                    ? `${startDateParts[0]} ${startDateParts[1]}` 
-                    : startDateParts[0] || ''; 
-                const formattedStartYear = startDateParts[2] && startDateParts[2].match(/\d{4}/) ? startDateParts[2] : ''; 
+                    ? `${startDateParts[0]} ${startDateParts[1]}`
+                    : startDateParts[0] || '';
+                const formattedStartYear = startDateParts[2] && startDateParts[2].match(/\d{4}/) ? startDateParts[2] : '';
 
                 let formattedEndMonth = endDate.includes("Hiện tại") ? "Hiện tại" : '';
                 let formattedEndYear = '';
@@ -74,10 +74,12 @@ const Preview = () => {
                     employer,
                     location,
                     endMonth: formattedEndMonth,
-                    endYear: formattedEndYear
+                    endYear: formattedEndYear,
+                    jobDescription: jobDescription || '', // Thêm mô tả công việc
                 };
             })
             : [];
+
 
         console.log("formattedWorkExperience", formattedWorkExperience);
 
@@ -88,7 +90,7 @@ const Preview = () => {
             phone: cvFormData.formData?.phone || '',
             email: cvFormData.formData?.email || '',
             image: selectedImage || '',
-            website: 'www.example.com',
+            website: portfoliosData.length > 0 ? portfoliosData[0] : 'www.example.com',
             skills: formattedSkillsData,
             summary: summaryData,
             workExperience: formattedWorkExperience,
@@ -139,7 +141,7 @@ const Preview = () => {
             skills: cvData.skills
                 .map(skill => `${skill.name} - ${skill.level}`)
                 .join("; "),
-            imageCV:cvData.image,
+            imageCV: cvData.image,
             hobby: cvData.hobbies.map(hob => hob.title).join("; "),
 
             education: cvData.education
@@ -150,7 +152,7 @@ const Preview = () => {
 
             workExperience: cvData.workExperience
                 .map(work =>
-                    `${work.startMonth} ${work.startYear} - ${work.jobTitle} - ${work.employer} - ${work.location} - ${work.endMonth} ${work.endYear}`
+                    `${work.startMonth} ${work.startYear} - ${work.jobTitle} - ${work.employer} - ${work.location} - ${work.endMonth} ${work.endYear} - ${work.jobDescription || ''}`
                 )
                 .join("; "),
 
@@ -185,7 +187,7 @@ const Preview = () => {
             navigate("/cv-cua-toi");
         }
     };
-    console.log("PRO",profile)
+    console.log("PRO", profile)
 
     return (
         <div className="flex min-h-screen bg-gray-100 overflow-y-auto">
@@ -245,49 +247,58 @@ const Preview = () => {
                         <p className="mb-4 text-gray-700 leading-relaxed">{profile.summary}</p>
 
                         {/* Work History */}
-                        <section>
-                            <h4 className="text-xl font-semibold mb-2 text-blue-900">Work History</h4>
-                            <div className="space-y-4">
-                                {profile.workExperience.map((job, index) => (
-                                    <div key={index} className="border-b pb-2">
-                                        <div className="flex items-center space-x-3 text-gray-500">
-                                            <p>{job.startMonth} {job.startYear}</p>
-                                            <span>-</span>
-                                            <p>{job.endMonth} {job.endYear}</p>
+                        {profile.workExperience.length > 0 && (
+                            <section>
+                                <h4 className="text-xl font-semibold mb-2 text-blue-900">Work History</h4>
+                                <div className="space-y-4">
+                                    {profile.workExperience.map((job, index) => (
+                                        <div key={index} className="border-b pb-2">
+                                            <div className="flex items-center space-x-3 text-gray-500">
+                                                <p>{job.startMonth} {job.startYear}</p>
+                                                <span>-</span>
+                                                <p>{job.endMonth} {job.endYear}</p>
+                                            </div>
+                                            <p className="font-semibold text-lg">{job.jobTitle}</p>
+                                            <p className="text-sm">{job.employer}</p>
+                                            <p className="text-gray-600">
+                                                {job.jobDescription}
+                                            </p>
                                         </div>
-                                        <p className="font-semibold text-lg">{job.jobTitle}</p>
-                                        <p className="text-sm">{job.employer}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
 
                         {/* Education */}
-                        <section>
-                            <h4 className="text-xl font-semibold mb-2 text-blue-900">Education</h4>
-                            <div className="space-y-4">
-                                {profile.education.map((edu, index) => (
-                                    <div key={index} className="border-b pb-2">
-                                        <p className="flex items-center space-x-3 text-gray-500">{edu.date}</p>
-                                        <p className="text-lg">{edu.title}</p>
-                                        <p className="text-sm">{edu.institution}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
+                        {profile.education.length > 0 && (
+                            <section>
+                                <h4 className="text-xl font-semibold mb-2 text-blue-900">Education</h4>
+                                <div className="space-y-4">
+                                    {profile.education.map((edu, index) => (
+                                        <div key={index} className="border-b pb-2">
+                                            <p className="flex items-center space-x-3 text-gray-500">{edu.date}</p>
+                                            <p className="text-lg">{edu.title}</p>
+                                            <p className="text-sm">{edu.institution}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
 
                         {/* Certifications */}
-                        <section>
-                            <h4 className="text-xl font-semibold mb-2 text-blue-900">Certifications</h4>
-                            <div className="space-y-4">
-                                {profile.certifications.map((cert, index) => (
-                                    <div key={index} className="border-b pb-2">
-                                        <p>{cert.date}</p>
-                                        <p className="font-semibold">{cert.title}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
+                        {profile.certifications.length > 0 && (
+                            <section>
+                                <h4 className="text-xl font-semibold mb-2 text-blue-900">Certifications</h4>
+                                <div className="space-y-4">
+                                    {profile.certifications.map((cert, index) => (
+                                        <div key={index} className="border-b pb-2">
+                                            <p>{cert.date}</p>
+                                            <p className="font-semibold">{cert.title}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
 
                         {/* Hobbies */}
                         {profile.hobbies && profile.hobbies.length > 0 && (

@@ -28,7 +28,7 @@ const Home = () => {
         // "Kinh nghiệm",
         "Ngành nghề"
     ];
-    const [selectedItem, setSelectedItem] = useState("")
+    const [selectedItem, setSelectedItem] = useState("Hồ Chí Minh")
 
     const handleChange = (option) => {
         setSelectedOption(option);
@@ -91,6 +91,7 @@ const Home = () => {
         setSelectedItem(item);
         // console.log("Item được chọn từ LocationCarousel:", item);
     };
+    
 
     return (
         <>

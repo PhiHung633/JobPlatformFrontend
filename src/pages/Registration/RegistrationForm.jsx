@@ -55,6 +55,14 @@ const RegistrationForm = () => {
       const response = await signUpUser(userData);
       setSuccessMessage("Đăng ký thành công! Bạn vui lòng xác thực qua email để có thể đăng nhập.");
       setError('');
+      setFormData({
+        fullName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        phone: '',
+        role: 'ROLE_JOB_SEEKER',
+      });
     } catch (err) {
       console.log("Error11", err);
       if (err.error.password) {

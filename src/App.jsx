@@ -32,7 +32,6 @@ import CreateJob from './pages/Employer/CreateJob.jsx';
 import ManageJobs from './pages/Employer/ManageJobs.jsx';
 import ManageCV from './pages/Employer/ManageCV.jsx';
 import Admin from './pages/Admin/AdminPage.jsx';
-import ChatApp from './pages/Admin/ChatApp.jsx';
 import { useEffect, useState } from 'react';
 import CvList from './pages/JobSeeker/CVList.jsx';
 import { matchPath } from 'react-router-dom';
@@ -47,6 +46,7 @@ import PrivateRouteForJobSeeker from './service/PrivateRoute/PrivateRouteForJobS
 import LoginGoogleCallback from './pages/Login/LoginGoogleCallback.jsx';
 import { AuthProvider, useAuth } from './service/AuthProvider.jsx';
 import MomoCallback from './pages/Employer/MomoCallback.jsx';
+import MyCompany from './pages/Employer/MyCompany.jsx';
 
 
 
@@ -119,7 +119,6 @@ const App = () => {
               </PrivateRoute>
             }
           />
-          <Route path="/chat" element={<ChatApp />} />
           <Route
             path="/dashboard/*"
             element={
@@ -131,6 +130,7 @@ const App = () => {
             <Route path="quan-li-cong-viec" element={<ManageJobs />} />
             <Route path="tao-cong-viec" element={<CreateJob />} />
             <Route path="quan-li-cv" element={<ManageCV />} />
+            <Route path="cong-ti-cua-toi" element={<MyCompany />} />
           </Route>
           {/* User routes */}
           <Route path='/viec-lam-da-ung-tuyen' element={<PrivateRouteForJobSeeker element={<JobApplied />} />} />

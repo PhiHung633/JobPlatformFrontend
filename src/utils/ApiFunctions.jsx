@@ -574,6 +574,18 @@ export async function addCompany(companyData) {
     }
 }
 
+export async function updateCompany(id, companyData) {
+    try {
+        const response = await api.patch(`/companies/${id}`, companyData);
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error updating company", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
 export async function getCompanies() {
     try {
         const response = await api.get("/companies"

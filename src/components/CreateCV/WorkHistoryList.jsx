@@ -9,66 +9,70 @@ const WorkHistoryList = () => {
     const navigate = useNavigate();
 
     const parseWorkHistoryData = (workHistoriesString) => {
-        // Kiểm tra nếu không có dữ liệu hoặc không phải chuỗi
         if (!workHistoriesString || typeof workHistoriesString !== 'string') return [];
-    
-        // Loại bỏ khoảng trắng thừa và tách các mục theo dấu ";"
+
         const entries = workHistoriesString.split(';').map(entry => entry.trim());
-    
+
         return entries.map(workHistory => {
-            const parts = workHistory.split(' - ').map(part => part.trim()); // Loại bỏ khoảng trắng thừa trong mỗi phần
-    
-            if (parts.length < 5) return null; // Bỏ qua entry không hợp lệ
-    
+            const parts = workHistory.split(' - ').map(part => part.trim());
+
+            if (parts.length < 5) return null;
+
             const [
-                startDate,   // Ví dụ: "Tháng 11 2011"
-                jobTitle,    // Ví dụ: "Lập trình viên frontend"
-                employer,    // Ví dụ: "Công ty FPT"
-                location,    // Ví dụ: "Thu Duc Ho Chi Minh City"
-                endDate      // Ví dụ: "Tháng 10 2014"
+                startDate,
+                jobTitle,
+                employer,
+                location,
+                endDate,
+                jobDescription = '' // Ensure jobDescription defaults to an empty string
             ] = parts;
-    
+
             const parseDate = (date) => {
                 if (date === 'Hiện tại') return { month: 'Hiện tại', year: 'Hiện tại' };
-                const dateParts = date.split(' '); // Tách "Tháng 11 2011" thành ["Tháng", "11", "2011"]
+                const dateParts = date.split(' ');
                 return {
-                    month: `${dateParts[0]} ${dateParts[1] || ''}`.trim(), // Lấy "Tháng 11"
-                    year: dateParts[2] || '', // Lấy "2011"
+                    month: `${dateParts[0]} ${dateParts[1] || ''}`.trim(),
+                    year: dateParts[2] || '',
                 };
             };
-    
+
             const { month: startMonth, year: startYear } = parseDate(startDate);
             const { month: endMonth, year: endYear } = parseDate(endDate);
-    
+
             return {
-                startMonth: startMonth,
-                startYear: startYear,
+                startMonth,
+                startYear,
                 jobTitle: jobTitle.trim(),
                 employer: employer.trim(),
                 location: location.trim(),
-                endMonth: endMonth,
-                endYear: endYear,
+                endMonth,
+                endYear,
+                jobDescription: jobDescription.trim() // Trim and standardize jobDescription
             };
-        }).filter(entry => entry !== null); // Bỏ qua các entry không hợp lệ
+        }).filter(entry => entry !== null);
     };
-    
-    
+
+
+
+
     useEffect(() => {
         const selectedCvData = JSON.parse(localStorage.getItem('selectedCvData')) || {};
         let workHistoriesFromSelectedCv = [];
-    
+        console.log("Work Experience:", selectedCvData.workExperience);
+
         if (selectedCvData && selectedCvData.workExperience) {
             workHistoriesFromSelectedCv = parseWorkHistoryData(selectedCvData.workExperience);
+            console.log("DAYYYNEE", workHistoriesFromSelectedCv)
         }
-    
+
         const storedData = localStorage.getItem('workHistories');
-        console.log("STOREDATA",storedData)
+        console.log("STOREDATA", storedData)
         let workHistoriesFromStorage = [];
-    
+
         if (storedData) {
             workHistoriesFromStorage = parseWorkHistoryData(storedData);
         }
-        console.log("WORKNE",workHistoriesFromStorage)
+        console.log("WORKNE", workHistoriesFromStorage)
         const combinedWorkHistories = [
             ...workHistoriesFromSelectedCv,
             ...workHistoriesFromStorage
@@ -77,17 +81,20 @@ const WorkHistoryList = () => {
                 e.startMonth === entry.startMonth && e.jobTitle === entry.jobTitle
             ))
         );
-        console.log("WORKNE",combinedWorkHistories)
+        console.log("WORKNE", combinedWorkHistories)
 
-    
+
         setWorkHistories(combinedWorkHistories);
-    
+
         const formattedData = combinedWorkHistories.map(entry => {
             const startDate = `${entry.startMonth} ${entry.startYear}`;
             const endDate = entry.endMonth === 'Hiện tại' ? 'Hiện tại' : `${entry.endMonth} ${entry.endYear}`;
-            return `${startDate} - ${entry.jobTitle} - ${entry.employer} - ${entry.location} - ${endDate}`;
+            const jobDescription = entry.jobDescription || '';
+            return `${startDate} - ${entry.jobTitle} - ${entry.employer} - ${entry.location} - ${endDate} - ${jobDescription}`;
         }).join(' ; ');
-    
+
+
+
         localStorage.setItem('workHistories', formattedData);
     }, []);
 
@@ -99,13 +106,13 @@ const WorkHistoryList = () => {
     const handleDelete = (index) => {
         const updatedWorkHistories = workHistories.filter((_, i) => i !== index);
         setWorkHistories(updatedWorkHistories);
-    
+
         const updatedData = updatedWorkHistories.map(entry => {
             const startDate = `${entry.startMonth} ${entry.startYear}`;
             const endDate = entry.endMonth === 'Hiện tại' ? 'Hiện tại' : `${entry.endMonth} ${entry.endYear}`;
-            return `${startDate} - ${entry.jobTitle} - ${entry.employer} - ${entry.location} - ${endDate}`;
+            return `${startDate} - ${entry.jobTitle} - ${entry.employer} - ${entry.location} - ${endDate} - ${entry.jobDescription}`;
         }).join(' ; ');
-    
+
         localStorage.setItem('workHistories', updatedData);
     };
 
@@ -138,6 +145,7 @@ const WorkHistoryList = () => {
                             <p className="text-gray-600 text-lg">
                                 {entry.location} | {entry.startMonth} {entry.startYear} - {entry.endMonth === 'Hiện tại' && entry.endYear ? 'Hiện tại' : `${entry.endMonth} ${entry.endYear}`}
                             </p>
+                            <p className="text-gray-600 text-sm mt-2">{entry.jobDescription}</p> {/* Hiển thị jobDescription */}
                         </div>
                     ))
                 ) : (
