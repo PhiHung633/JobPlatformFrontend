@@ -52,6 +52,7 @@ const Header = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [errortb, setErrorTB] = useState(null);
   const navigate = useNavigate();
+  let tempIdCounter = 0;
 
   const [pagination, setPagination] = useState({
     page: 0,
@@ -150,16 +151,31 @@ const Header = () => {
 
   useEffect(() => {
     const unsubscribe = onMessage(messaging, (payload) => {
-      console.log("Message received: ", payload.data.message);
-      toast.info(payload.data.message, {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      if (payload && payload.data && payload.data.message) {
+        console.log("Message received: ", payload.data.message);
+        toast.info(payload.data.message, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+
+        const newNotification = {
+          id: `temp-${Date.now()}-${tempIdCounter++}`,
+          message: payload.data.message,
+          isRead: false,
+          createdAt:Date.now()
+        };
+
+        setNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
+        setUnreadCount((prevCount) => prevCount + 1);
+      } else {
+        console.error("Invalid payload: ", payload);
+      }
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -295,7 +311,9 @@ const Header = () => {
                           <h4 className="font-medium text-gray-900 group-hover:text-green-600">
                             {notification.message}
                           </h4>
-                          <p className=" text-sm text-gray-500">{formatDate(notification.createdAt)}</p>
+                          <p className="text-sm text-gray-500">
+                            {new Date(notification.createdAt).toLocaleDateString('en-GB')}
+                          </p>
                         </div>
                       ))}
                       {pagination.page + 1 < pagination.totalPages && (

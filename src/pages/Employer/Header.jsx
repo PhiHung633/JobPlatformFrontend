@@ -9,10 +9,10 @@ import { messaging } from '../../utils/firebase.js'
 import { fetchNotifications } from "../../utils/ApiFunctions";
 import { useNavigate } from "react-router-dom";
 
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  return format(date, 'dd/MM/yyyy');
-}
+// function formatDate(dateString) {
+//   const date = new Date(dateString);
+//   return format(date, 'dd/MM/yyyy');
+// }
 
 const Header = () => {
   const [isUserPopupOpen, setIsUserPopupOpen] = useState(false);
@@ -29,6 +29,8 @@ const Header = () => {
   const [userId, setUserId] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
+  let tempIdCounter = 0;
+
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -106,13 +108,24 @@ const Header = () => {
           pauseOnHover: true,
           draggable: true,
         });
+
+        const newNotification = {
+          id: `temp-${Date.now()}-${tempIdCounter++}`,
+          message: payload.data.message,
+          isRead: false,
+          createdAt:Date.now()
+        };
+
+        setNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
+        setUnreadCount((prevCount) => prevCount + 1);
       } else {
         console.error("Invalid payload: ", payload);
       }
     });
+
     return () => unsubscribe();
   }, []);
-  
+
 
   return (
     <div className="flex justify-between items-center bg-blue-900 text-white p-4 shadow-md relative">
@@ -164,7 +177,9 @@ const Header = () => {
                           <h4 className="font-medium text-gray-900 group-hover:text-green-600">
                             {notification.message}
                           </h4>
-                          <p className=" text-sm text-gray-500">{formatDate(notification.createdAt)}</p>
+                          <p className="text-sm text-gray-500">
+                            {new Date(notification.createdAt).toLocaleDateString('en-GB')}
+                          </p>
                         </div>
                       ))}
                     </ul>

@@ -7,6 +7,7 @@ import { addJobSave, deleteJobSave, fetchJobSavesByUser } from '../../utils/ApiF
 
 const JobItem = ({ job }) => {
     const [showHoverInfo, setShowHoverInfo] = useState(false);
+
     const [isFavorite, setIsFavorite] = useState(false);
     console.log("JOBBNE", job)
     useEffect(() => {
@@ -64,7 +65,8 @@ const JobItem = ({ job }) => {
                     </h3>
                     {showHoverInfo &&
                         <div
-                            className="absolute z-10 mt-1"
+                            className="absolute z-20 mt-1"
+                            style={{ zIndex: 999 }}
                             onMouseEnter={() => setShowHoverInfo(true)}
                             onMouseLeave={() => setShowHoverInfo(false)}
                         >
@@ -81,9 +83,9 @@ const JobItem = ({ job }) => {
                             <div className="font-semibold text-sm px-4 py-1 bg-green-100 rounded-full text-green-600">
                                 <span>{job.salary.toLocaleString()} VNĐ</span>
                             </div>
-                            <div className="relative font-semibold text-xs px-5 py-1 bg-blue-100 rounded-full text-blue-600">
+                            <div className="font-semibold text-xs px-5 py-1 bg-blue-100 rounded-full text-blue-600">
                                 <span>{city}</span>
-                                <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-max max-w-xs p-2 text-xs bg-gray-700 text-white rounded-lg opacity-0 hover:opacity-100 transition-opacity">
+                                <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-max max-w-xs p-2 text-xs bg-gray-700 text-white rounded-lg z-0 opacity-0 hover:opacity-100 transition-opacity">
                                     {fullAddress}
                                 </div>
                             </div>

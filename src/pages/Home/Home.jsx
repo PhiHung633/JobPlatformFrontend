@@ -41,22 +41,21 @@ const Home = () => {
 
     const loadJobs = async (currentPage, industry = "", address = "") => {
         setLoading(true);
-        console.log("INDUSTRY", industry)
+        console.log("INDUSTRY", industry);
         const response = await fetchAllJobs(currentPage, 9, '', false, industry, address);
         if (response && response.data) {
+            // Lọc công việc có status === "SHOW"
             const filteredJobs = response.data.filter(job => job.status === "SHOW");
             setJobs(filteredJobs);
-            if (!jobs.length)
-                setLoading(false);
-            // setJobs(response.data);
-            // if (!jobs.length) {
-            //     setTotalPages(0);
-            //     setTotalElements(0);
-            //     setLoading(false);
-            //     return;
-            // }
-            setTotalPages(response.totalPages);
-            setTotalElements(response.totalElements);
+
+            // Tính lại totalPages và totalElements dựa trên công việc đã lọc
+            const totalFilteredElements = filteredJobs.length;
+            const totalFilteredPages = Math.ceil(totalFilteredElements / 9); // 9 là số công việc trên mỗi trang
+
+            setTotalPages(totalFilteredPages);
+            setTotalElements(totalFilteredElements);
+
+            if (!filteredJobs.length) setLoading(false);
         } else if (response && response.error) {
             console.log("Error fetching jobs:", response.error);
         }

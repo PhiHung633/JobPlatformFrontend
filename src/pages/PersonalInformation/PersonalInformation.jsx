@@ -9,6 +9,8 @@ const PersonalInformation = () => {
         phone: "",
         email: "",
     });
+    const [avatar, setAvatar] = useState(""); // URL hiển thị avatar
+    const [selectedAvatar, setSelectedAvatar] = useState(null); // Ảnh người dùng chọn
 
     useEffect(() => {
         const token = localStorage.getItem("accessToken");
@@ -28,6 +30,7 @@ const PersonalInformation = () => {
                         phone: data.phone,
                         email: data.email,
                     });
+                    setAvatar(data.avatar || "https://via.placeholder.com/150");
                 } else {
                     console.error("Error fetching user data:", error);
                 }
@@ -41,11 +44,26 @@ const PersonalInformation = () => {
         setUserData((prev) => ({ ...prev, [id]: value }));
     };
 
+    const handleAvatarChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedAvatar(file);
+            setAvatar(URL.createObjectURL(file));
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        const formData = new FormData();
+        formData.append("fullName", userData.fullName);
+        formData.append("phone", userData.phone);
+        if (selectedAvatar) {
+            formData.append("avatar", selectedAvatar);
+        }
+
         try {
-            const { data, error } = await updateUser(userId, userData);
+            const { data, error } = await updateUser(userId, formData);
             if (data) {
                 alert("Cập nhật thông tin thành công!");
                 console.log("Updated user data:", data);
@@ -68,6 +86,24 @@ const PersonalInformation = () => {
                 <p className="text-sm text-gray-500 mb-6">
                     <span className="text-red-500">*</span> Các thông tin bắt buộc
                 </p>
+
+                {/* Avatar Upload */}
+                <div className="flex items-center mb-6 space-x-5">
+                    <img
+                        src={avatar}
+                        alt="Avatar"
+                        className="w-20 h-20 rounded-full object-cover mr-4 border border-gray-500"
+                    />
+                    <label className="cursor-pointer bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl">
+                        Chọn ảnh
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarChange}
+                            className="hidden"
+                        />
+                    </label>
+                </div>
 
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">

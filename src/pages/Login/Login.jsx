@@ -5,8 +5,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
 
-import { loginUser } from '../../utils/ApiFunctions';
+import { addFCMToken, loginUser } from '../../utils/ApiFunctions';
 import { useAuth } from '../../service/AuthProvider';
+import { getToken } from 'firebase/messaging';
+import { messaging } from '../../utils/firebase';
 
 const LoginForm = () => {
     const [showPassword, setShowPassword] = useState({ password: false });
@@ -17,12 +19,46 @@ const LoginForm = () => {
 
     const navigate = useNavigate();
 
-
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevState) => ({ ...prevState, [name]: value }));
     };
+
+    const requestNotificationPermission = async () => {
+        try {
+          // Check if the user has already granted permission
+          const permission = Notification.permission;
+      
+          if (permission === "granted") {
+            // If permission is granted, retrieve the token
+            const currentToken = await getToken(messaging, {
+              vapidKey: "BH076IGPbTBV8Boh8I6vKX-7QpyT9OD4AQ0icfUxN7eUM7QEJ35F1Yk8qxFqHCeS9ftln3UsXR8rlduennz0kMQ",
+            });
+            if (currentToken) {
+              console.log("FCM Token:", currentToken);
+              await addFCMToken(currentToken)
+            } else {
+              console.log("No registration token available. Request permission to generate one.");
+            }
+          } else if (permission === "default") {
+            // Request permission if not explicitly granted or denied
+            const permissionResult = await Notification.requestPermission();
+            if (permissionResult === "granted") {
+              const currentToken = await getToken(messaging, {
+                vapidKey: "BH076IGPbTBV8Boh8I6vKX-7QpyT9OD4AQ0icfUxN7eUM7QEJ35F1Yk8qxFqHCeS9ftln3UsXR8rlduennz0kMQ",
+              });
+              console.log("FCM Token:", currentToken);
+              await addFCMToken(currentToken)
+            } else {
+              console.warn("Notification permission not granted.");
+            }
+          } else {
+            console.warn("Notifications are denied by the user.");
+          }
+        } catch (error) {
+          console.error("Permission denied or error:", error);
+        }
+      };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -40,7 +76,7 @@ const LoginForm = () => {
             localStorage.setItem('currentUserRole',userRole)
 
             updateRole(userRole);
-
+            requestNotificationPermission();
             if (userRole === 'ROLE_JOB_SEEKER') {
                 navigate('/');
             } else if (userRole === 'ROLE_RECRUITER') {

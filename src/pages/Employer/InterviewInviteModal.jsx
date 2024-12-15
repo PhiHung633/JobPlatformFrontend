@@ -86,8 +86,8 @@ const InterviewInviteModal = ({ isOpen, onClose, cv, onSuccess }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-96 shadow-lg">
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-96 shadow-sm">
                 <h2 className="text-lg font-bold mb-4">Gửi thư mời phỏng vấn</h2>
                 {loading ? (
 
