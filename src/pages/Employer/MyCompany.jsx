@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { jwtDecode } from "jwt-decode";
-import { addCompany, fetchUserById, getCompanyById, updateCompany, uploadImage } from '../../utils/ApiFunctions';
+import { fetchUserById, getCompanyById, updateCompany, uploadImage } from '../../utils/ApiFunctions';
 
 const MyCompany = () => {
   const [company, setCompany] = useState({

@@ -9,6 +9,7 @@ import { jwtDecode } from "jwt-decode";
 import { fetchJobs, fetchApplications, fetchUserById, fetchJobById, getCvFile, getCv, updateApplicationStatus } from '../../utils/ApiFunctions';
 import StatusModal from './StatusModal';
 import InterviewInviteModal from './InterviewInviteModal';
+import { CircularProgress } from "@mui/material";
 
 const ManageCV = () => {
   const [cvs, setCvs] = useState([]);
@@ -22,10 +23,12 @@ const ManageCV = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [currentCv, setCurrentCv] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
 
   const loadJobs = async () => {
+    setLoading(true);
     const token = localStorage.getItem('accessToken');
     if (token) {
       const decodedToken = jwtDecode(token);
@@ -38,6 +41,7 @@ const ManageCV = () => {
     } else {
       console.error("Lỗi khi gọi API:", result.error, result.status);
     }
+    setLoading(false);
   };
 
   const toggleMenu = (id) => {
@@ -45,6 +49,7 @@ const ManageCV = () => {
   };
 
   const loadApplications = async (jobId = '', status = '') => {
+    setLoading(true);
     const queryParams = {};
 
     if (jobId) {
@@ -93,6 +98,7 @@ const ManageCV = () => {
     } else {
       console.error("Lỗi khi gọi API:", result.error);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -235,7 +241,11 @@ const ManageCV = () => {
 
       {/* Display CVs or Empty State */}
       <div className="overflow-auto rounded-lg border border-gray-200">
-        {cvs.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <CircularProgress />
+          </div>
+        ) : cvs.length === 0 ? (
           <div className="text-center py-10">
             <p className="text-lg text-gray-500 mb-2">Tìm thấy 0 ứng viên</p>
             <img src="/empty-cv.webp" alt="empty folder" className="w-48 h-48 mx-auto mb-4" />

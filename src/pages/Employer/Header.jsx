@@ -128,7 +128,7 @@ const Header = () => {
 
 
   return (
-    <div className="flex justify-between items-center bg-blue-900 text-white p-4 shadow-md relative">
+    <div className="flex justify-between items-center bg-blue-900 text-white p-4 shadow-md relative sticky top-0 z-50">
       {/* Logo and Menu */}
       <div className="flex items-center space-x-3">
         <FaBars className="text-xl cursor-pointer" />
