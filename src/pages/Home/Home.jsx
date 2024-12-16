@@ -67,7 +67,7 @@ const Home = () => {
             loadJobs(page, selectedItem, "");
         } else if (selectedOption === "Địa điểm") {
             console.log("THANHPHO", selectedItem)
-            if (selectedItem === "Thành phố Hồ Chí Minh")
+            if (selectedItem === "Tp Hồ Chí Minh")
                 setSelectedItem("Hồ Chí Minh");
             loadJobs(page, "", selectedItem);
         } else {
