@@ -25,6 +25,7 @@
     "chart.js": "^4.4.6",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
+    "dompurify": "^3.2.3",
     "firebase": "^11.0.2",
     "hooks": "^0.3.2",
     "html2pdf.js": "^0.10.2",
@@ -64,6 +65,6 @@
     "vite": "^5.4.1"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "4.6.1"
+    "@rollup/rollup-linux-x64-musl": "4.9.5"
   }
 }

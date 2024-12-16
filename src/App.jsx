@@ -33,7 +33,7 @@ import ManageJobs from './pages/Employer/ManageJobs.jsx';
 import ManageCV from './pages/Employer/ManageCV.jsx';
 import Admin from './pages/Admin/AdminPage.jsx';
 import { useEffect, useState } from 'react';
-import CvList from './pages/JobSeeker/CVList.jsx';
+import CvList from './pages/JobSeeker/CvList.jsx';
 import { matchPath } from 'react-router-dom';
 import PersonalInformation from './pages/PersonalInformation/PersonalInformation.jsx';
 import ChangePassword from './pages/ChangePassword/ChangePassword.jsx';
