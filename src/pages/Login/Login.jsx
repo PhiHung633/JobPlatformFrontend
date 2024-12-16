@@ -9,11 +9,13 @@ import { addFCMToken, loginUser } from '../../utils/ApiFunctions';
 import { useAuth } from '../../service/AuthProvider';
 import { getToken } from 'firebase/messaging';
 import { messaging } from '../../utils/firebase';
+import LoadingPopup from '../../components/LoadingPopup/LoadingPopup';
 
 const LoginForm = () => {
     const [showPassword, setShowPassword] = useState({ password: false });
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
     const { updateRole } = useAuth();
 
 
@@ -26,43 +28,44 @@ const LoginForm = () => {
 
     const requestNotificationPermission = async () => {
         try {
-          // Check if the user has already granted permission
-          const permission = Notification.permission;
-      
-          if (permission === "granted") {
-            // If permission is granted, retrieve the token
-            const currentToken = await getToken(messaging, {
-              vapidKey: "BH076IGPbTBV8Boh8I6vKX-7QpyT9OD4AQ0icfUxN7eUM7QEJ35F1Yk8qxFqHCeS9ftln3UsXR8rlduennz0kMQ",
-            });
-            if (currentToken) {
-              console.log("FCM Token:", currentToken);
-              await addFCMToken(currentToken)
+            // Check if the user has already granted permission
+            const permission = Notification.permission;
+
+            if (permission === "granted") {
+                // If permission is granted, retrieve the token
+                const currentToken = await getToken(messaging, {
+                    vapidKey: "BH076IGPbTBV8Boh8I6vKX-7QpyT9OD4AQ0icfUxN7eUM7QEJ35F1Yk8qxFqHCeS9ftln3UsXR8rlduennz0kMQ",
+                });
+                if (currentToken) {
+                    console.log("FCM Token:", currentToken);
+                    await addFCMToken(currentToken)
+                } else {
+                    console.log("No registration token available. Request permission to generate one.");
+                }
+            } else if (permission === "default") {
+                // Request permission if not explicitly granted or denied
+                const permissionResult = await Notification.requestPermission();
+                if (permissionResult === "granted") {
+                    const currentToken = await getToken(messaging, {
+                        vapidKey: "BH076IGPbTBV8Boh8I6vKX-7QpyT9OD4AQ0icfUxN7eUM7QEJ35F1Yk8qxFqHCeS9ftln3UsXR8rlduennz0kMQ",
+                    });
+                    console.log("FCM Token:", currentToken);
+                    await addFCMToken(currentToken)
+                } else {
+                    console.warn("Notification permission not granted.");
+                }
             } else {
-              console.log("No registration token available. Request permission to generate one.");
+                console.warn("Notifications are denied by the user.");
             }
-          } else if (permission === "default") {
-            // Request permission if not explicitly granted or denied
-            const permissionResult = await Notification.requestPermission();
-            if (permissionResult === "granted") {
-              const currentToken = await getToken(messaging, {
-                vapidKey: "BH076IGPbTBV8Boh8I6vKX-7QpyT9OD4AQ0icfUxN7eUM7QEJ35F1Yk8qxFqHCeS9ftln3UsXR8rlduennz0kMQ",
-              });
-              console.log("FCM Token:", currentToken);
-              await addFCMToken(currentToken)
-            } else {
-              console.warn("Notification permission not granted.");
-            }
-          } else {
-            console.warn("Notifications are denied by the user.");
-          }
         } catch (error) {
-          console.error("Permission denied or error:", error);
+            console.error("Permission denied or error:", error);
         }
-      };
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+        setIsLoading(true);
         localStorage.removeItem("currentUserRole");
 
         const result = await loginUser(formData);
@@ -73,7 +76,7 @@ const LoginForm = () => {
             localStorage.setItem('refreshToken', refreshToken);
             const decodedToken = jwtDecode(accessToken);
             const userRole = decodedToken.role;
-            localStorage.setItem('currentUserRole',userRole)
+            localStorage.setItem('currentUserRole', userRole);
 
             updateRole(userRole);
             requestNotificationPermission();
@@ -89,13 +92,17 @@ const LoginForm = () => {
         } else if (result.error) {
             setError('Email hoặc mật khẩu của bạn không đúng!');
         }
+
+        setIsLoading(false);
     };
+
     const togglePasswordVisibility = (field) => {
         setShowPassword((prev) => ({ ...prev, [field]: !prev[field] }));
     };
 
     return (
         <div className="flex justify-center items-center min-h-screen bg-gray-100">
+            {isLoading && <LoadingPopup />}
             <div className="flex w-full min-h-screen bg-white">
                 <div className="flex w-full md:w-1/2 justify-center p-14">
                     <div className="w-full max-w-md">
