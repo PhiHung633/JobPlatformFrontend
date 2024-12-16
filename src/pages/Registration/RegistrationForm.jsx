@@ -3,6 +3,7 @@ import { faUser, faEnvelope, faLock, faEye, faEyeSlash, faPhone } from '@fortawe
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { signUpUser } from '../../utils/ApiFunctions';
+import LoadingPopup from '../../components/LoadingPopup/LoadingPopup';
 
 const RegistrationForm = () => {
   const [showPassword, setShowPassword] = useState({ password: false, confirmPassword: false });
@@ -13,11 +14,12 @@ const RegistrationForm = () => {
     password: '',
     confirmPassword: '',
     phone: '',
-    role: 'ROLE_JOB_SEEKER', 
+    role: 'ROLE_JOB_SEEKER',
   });
 
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,6 +31,7 @@ const RegistrationForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     if (formData.password !== formData.confirmPassword) {
       setSuccessMessage('');
       setError("Mật khẩu và xác nhận mật khẩu không khớp.");
@@ -48,7 +51,7 @@ const RegistrationForm = () => {
         password: formData.password,
         fullName: formData.fullName,
         phone: formData.phone,
-        role: formData.role, 
+        role: formData.role,
       };
       console.log("USERRDAA", userData);
 
@@ -74,6 +77,7 @@ const RegistrationForm = () => {
       }
       setSuccessMessage('');
     }
+    setIsLoading(false);
   };
 
   const togglePasswordVisibility = (field) => {
@@ -85,6 +89,7 @@ const RegistrationForm = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      {isLoading && <LoadingPopup />}
       <div className="flex w-full min-h-screen bg-white">
         <div className="flex w-full md:w-1/2 justify-center p-14">
           <div className="w-full max-w-md">
@@ -192,7 +197,7 @@ const RegistrationForm = () => {
               <button className="bg-red-500 text-white w-full py-2 mx-1 rounded-lg">Google</button>
             </div>
             <div className="mt-6 text-center">
-              Bạn đã có tài khoản ? 
+              Bạn đã có tài khoản ?
               <Link to={"/dang-nhap"} className="text-green-600"> Đăng nhập ngay</Link>
             </div>
           </div>

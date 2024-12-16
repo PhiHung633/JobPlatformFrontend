@@ -10,6 +10,7 @@ import {
 import { useState, useEffect, useRef } from "react";
 import { fetchAllJobs } from "../../utils/ApiFunctions";
 import { Link, useNavigate } from "react-router-dom";
+import { ClipLoader } from "react-spinners";
 
 const Searchbar = () => {
   const cities = [
@@ -168,6 +169,7 @@ const Searchbar = () => {
   const [jobSuggestions, setJobSuggestions] = useState([]);
   const [searchTitle, setSearchTitle] = useState('');
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSearch = () => {
@@ -198,17 +200,24 @@ const Searchbar = () => {
   }, []);
   useEffect(() => {
     const fetchJobs = async () => {
-      if(selectedJob==="Tất cả ngành nghề")
-        setSelectedJob("");
-      else if(selectedCity==="Tất cả tỉnh/thành phố")
-        setSelectedCity("")
-      console.log("JOBNE",selectedJob);
-      console.log("CITYNE",selectedCity);
-      const { data, error } = await fetchAllJobs(0, 10, searchTitle, true, selectedJob, selectedCity);
-      if (!error) {
-        setJobSuggestions(data);
-      } else {
-        setError(error);
+      setIsLoading(true); // Bắt đầu loading
+      try {
+        if (selectedJob === "Tất cả ngành nghề") setSelectedJob("");
+        if (selectedCity === "Tất cả tỉnh/thành phố") setSelectedCity("");
+
+        console.log("JOBNE", selectedJob);
+        console.log("CITYNE", selectedCity);
+
+        const { data, error } = await fetchAllJobs(0, 10, searchTitle, true, selectedJob, selectedCity);
+        if (!error) {
+          setJobSuggestions(data);
+        } else {
+          setError(error);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false); // Dừng loading sau khi hoàn thành
       }
     };
 
@@ -401,7 +410,7 @@ const Searchbar = () => {
 
         <div className="border-l border-gray-300 h-10 mx-1 hidden-on-small"></div>
 
-        <button 
+        <button
           className="ml-auto bg-green-500 text-white rounded-full py-3 px-6 
                     flex items-center hover:bg-green-700 transition-colors duration-300"
           onClick={handleSearch}
@@ -457,8 +466,12 @@ const Searchbar = () => {
             </div>
 
             <div className="flex flex-col mt-2 pt-2 w-full max-h-72 overflow-y-auto">
-              {jobSuggestions.length > 0 ? (
-                Array.from(new Set(jobSuggestions.map(job => job.title))).map((title) => (
+              {isLoading ? (
+                <div className="flex justify-center items-center h-full">
+                  <ClipLoader color="#4caf50" size={40} />
+                </div>
+              ) : jobSuggestions.length > 0 ? (
+                Array.from(new Set(jobSuggestions.map((job) => job.title))).map((title) => (
                   <div key={title} className="p-2 w-full hover:bg-gray-200">
                     <p>{title}</p>
                   </div>
@@ -472,39 +485,47 @@ const Searchbar = () => {
           <div className="flex flex-col ml-5 hidden-on-small:ml-0">
             <div className="font-semibold mb-2">Việc làm bạn có thể quan tâm</div>
             <div className="flex flex-col">
-              {Array.from(new Set(jobSuggestions.map(job => job.companyName))).map((companyName) => {
-                const jobsForCompany = jobSuggestions.filter(job => job.companyName === companyName);
+              {isLoading ? (
+                <div className="flex justify-center items-center h-20">
+                  <ClipLoader color="#4caf50" size={40} />
+                </div>
+              ) : jobSuggestions.length > 0 ? (
+                Array.from(new Set(jobSuggestions.map(job => job.companyName))).map((companyName) => {
+                  const jobsForCompany = jobSuggestions.filter(job => job.companyName === companyName);
 
-                return (
-                  <Link
-                    to={`/viec-lam/${jobsForCompany[0].id}`} 
-                    className="flex items-center p-2 hover:bg-[#e0e7ff] transition-colors w-[600px] relative group"
-                    key={companyName}
-                  >
-                    <div className="mr-2">
-                      <img
-                        src={jobsForCompany[0].companyImages} 
-                        alt={"Image"}
-                        className="w-24 h-auto"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-[#263a4d] font-semibold truncate">
-                        {jobsForCompany[0].title} 
-                      </p>
-                      <p className="text-gray-600 text-sm truncate">
-                        {companyName}
-                      </p>
-                      <div className="text-green-600 text-sm font-semibold">
-                        {jobsForCompany[0].salary.toLocaleString()}
+                  return (
+                    <Link
+                      to={`/viec-lam/${jobsForCompany[0].id}`}
+                      className="flex items-center p-2 hover:bg-[#e0e7ff] transition-colors w-[600px] relative group"
+                      key={companyName}
+                    >
+                      <div className="mr-2">
+                        <img
+                          src={jobsForCompany[0].companyImages}
+                          alt={"Image"}
+                          className="w-24 h-auto"
+                        />
                       </div>
-                    </div>
-                    <div className="ml-4 text-green-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                      <FontAwesomeIcon icon={faArrowRight} />
-                    </div>
-                  </Link>
-                );
-              })}
+                      <div className="flex-1">
+                        <p className="text-[#263a4d] font-semibold truncate">
+                          {jobsForCompany[0].title}
+                        </p>
+                        <p className="text-gray-600 text-sm truncate">
+                          {companyName}
+                        </p>
+                        <div className="text-green-600 text-sm font-semibold">
+                          {jobsForCompany[0].salary.toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="ml-4 text-green-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        <FontAwesomeIcon icon={faArrowRight} />
+                      </div>
+                    </Link>
+                  );
+                })
+              ) : (
+                <p className="text-gray-500 text-center mt-4">Không có việc làm nào phù hợp.</p>
+              )}
             </div>
           </div>
         </div>
