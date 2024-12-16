@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { onMessage } from "firebase/messaging";
 import { messaging } from '../../utils/firebase.js'
 import { fetchNotifications } from "../../utils/ApiFunctions";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // function formatDate(dateString) {
 //   const date = new Date(dateString);
@@ -113,7 +113,7 @@ const Header = () => {
           id: `temp-${Date.now()}-${tempIdCounter++}`,
           message: payload.data.message,
           isRead: false,
-          createdAt:Date.now()
+          createdAt: Date.now()
         };
 
         setNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
@@ -132,7 +132,7 @@ const Header = () => {
       {/* Logo and Menu */}
       <div className="flex items-center space-x-3">
         <FaBars className="text-xl cursor-pointer" />
-        <div className="text-xl font-bold">JobSearch</div>
+        <Link to={"/"} className="text-xl font-bold">JobSearch</Link>
       </div>
 
       {/* Notification and User Avatar */}

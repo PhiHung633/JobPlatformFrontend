@@ -102,7 +102,7 @@ const Home = () => {
                             Tìm việc làm nhanh 24h, việc làm mới nhất trên toàn quốc.
                         </h1>
                         <p className="text-gray-500 text-sm font-medium">
-                            Tiếp cận <span className="font-bold text-black">40,000+</span> tin tuyển dụng việc làm mỗi ngày từ hàng nghìn doanh nghiệp uy tín tại Việt Nam
+                            Tiếp cận nhiều tin tuyển dụng việc làm mỗi ngày từ hàng nghìn doanh nghiệp uy tín tại Việt Nam
                         </p>
                     </div>
 
@@ -110,11 +110,11 @@ const Home = () => {
                         <Searchbar setResults />
                     </div>
 
-                    <div className="mt-4 text-center text-gray-600">
+                    {/* <div className="mt-4 text-center text-gray-600">
                         <span className="mr-6">Vị trí chờ bạn khám phá <span className="text-green-500 font-bold">44,818</span></span>
                         <span className="mr-6">Việc làm mới nhất <span className="text-green-500 font-bold">3,048</span></span>
                         <span>Cập nhật lúc: <span className="text-green-500 font-bold">14:39 17/10/2024</span></span>
-                    </div>
+                    </div> */}
                 </div>
             </div>
             <div className='px-8 max-w-[1280px] mx-auto'>

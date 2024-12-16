@@ -11,14 +11,14 @@ const EducationList = () => {
     useEffect(() => {
         const selectedCvData = JSON.parse(localStorage.getItem('selectedCvData'));
         let educationFromSelectedCv = [];
-    
+
         if (selectedCvData && selectedCvData.education) {
             educationFromSelectedCv = selectedCvData.education.split(';').map(item => item.trim());
         }
-    
+
         const storedEducationData = localStorage.getItem('educationData');
         let educationDataFromStorage = [];
-    
+
         if (storedEducationData) {
             educationDataFromStorage = storedEducationData.split(';').map(item => item.trim());
         }
@@ -29,7 +29,7 @@ const EducationList = () => {
                 ...educationFromSelectedCv
             ])
         ];
-    
+
         setEducationData(combinedEducationData);
 
         localStorage.setItem('educationData', combinedEducationData.join('; '));
@@ -40,8 +40,39 @@ const EducationList = () => {
     };
 
     const handleEdit = (entry, index) => {
-        navigate('/education', { state: { entry, index } });
+        const parts = entry.split(' - '); // Tách entry bằng dấu " - "
+
+        // Tách phần ngày tốt nghiệp (Tháng 1 2015)
+        const graduationDate = parts[0] ? parts[0].split(' ') : [];
+        const graduationMonth = `${graduationDate[0]} ${graduationDate[1]}`.trim(); // Kết hợp "Tháng" và "1"
+        const graduationYear = graduationDate[2] ? graduationDate[2].trim() : ''; // Lấy "2015"
+
+        // Tách bằng cấp và lĩnh vực
+        const degreeAndField = parts[1] ? parts[1].split(':') : [];
+        const degree = degreeAndField[0] ? degreeAndField[0].trim() : '';
+        const fieldOfStudy = degreeAndField[1] ? degreeAndField[1].trim() : '';
+
+        // Tách tên trường và vị trí
+        const schoolInfo = parts[2] ? parts[2].split(',') : [];
+        const schoolName = schoolInfo[0] ? schoolInfo[0].trim() : '';
+        const schoolLocation = schoolInfo[1] ? schoolInfo[1].trim() : '';
+
+        navigate('/education', {
+            state: {
+                entry: {
+                    schoolName,
+                    schoolLocation,
+                    degree,
+                    fieldOfStudy,
+                    graduationMonth, // Lấy "Tháng 1"
+                    graduationYear,  // Lấy "2015"
+                },
+                index
+            }
+        });
     };
+
+
 
     const handleDelete = (index) => {
         if (window.confirm("Bạn có chắc chắn muốn xóa mục này?")) {
@@ -70,10 +101,10 @@ const EducationList = () => {
                         if (typeof entry === 'string') {
                             const parts = entry.split(' - ');
                             const graduationYear = parts[0];
-                            const degreeAndField = parts[1] ? parts[1].split(':') : []; 
+                            const degreeAndField = parts[1] ? parts[1].split(':') : [];
                             const degree = degreeAndField[0] ? degreeAndField[0].trim() : '';
                             const fieldOfStudy = degreeAndField[1] ? degreeAndField[1].trim() : '';
-                            const schoolInfo = parts[2] ? parts[2].split(',') : []; 
+                            const schoolInfo = parts[2] ? parts[2].split(',') : [];
                             const schoolName = schoolInfo[0] ? schoolInfo[0].trim() : '';
                             const schoolLocation = schoolInfo[1] ? schoolInfo[1].trim() : '';
 

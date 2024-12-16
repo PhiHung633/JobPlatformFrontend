@@ -49,18 +49,17 @@ const CompanyDetails = () => {
         try {
             const response = await fetchJobsByCompany(id, page, pageSize);
             const filteredJobs = response.data.filter(job => job.status === "SHOW");
-            setJobs(filteredJobs);
-            if(!jobs.length)
-                setTotalPages(0);
-            setTotalPages(response.totalPages);
+            setJobs(filteredJobs || []);
+            setTotalPages(response.totalPages || 0);
             setError(null);
         } catch (err) {
             console.error("Error fetching jobs:", err);
-            setError("Có lỗi xảy ra khi tải danh sách công việc.");
+            setError(err.message || "Có lỗi xảy ra khi tải danh sách công việc.");
         } finally {
             setLoading(false);
         }
     };
+
 
     useEffect(() => {
         fetchJobs(currentPage);
@@ -112,7 +111,7 @@ const CompanyDetails = () => {
                 <ClipLoader color="#4caf50" size={40} />
             </div>
         );
-    }    
+    }
     // if (error) return <div>Error: {error.message || "Something went wrong"}</div>;
     if (!company) return <div>No company data available</div>;
 

@@ -4,6 +4,8 @@ import { FaPlus, FaStar, FaDownload, FaTrash, FaUpload, FaRobot } from "react-ic
 import { jwtDecode } from "jwt-decode";
 import Modal from "react-modal";
 import { fetchCvs, deleteCv, uploadCv, fetchCvsFile, deleteCvUpload, evaluateCv, evaluateCvFile } from "../../utils/ApiFunctions";
+import { toast } from "react-toastify";
+import { ClipLoader } from "react-spinners";
 
 function CvList() {
     const [cvs, setCvs] = useState([]);
@@ -17,6 +19,8 @@ function CvList() {
     const [evaluationContent, setEvaluationContent] = useState("");
     const [modalIsOpenFile, setModalIsOpenFile] = useState(false);
     const [evaluationContentFile, setEvaluationContentFile] = useState("");
+    const [isUploading, setIsUploading] = useState(false);
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -90,7 +94,7 @@ function CvList() {
 
     const handleEvaluateCvFile = async (id) => {
         const { data, error } = await evaluateCvFile(id);
-        console.log("DATANE",data)
+        console.log("DATANE", data)
         if (error) {
             console.error("Error evaluating CV:", error);
             alert("Đã xảy ra lỗi khi đánh giá CV. Vui lòng thử lại.");
@@ -120,22 +124,44 @@ function CvList() {
     const handleFileChange = async (event) => {
         const file = event.target.files[0];
         if (file) {
-            //userid
-            const response = await uploadCv(file, userId);
+            try {
+                // Bắt đầu hiển thị loader
+                setIsUploading(true);
 
-            if (!response.error) {
-                const fileUrl = response.data?.cvUrl;
-                const fileName = file.name;
+                // Kiểm tra kích thước file (giả sử 5MB là giới hạn)
+                const maxSize = 2 * 1024 * 1024; // 5MB
+                if (file.size > maxSize) {
+                    toast.error("File quá lớn. Vui lòng chọn file có kích thước nhỏ hơn 2MB.");
+                    setIsUploading(false); // Ẩn loader
+                    return;
+                }
 
-                setUploadedCvs((prev) => [
-                    ...prev,
-                    { id: Date.now(), fileName, fileUrl, createdAt: new Date() },
-                ]);
-                setTotalElements((prevTotal) => prevTotal + 1);
+                const response = await uploadCv(file, userId);
+                console.log("API Response:", response);
 
-                console.log("File uploaded successfully:", response.data);
-            } else {
-                console.log("Error uploading file:", response.error);
+                if (!response.error) {
+                    const fileUrl = response.data?.cvUrl;
+                    const cvName = response.data?.cvName;
+                    const uploadedAt = response.data?.uploadedAt || new Date().toISOString();
+
+                    setUploadedCvs((prev) => [
+                        ...prev,
+                        { id: response.data?.id, cvName, cvUrl: fileUrl, uploadedAt },
+                    ]);
+                    setTotalElements((prevTotal) => prevTotal + 1);
+
+                    toast.success("Tải file thành công!");
+                    console.log("File uploaded successfully:", response.data);
+                } else {
+                    toast.error("Đã xảy ra lỗi khi tải file lên. Vui lòng thử lại.");
+                    console.error("Error uploading file:", response.error);
+                }
+            } catch (error) {
+                toast.error("Đã xảy ra lỗi không xác định. Vui lòng thử lại.");
+                console.error("Error during file upload:", error);
+            } finally {
+                // Ẩn loader
+                setIsUploading(false);
             }
         }
     };
@@ -205,7 +231,7 @@ function CvList() {
                                                 padding: "20px",
                                                 borderRadius: "10px",
                                                 border: "1px solid #ccc",
-                                                height:"500px",
+                                                height: "500px",
                                                 boxShadow: "0px 4px 6px rgba(0,0,0,0.1)"
                                             },
                                             overlay: {
@@ -243,9 +269,17 @@ function CvList() {
                     <h2 className="text-lg font-semibold">CV đã tải lên JobSearch</h2>
                     <button
                         onClick={handleUploadClick}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600">
-                        <FaUpload className="w-5 h-5" />
-                        <span>Tải CV lên</span>
+                        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600"
+                        disabled={isUploading} // Vô hiệu hóa khi đang tải
+                    >
+                        {isUploading ? (
+                            <ClipLoader color="#4caf50" size={20} />
+                        ) : (
+                            <>
+                                <FaUpload className="w-5 h-5" />
+                                <span>Tải CV lên</span>
+                            </>
+                        )}
                     </button>
                 </div>
                 <input
@@ -284,15 +318,6 @@ function CvList() {
                                         <span>Tải xuống</span>
                                     </button>
                                     <button
-                                        className="flex items-center gap-1 px-2 py-1 text-xs bg-red-200 text-red-600 rounded hover:bg-red-300"
-                                        onClick={() => handleDeleteUploadedCv(cv.id)}
-                                    >
-                                        <FaTrash />
-                                        <span>Xóa</span>
-                                    </button>
-                                </div>
-                                <div>
-                                    <button
                                         className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300"
                                         onClick={() => handleEvaluateCvFile(cv.id)}
                                     >
@@ -310,7 +335,7 @@ function CvList() {
                                                 padding: "12px",
                                                 borderRadius: "10px",
                                                 border: "1px solid #ccc",
-                                                height:"500px",
+                                                height: "500px",
                                                 boxShadow: "0px 4px 6px rgba(0,0,0,0.1)"
                                             },
                                             overlay: {
@@ -327,6 +352,16 @@ function CvList() {
                                             Đóng
                                         </button>
                                     </Modal>
+
+                                </div>
+                                <div>
+                                    <button
+                                        className="flex items-center gap-1 px-2 py-1 text-xs bg-red-200 text-red-600 rounded hover:bg-red-300"
+                                        onClick={() => handleDeleteUploadedCv(cv.id)}
+                                    >
+                                        <FaTrash />
+                                        <span>Xóa</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>

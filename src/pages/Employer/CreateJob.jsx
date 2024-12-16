@@ -353,7 +353,7 @@ const CreateJob = () => {
           </div>
           {/* Yêu cầu công việc */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Yêu cầu công việc</h3>
+            <h3 className="text-lg font-semibold mb-4 mt-4">Yêu cầu công việc</h3>
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label htmlFor="workExperience" className="block text-sm font-medium mb-2">Kinh nghiệm làm việc</label>
@@ -393,7 +393,7 @@ const CreateJob = () => {
             </div>
           </div>
           <div>
-            <h3 className="text-lg font-semibold mb-4">Chi tiết tuyển dụng</h3>
+            <h3 className="text-lg font-semibold mb-4 mt-4">Chi tiết tuyển dụng</h3>
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label htmlFor="workType" className="block text-sm font-medium mb-2">Hình thức làm việc</label>

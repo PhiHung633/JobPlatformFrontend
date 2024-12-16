@@ -167,8 +167,8 @@ const Preview = () => {
         } else {
             result = await createCv(formattedData);
         }
-
-        if (result.error) {
+        console.log("RESQQWESA",result)
+        if (result.status === 403) {
             console.error("Failed to save CV:", result.error);
             alert(`Error saving CV: ${result.error.message}`);
         } else {
@@ -240,6 +240,23 @@ const Preview = () => {
                                 ))}
                             </div>
                         </div>
+
+                        <div>
+                            <h4 className="text-lg font-semibold bg-blue-800 p-2 rounded-t-lg">Languages</h4>
+                            <div className="p-4">
+                                {profile.languages.map((language, index) => (
+                                    <div key={index} className="mb-3">
+                                        <p className="font-semibold text-sm">{language.title}</p>
+                                        {/* <div className="w-full bg-gray-300 rounded-full h-2 mt-2">
+                                            <div
+                                                className="bg-yellow-500 h-2 rounded-full"
+                                                style={{ width: `${skill.level * 10}%` }}
+                                            ></div>
+                                        </div> */}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Main Content */}
@@ -293,7 +310,7 @@ const Preview = () => {
                                     {profile.certifications.map((cert, index) => (
                                         <div key={index} className="border-b pb-2">
                                             <p>{cert.date}</p>
-                                            <p className="font-semibold">{cert.title}</p>
+                                            <p className="">{cert.title}</p>
                                         </div>
                                     ))}
                                 </div>

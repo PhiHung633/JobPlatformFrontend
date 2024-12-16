@@ -19,6 +19,7 @@ import {
   faBars,
   faGear,
   faMagnifyingGlass,
+  faUserCog,
 } from "@fortawesome/free-solid-svg-icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { format } from 'date-fns';
@@ -52,6 +53,7 @@ const Header = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [errortb, setErrorTB] = useState(null);
   const [avatar, setAvatar] = useState("");
+  const [currentRole, setCurrentRole] = useState("")
   const navigate = useNavigate();
   let tempIdCounter = 0;
 
@@ -69,6 +71,7 @@ const Header = () => {
       setUserId(decodedToken.user_id);
       setIsLoggedIn(true);
       setUserEmail(decodedToken.sub);
+      setCurrentRole(decodedToken.role)
     } else {
       setIsLoggedIn(false);
       setUserId("");
@@ -168,7 +171,7 @@ const Header = () => {
           id: `temp-${Date.now()}-${tempIdCounter++}`,
           message: payload.data.message,
           isRead: false,
-          createdAt:Date.now()
+          createdAt: Date.now()
         };
 
         setNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
@@ -366,6 +369,20 @@ const Header = () => {
                   <ul>
                     <DropdownItem icon={faGear} text="Cài đặt thông tin cá nhân" to={"/cai-dat-thong-tin-ca-nhan"} />
                     <DropdownItem icon={faShield} text="Đổi mật khẩu" to={"/doi-mat-khau"} />
+                    {currentRole === "ROLE_RECRUITER" && (
+                      <DropdownItem
+                        icon={faBriefcase}
+                        text="Trang nhà tuyển dụng"
+                        to={"/dashboard"}
+                      />
+                    )}
+                    {currentRole === "ROLE_ADMIN" && (
+                      <DropdownItem
+                        icon={faUserCog}
+                        text="Trang quản trị"
+                        to={"/admin"}
+                      />
+                    )}
                     <DropdownItem icon={faArrowRightFromBracket} text="Đăng xuất" onClick={() => {
                       localStorage.removeItem("accessToken");
                       localStorage.removeItem("refreshToken");
@@ -418,7 +435,7 @@ const Header = () => {
                     e.target.src =
                       "https://media4.giphy.com/media/xTk9ZvMnbIiIew7IpW/giphy.gif?cid=6c09b952souzn361oda9jrwdqfbhyupzrijte9zxczqrfh69&ep=v1_internal_gif_by_id&rid=giphy.gif&ct=g";
                   }
-                }
+                  }
                 />
                 <div>
                   <p className="font-semibold">Phi Hùng</p>

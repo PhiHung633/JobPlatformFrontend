@@ -38,6 +38,7 @@ const JobDetail = () => {
     const [reviews, setReviews] = useState([]);
     const [userId, setUserId] = useState("");
     const [currentEditId, setCurrentEditId] = useState(null);
+    const [hasReviewed, setHasReviewed] = useState(false);
     const navigate = useNavigate();
 
 
@@ -218,6 +219,16 @@ const JobDetail = () => {
     //     }
     // }, [error]);
 
+    useEffect(() => {
+        // Kiểm tra xem người dùng đã đánh giá hay chưa
+        const checkUserReview = () => {
+            const userReview =reviews.find((review) => review.id === id);
+            setHasReviewed(!userReview);
+        };
+        checkUserReview();
+    }, [reviews, userId, id]);
+
+
     if (loading) {
         return (
             <div className="flex justify-center items-center min-h-screen">
@@ -365,9 +376,13 @@ const JobDetail = () => {
                     {!showReviewForm && (
                         <button
                             onClick={handleReviewClick}
-                            className="bg-green-500 text-white py-2 px-4 rounded-xl hover:bg-green-600 mt-4"
+                            className={`py-2 px-4 rounded-xl mt-4 ${hasReviewed
+                                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                    : "bg-green-500 text-white hover:bg-green-600"
+                                }`}
+                            disabled={hasReviewed} // Vô hiệu hóa nếu đã đánh giá
                         >
-                            Viết đánh giá
+                            {hasReviewed ? "Đã đánh giá" : "Viết đánh giá"}
                         </button>
                     )}
 

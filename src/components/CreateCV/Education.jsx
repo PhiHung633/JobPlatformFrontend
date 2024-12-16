@@ -21,9 +21,9 @@ const Education = () => {
         const data = localStorage.getItem('educationData');
         if (data) {
             const parsedData = data.split(';').map(item => item.trim()).filter(item => item !== '');
-            setFormData(parsedData); 
+            setFormData(parsedData);
         } else {
-            setFormData([]); 
+            setFormData([]);
         }
     }, []);
 
@@ -52,30 +52,37 @@ const Education = () => {
 
     const handleNext = () => {
         const requiredFields = ['schoolName', 'schoolLocation', 'degree', 'fieldOfStudy', 'graduationMonth', 'graduationYear'];
-    
+
         for (let field of requiredFields) {
             if (!currentEntry[field]) {
-                alert(`Vui lòng nhập đầy đủ thông tin: ${
-                    field === 'schoolName' ? 'Tên trường' :
-                    field === 'schoolLocation' ? 'Địa chỉ trường' :
-                    field === 'degree' ? 'Bằng cấp' :
-                    field === 'fieldOfStudy' ? 'Ngành học' :
-                    field === 'graduationMonth' ? 'Tháng tốt nghiệp' :
-                    'Năm tốt nghiệp'}.`);
+                alert(`Vui lòng nhập đầy đủ thông tin: ${field === 'schoolName' ? 'Tên trường' :
+                        field === 'schoolLocation' ? 'Địa chỉ trường' :
+                            field === 'degree' ? 'Bằng cấp' :
+                                field === 'fieldOfStudy' ? 'Ngành học' :
+                                    field === 'graduationMonth' ? 'Tháng tốt nghiệp' :
+                                        'Năm tốt nghiệp'}.`);
                 return;
             }
         }
-    
+
         const formattedEntry = `${currentEntry.graduationMonth} ${currentEntry.graduationYear} - ${currentEntry.degree}: ${currentEntry.fieldOfStudy} - ${currentEntry.schoolName}, ${currentEntry.schoolLocation}`;
-    
+
         const existingData = localStorage.getItem('educationData');
-        const updatedData = existingData ? `${existingData}; ${formattedEntry}` : formattedEntry;
-    
-        localStorage.setItem('educationData', updatedData);
-    
+        let updatedData = existingData ? existingData.split(';').map(item => item.trim()) : [];
+
+        if (location.state && location.state.index >= 0) {
+            // Nếu đang chỉnh sửa, cập nhật entry cũ
+            updatedData[location.state.index] = formattedEntry;
+        } else {
+            // Nếu thêm mới, thêm entry vào danh sách
+            updatedData.push(formattedEntry);
+        }
+
+        localStorage.setItem('educationData', updatedData.join('; '));
         navigate('/education/list');
     };
 
+    console.log("DAYNEE",currentEntry);
     return (
         <div className="flex min-h-screen">
             <Sidebar currentStep={2} />
