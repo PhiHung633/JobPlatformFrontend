@@ -1,4 +1,5 @@
 import axios from "axios"
+import { param } from "jquery";
 
 export const api = axios.create({
     baseURL: "https://jobplatformbackend.onrender.com"
@@ -60,7 +61,9 @@ const publicPaths = [
     '/cong-ti',
     '/cong-ti/:id',
     '/tim-viec-lam',
-    '/tao-cv'
+    '/tao-cv',
+    '/auth/password-reset',
+    '/auth/verify-email'
 ];
 
 // Hàm kiểm tra nếu path hiện tại là công khai
@@ -130,6 +133,35 @@ api.interceptors.response.use(
 export async function loginUser(login) {
     try {
         const response = await api.post("/auth/login", login);
+        if (response.status >= 200 && response.status < 300) {
+            return { data: response.data, error: null };
+        }
+    } catch (error) {
+        console.log("Error", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.status };
+        }
+    }
+}
+
+export async function verifyEmail(token) {
+    try {
+        const params = { token }
+        const response = await api.get("/auth/verify-email", { params });
+        if (response.status >= 200 && response.status < 300) {
+            return { data: response.data, error: null };
+        }
+    } catch (error) {
+        console.log("Error", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.status };
+        }
+    }
+}
+
+export async function resetPassword(payload) {
+    try {
+        const response = await api.post("/auth/reset-password", payload);
         if (response.status >= 200 && response.status < 300) {
             return { data: response.data, error: null };
         }

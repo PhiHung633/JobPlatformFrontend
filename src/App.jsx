@@ -47,6 +47,8 @@ import LoginGoogleCallback from './pages/Login/LoginGoogleCallback.jsx';
 import { AuthProvider, useAuth } from './service/AuthProvider.jsx';
 import MomoCallback from './pages/Employer/MomoCallback.jsx';
 import MyCompany from './pages/Employer/MyCompany.jsx';
+import VerifyMailSuccess from './pages/VerifyMail/VerifyMailSuccess.jsx'
+import PasswordResetForm from './pages/ForgotPassword/ResetPasswordForm.jsx';
 
 
 
@@ -110,6 +112,8 @@ const App = () => {
           <Route path="/cong-ti/:id" element={<CompanyDetails />} />
           <Route path="/viec-lam/:id" element={<JobDetail />} />
           <Route path="/tim-viec-lam" element={<JobsSearch />} />
+          <Route path="/auth/verify-email" element={<VerifyMailSuccess />} />
+          <Route path="/auth/password-reset" element={<PasswordResetForm />} />
           <Route path="/403" element={<Forbidden />} />
           <Route
             path="/admin/*"
