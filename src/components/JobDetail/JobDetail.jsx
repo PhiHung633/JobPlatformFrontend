@@ -26,6 +26,7 @@ const JobDetail = () => {
     const [job, setJob] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [error1, setError1] = useState(null);
     const [isPopupOpen, setIsPopupOpen] = useState(false)
     const formatDate = (dateString) => {
         const [day, month, year] = dateString.split(" ")[0].split("-");
@@ -148,9 +149,17 @@ const JobDetail = () => {
                     setLoading(false);
                     return;
                 }
-
-                setJob(jobData);
-
+    
+                // Kiểm tra trạng thái của job
+                if (jobData.status === "SHOW") {
+                    setJob(jobData);
+                } else {
+                    setError1("Job is not available.");
+                    console.error(`Job status is ${jobData.status}`);
+                    setLoading(false);
+                    return;
+                }
+    
                 const { data: savesData, error: savesError } = await fetchJobSavesByUser();
                 if (savesError) {
                     console.error("Error fetching job saves:", savesError);
@@ -166,11 +175,11 @@ const JobDetail = () => {
                 setLoading(false);
             }
         };
-
+    
         if (id) {
             loadJobAndCheckSaveStatus();
         }
-    }, [id]);
+    }, [id]);    
 
     const handleApplyClick = () => {
         if (!userId) {
@@ -205,25 +214,25 @@ const JobDetail = () => {
         }
     };
 
-    // useEffect(() => {
-    //     if (error) {
-    //         toast.error(`Lỗi: ${error}`, {
-    //             position: "top-right",
-    //             autoClose: 5000,
-    //             hideProgressBar: false,
-    //             closeOnClick: true,
-    //             pauseOnHover: true,
-    //             draggable: true,
-    //             progress: undefined,
-    //         });
-    //     }
-    // }, [error]);
+    useEffect(() => {
+        if (error1) {
+            toast.error(`Lỗi: ${error1}`, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+        }
+    }, [error1]);
 
     useEffect(() => {
         // Kiểm tra xem người dùng đã đánh giá hay chưa
         const checkUserReview = () => {
-            const userReview =reviews.find((review) => review.id === id);
-            setHasReviewed(!userReview);
+            const userReview = reviews.find((review) => review.userId === userId);
+            setHasReviewed(!!userReview);
         };
         checkUserReview();
     }, [reviews, userId, id]);
@@ -238,24 +247,23 @@ const JobDetail = () => {
     }
 
     if (!job) {
-        return <p>No job found.</p>;
+        return <p className='flex justify-center items-center'>No job found.</p>;
     }
-
     // console.log("JOBDETAIL", job)
     // console.log("JOBMO", isPopupOpen)
     // console.log("COREVIEWMA", reviews)
     return (
-        <div className="p-6 flex justify-between max-w-5xl mx-56 gap-6 items-start">
+        <div className="p-6 flex flex-col lg:flex-row justify-between max-w-7xl mx-auto gap-6 items-start">
             {/* Left Column: Job Detail and Job Description */}
-            <div className="flex flex-col gap-6 w-4/5">
+            <div className="flex flex-col gap-6 w-full lg:w-4/5">
                 {/* Job Detail Section */}
                 <div className="bg-white shadow-md rounded-lg p-6">
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">
                         {job.title} tại {job.companyLocation}
                     </h2>
 
-                    <div className="flex justify-between mb-4">
-                        <div className="flex items-center text-gray-600">
+                    <div className="flex flex-col sm:flex-row sm:justify-between mb-4">
+                        <div className="flex items-center text-gray-600 mb-4 sm:mb-0">
                             <FontAwesomeIcon icon={faDollarSign} className="text-white text-xl mr-2 bg-green-600 px-4 py-3 rounded-full" />
                             <div>
                                 <p className="font-medium">Mức lương</p>
@@ -263,7 +271,7 @@ const JobDetail = () => {
                             </div>
                         </div>
 
-                        <div className="flex items-center text-gray-600">
+                        <div className="flex items-center text-gray-600 mb-4 sm:mb-0">
                             <FontAwesomeIcon icon={faMapMarkerAlt} className="text-white text-xl mr-2 bg-green-600 px-4 py-3 rounded-full" />
                             <div>
                                 <p className="font-medium">Địa điểm</p>
@@ -271,7 +279,7 @@ const JobDetail = () => {
                             </div>
                         </div>
 
-                        <div className="flex items-center text-gray-600">
+                        <div className="flex items-center text-gray-600 mb-4 sm:mb-0">
                             <FontAwesomeIcon icon={faHourglassHalf} className="text-white text-xl mr-2 bg-green-600 px-4 py-3 rounded-full" />
                             <div>
                                 <p className="font-medium">Kinh nghiệm</p>
@@ -288,7 +296,7 @@ const JobDetail = () => {
                     <div className="flex justify-between mt-4">
                         <button
                             onClick={handleApplyClick}
-                            className="bg-green-500 text-white w-4/6 mr-2 py-2 px-4 rounded-xl flex items-center justify-center hover:bg-green-600">
+                            className="bg-green-500 text-white w-full sm:w-4/6 mr-2 py-2 px-4 rounded-xl flex items-center justify-center hover:bg-green-600">
                             <FontAwesomeIcon icon={faPaperPlane} className="mr-2" />
                             Ứng tuyển ngay
                         </button>
@@ -297,7 +305,6 @@ const JobDetail = () => {
                             className="border border-green-500 text-green-500 py-2 px-4 rounded-xl flex items-center gap-2 hover:border-green-700"
                         >
                             <FontAwesomeIcon icon={faHeart} className={isFavorite ? 'text-red-500' : ''} />
-
                             {isFavorite ? 'Đã lưu' : 'Lưu tin'}
                         </button>
                     </div>
@@ -306,7 +313,6 @@ const JobDetail = () => {
                 {/* Job Description Section */}
                 <div className="bg-white shadow-md rounded-lg p-6">
                     <h3 className='text-xl font-bold text-gray-900 border-green-500 border-l-8 pl-2 '>Chi tiết tuyển dụng</h3>
-                    {/* <ImageGallery /> */}
                     <div className='mt-3'>
                         <h4 className="text-base font-semibold text-gray-800 mb-4">Mô tả công việc</h4>
                         <ul className="list-disc list-inside text-gray-600 space-y-2 ml-4">
@@ -377,8 +383,8 @@ const JobDetail = () => {
                         <button
                             onClick={handleReviewClick}
                             className={`py-2 px-4 rounded-xl mt-4 ${hasReviewed
-                                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                    : "bg-green-500 text-white hover:bg-green-600"
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-green-500 text-white hover:bg-green-600"
                                 }`}
                             disabled={hasReviewed} // Vô hiệu hóa nếu đã đánh giá
                         >
@@ -433,7 +439,7 @@ const JobDetail = () => {
             </div>
 
             {/* Right Column: Company Details */}
-            <div className="flex flex-col gap-4 w-2/5">
+            <div className="flex flex-col gap-4 w-full lg:w-2/5">
                 {/* Company Details Block */}
                 <div className="bg-white shadow-md rounded-lg p-4">
                     <div className="flex items-center mb-4">
@@ -512,6 +518,7 @@ const JobDetail = () => {
                     </div>
                 </div>
             </div>
+
             {isPopupOpen && (
                 <JobApplicationPopup isPopupOpen={isPopupOpen} job={job} handleCloseClick={handleCloseClick} userId={userId} />
             )}
