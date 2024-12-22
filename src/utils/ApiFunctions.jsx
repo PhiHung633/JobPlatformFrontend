@@ -244,6 +244,7 @@ export async function fetchAllJobs(page = 0, size = 10, title = '', related = fa
         if (related !== false) params.related = related;
         if (industry) params.industry = industry;
         if (address) params.address = address;
+        params.status = "SHOW"
 
         const response = await api.get(`/jobs`, { params });
 
