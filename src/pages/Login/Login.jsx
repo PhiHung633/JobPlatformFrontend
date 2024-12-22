@@ -152,7 +152,7 @@ const LoginForm = () => {
                                 className="bg-red-500 text-white w-full py-2 mx-1 rounded-lg"
                                 onClick={() => {
                                     window.location.href =
-                                        "https://accounts.google.com/o/oauth2/v2/auth?redirect_uri=http%3A%2F%2Flocalhost%3A5173%2FloginGoogle&response_type=code&client_id=1019353721616-0u30ou5beb58p5av6qfo9lguhtnh7n1s.apps.googleusercontent.com&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+openid&access_type=offline";
+                                        "https://accounts.google.com/o/oauth2/v2/auth?client_id=1019353721616-0u30ou5beb58p5av6qfo9lguhtnh7n1s.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fjobplatformfrontend.onrender.com%2FloginGoogle&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=consent";
                                 }}
                             >
                                 Google
