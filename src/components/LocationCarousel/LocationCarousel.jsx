@@ -19,10 +19,10 @@ const LocationCarousel = ({ selectedOption, onItemSelect }) => {
   const industries = [
     "Công nghệ thông tin",
     "Kế toán",
-    "Marketing / Truyền Thông / Quảng Cáo",
     "Giáo dục",
     "Y tế",
     "Kỹ thuật",
+    "Marketing / Truyền Thông / Quảng Cáo",
     "Thời trang",
     "Bất động sản",
   ];
@@ -53,7 +53,7 @@ const LocationCarousel = ({ selectedOption, onItemSelect }) => {
     <div className="relative w-full py-4">
       {/* Swiper */}
       <Swiper
-        spaceBetween={10}
+        spaceBetween={100}
         slidesPerView={4}
         loop={true}
         navigation={true}
@@ -62,8 +62,8 @@ const LocationCarousel = ({ selectedOption, onItemSelect }) => {
         {dataToDisplay.map((item, index) => (
           <SwiperSlide key={index}>
             <button
-              onClick={() => handleItemClick(item)} // Gọi handleItemClick khi click
-              className={`text-sm font-semibold rounded-3xl px-4 py-2 w-full flex items-center justify-center
+              onClick={() => handleItemClick(item)}
+              className={`text-sm font-semibold rounded-3xl px-6 py-2 w-48 flex items-center justify-center
                 border ${
                   selectedItem === item
                     ? "bg-green-500 text-white border-green-600"

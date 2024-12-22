@@ -150,7 +150,7 @@ const JobDetail = () => {
                     return;
                 }
     
-                // Kiểm tra trạng thái của job
+                console.log("JOBBDAAA",jobData)
                 if (jobData.status === "SHOW") {
                     setJob(jobData);
                 } else {
