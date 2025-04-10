@@ -2,7 +2,7 @@ import axios from "axios"
 import { param } from "jquery";
 
 export const api = axios.create({
-    baseURL: "https://jobplatformbackend.onrender.com"
+    baseURL: "http://localhost:8080"
 })
 
 function getAccessToken() {
@@ -1081,6 +1081,31 @@ export async function evaluateCvFile(id) {
             return { data: null, error: error.response.data, status: error.response.status };
         } else {
             return { data: null, error: "Network Error", status: null };
+        }
+    }
+}
+
+export async function getQuestions() {
+    try {
+        const response = await api.get("/questions");
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error fetching question ", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+        return { data: null, error: "Unexpected error", status: 500 };
+    }
+}
+
+export async function createQuestion(question) {
+    try {
+        const response = await api.post('/questions', question );
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error adding question", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
         }
     }
 }
