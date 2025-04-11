@@ -22,7 +22,7 @@ const JobApplied = () => {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [selectedStatus, setSelectedStatus] = useState("Trạng thái"); // Trạng thái được chọn
+    const [selectedStatus, setSelectedStatus] = useState("Trạng thái");
 
     const getApplications = async (status) => {
         setLoading(true);
@@ -38,7 +38,7 @@ const JobApplied = () => {
 
             const { data, error } = await fetchApplications({
                 email: email,
-                status: status !== "Trạng thái" ? status : undefined, // Chỉ truyền trạng thái nếu không phải mặc định
+                status: status !== "Trạng thái" ? status : undefined,
             });
 
             if (data) {

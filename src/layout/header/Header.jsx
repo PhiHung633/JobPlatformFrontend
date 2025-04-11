@@ -20,6 +20,8 @@ import {
   faGear,
   faMagnifyingGlass,
   faUserCog,
+  faArrowUp,
+  faWebAwesome,
 } from "@fortawesome/free-solid-svg-icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { format } from 'date-fns';
@@ -31,7 +33,7 @@ import { onMessage } from "firebase/messaging";
 import { messaging } from '../../utils/firebase.js'
 
 import DropdownItem from "../../components/DropdownItem/DropdownItem";
-import { fetchNotifications, fetchUserById } from "../../utils/ApiFunctions";
+import { fetchNotifications, fetchUserById, processMomoPayment } from "../../utils/ApiFunctions";
 
 
 function formatDate(dateString) {
@@ -55,6 +57,9 @@ const Header = () => {
   const [avatar, setAvatar] = useState("");
   const [currentRole, setCurrentRole] = useState("")
   const navigate = useNavigate();
+  const [isPremium, setIsPremium] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [amountToDeposit, setAmountToDeposit] = useState("100.000");
   let tempIdCounter = 0;
 
   const [pagination, setPagination] = useState({
@@ -114,9 +119,11 @@ const Header = () => {
 
   const fetchUser = async () => {
     const { data, error } = await fetchUserById(userId);
+    console.log("DAYNEEEE", data)
     if (data) {
       setUserName(data.fullName)
       setAvatar(data.avatarUrl)
+      setIsPremium(data.isPremium)
     } else {
       setError(error);
     }
@@ -212,6 +219,45 @@ const Header = () => {
       });
     }
   }, [isLoggedIn, userId]);
+
+  const formatCurrency = (value) => {
+    if (!value) return "";
+    return parseInt(value.replace(/\D/g, ""), 10).toLocaleString("vi-VN");
+  };
+
+  const handlePayment = async () => {
+    if (!amountToDeposit || parseInt(amountToDeposit.replace(/\D/g, ""), 10) <= 0) {
+      alert("Vui lòng nhập số tiền hợp lệ.");
+      return;
+    }
+
+    const paymentData = {
+      // amount: parseInt(amountToDeposit.replace(/\D/g, ""), 10),
+      amount: 100000,
+      account: userEmail,
+      type: "PREMIUM"
+    };
+
+    try {
+      const { data, error } = await processMomoPayment(paymentData);
+
+      if (error) {
+        alert(`Thanh toán thất bại: ${error.message || "Có lỗi xảy ra."}`);
+        return;
+      }
+
+      if (data?.shortLink) {
+        alert("Đang chuyển hướng đến cổng thanh toán...");
+        window.location.href = data.shortLink;
+        setShowModal(false);
+      } else {
+        alert("Không tìm thấy liên kết thanh toán.");
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      alert("Có lỗi xảy ra trong quá trình xử lý thanh toán.");
+    }
+  };
 
   return (
     <header className="w-full bg-white sticky top-0 z-50 shadow-sm px-4">
@@ -332,21 +378,24 @@ const Header = () => {
                 )}
               </li>
               <li className="relative group">
-                <a className="flex items-center justify-center w-9 h-9 bg-green-100 rounded-full text-green-600">
+                <Link to={"/tin-nhan"} className="flex items-center justify-center w-9 h-9 bg-green-100 rounded-full text-green-600">
                   <FontAwesomeIcon icon={faMessage} />
-                </a>
+                </Link>
               </li>
               <li className="relative group">
                 <img
                   src={avatar}
                   alt="User Avatar"
-                  className="w-9 h-9 rounded-full object-cover cursor-pointer"
+                  className="w-9 h-9 rounded-full object-cover cursor-pointer relative"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src =
                       "https://media4.giphy.com/media/xTk9ZvMnbIiIew7IpW/giphy.gif?cid=6c09b952souzn361oda9jrwdqfbhyupzrijte9zxczqrfh69&ep=v1_internal_gif_by_id&rid=giphy.gif&ct=g";
                   }}
                 />
+                {isPremium ? <FontAwesomeIcon icon={faWebAwesome} className="absolute text-green-400 top-0 right-0 " />
+                  : <></>
+                }
                 <div className="absolute right-0 mt-1 w-80 bg-white rounded-lg py-4 px-5 opacity-0 invisible transform -translate-y-5 transition ease-in-out duration-300 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
                   <div className="flex items-center mb-4">
                     <img
@@ -369,6 +418,18 @@ const Header = () => {
                   <ul>
                     <DropdownItem icon={faGear} text="Cài đặt thông tin cá nhân" to={"/cai-dat-thong-tin-ca-nhan"} />
                     <DropdownItem icon={faShield} text="Đổi mật khẩu" to={"/doi-mat-khau"} />
+                    {currentRole === "ROLE_JOB_SEEKER" && (
+                      <li onClick={() => setShowModal(true)} className={`dropdownItem flex items-center p-2 my-2 bg-gray-100 rounded transition duration-300 ease-in-out cursor-pointer hover:bg-green-50 ${isPremium ? "opacity-50 cursor-not-allowed pointer-events-none" : "opacity-100 cursor-pointer"}`}>
+                        <div className="flex w-full items-center">
+                          <FontAwesomeIcon className="icon text-green-500 w-5 mr-2 opacity-50 transition-all duration-500 ease"
+                            icon={faArrowUp} />
+                          <span className="flex-1 text-left text-gray-800 font-semibold transition-colors duration-500 ease
+                       hover:text-green-600">
+                            Nâng cấp tài khoản vip
+                          </span>
+                        </div>
+                      </li>
+                    )}
                     {currentRole === "ROLE_RECRUITER" && (
                       <DropdownItem
                         icon={faBriefcase}
@@ -390,6 +451,42 @@ const Header = () => {
                     }} />
                   </ul>
                 </div>
+                {showModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white rounded-xl shadow-lg w-96 p-6">
+                      <h3 className="text-xl font-semibold text-gray-800">Nạp tiền</h3>
+                      <p className="mt-4 text-sm font-semibold text-red-600">
+                        (*) Lưu ý: Với <span className="text-blue-500 font-bold">100.000 VNĐ</span>, bạn đã được nâng cấp tài khoản vip
+                      </p>
+                      <p className="mt-4 text-gray-600">Nhập số tiền bạn muốn nạp:</p>
+                      <input
+                        type="text"
+                        value={amountToDeposit}
+                        onChange={(e) => {
+                          const formattedValue = formatCurrency(e.target.value);
+                          setAmountToDeposit(formattedValue);
+                        }}
+                        disabled
+                        placeholder="Số tiền"
+                        className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                      <div className="mt-6 flex justify-end space-x-4">
+                        <button
+                          onClick={handlePayment}
+                          className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                        >
+                          Thanh toán
+                        </button>
+                        <button
+                          onClick={() => setShowModal(false)}
+                          className="px-4 py-2 bg-gray-300 text-gray-800 rounded-xl hover:bg-gray-400 focus:ring-2 focus:ring-gray-200 focus:outline-none"
+                        >
+                          Hủy
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </li>
             </>
           ) : (

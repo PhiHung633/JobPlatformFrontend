@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FaBars, FaBell, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
+import { FaBars, FaBell, FaUserCircle, FaSignOutAlt, FaFacebookMessenger } from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
 import { format } from 'date-fns';
 import { toast } from "react-toastify";
@@ -8,6 +8,9 @@ import { onMessage } from "firebase/messaging";
 import { messaging } from '../../utils/firebase.js'
 import { fetchNotifications } from "../../utils/ApiFunctions";
 import { Link, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMessage } from "@fortawesome/free-solid-svg-icons";
+
 
 // function formatDate(dateString) {
 //   const date = new Date(dateString);
@@ -199,7 +202,11 @@ const Header = () => {
             </div>
           )}
         </div>
-
+        <div>
+          <Link to={"/tin-nhan"} className="">
+            <FontAwesomeIcon icon={faMessage} />
+          </Link>
+        </div>
         {/* User Icon */}
         <div className="relative">
           <FaUserCircle

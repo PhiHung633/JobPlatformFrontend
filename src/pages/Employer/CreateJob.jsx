@@ -22,6 +22,7 @@ const CreateJob = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [workExperience, setWorkExperience] = useState("");
+  const [requirement, setRequirement] = useState("");
   const [benefits, setBenefits] = useState("");
   const [salary, setSalary] = useState("");
   const [deadline, setDeadline] = useState(dayjs());
@@ -71,6 +72,7 @@ const CreateJob = () => {
     if (state) {
       setTitle(state.title);
       setDescription(state.description);
+      setRequirement(state.requirement);
       setWorkExperience(state.workExperience);
       setBenefits(state.benefits);
       setIndustry(state.industry);
@@ -133,6 +135,7 @@ const CreateJob = () => {
     if (
       !title.trim() ||
       !description.trim() ||
+      !requirement.trim() ||
       !industry ||
       !level ||
       !workType ||
@@ -149,6 +152,7 @@ const CreateJob = () => {
     const jobData = {
       title,
       description,
+      requirement,
       workExperience,
       benefits,
       industry,
@@ -263,7 +267,7 @@ const CreateJob = () => {
             </div>
             <div>
               <label htmlFor="industry" className="block text-sm font-medium mb-2">Ngành nghề</label>
-              <TextField
+              {/* <TextField
                 id="industry"
                 type="text"
                 placeholder="Ngành nghề"
@@ -271,7 +275,28 @@ const CreateJob = () => {
                 onChange={(e) => setIndustry(e.target.value)}
                 className="w-full p-3 border rounded-lg"
                 disabled={!!jobId}
-              />
+              /> */}
+              <Select
+                id="industry"
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value)}
+                displayEmpty
+                className="w-full"
+                disabled={!!jobId}
+                renderValue={(selected) => !selected ? <em>Chọn ngành nghề</em> : selected}
+              >
+                <MenuItem value="" disabled>
+                  <span className="text-gray-400">Chọn ngành nghề</span>
+                </MenuItem>
+                <MenuItem value="Kỹ thuật">Kỹ thuật</MenuItem>
+                <MenuItem value="Bất động sản">Bất động sản</MenuItem>
+                <MenuItem value="Công nghệ thông tin">Công nghệ thông tin</MenuItem>
+                <MenuItem value="Giáo dục">Giáo dục</MenuItem>
+                <MenuItem value="Kế toán">Kế toán</MenuItem>
+                <MenuItem value="Marketing / Truyền thông / Quảng cáo">Marketing / Truyền thông / Quảng cáo</MenuItem>
+                <MenuItem value="Thời trang">Thời trang</MenuItem>
+                <MenuItem value="Y tế">Y tế</MenuItem>
+              </Select>
             </div>
             <div>
               <label htmlFor="description" className="block text-sm font-medium mb-2">Mô tả công việc</label>
@@ -286,14 +311,32 @@ const CreateJob = () => {
             </div>
             <div>
               <label htmlFor="level" className="block text-sm font-medium mb-2">Cấp bậc</label>
-              <TextField
+              {/* <TextField
                 id="level"
                 type="text"
                 placeholder="Cấp bậc"
                 value={level}
                 onChange={(e) => setLevel(e.target.value)}
                 className="w-full p-3 border rounded-lg"
-              />
+              /> */}
+              <Select
+                id="level"
+                value={level}
+                onChange={(e) => setLevel(e.target.value)}
+                displayEmpty
+                className="w-full"
+                renderValue={(selected) => !selected ? <em>Chọn cấp bậc làm việc</em> : selected}
+              >
+                <MenuItem value="" disabled>
+                  <span className="text-gray-400">Chọn cấp bậc làm việc</span>
+                </MenuItem>
+                <MenuItem value="Intern">Intern</MenuItem>
+                <MenuItem value="Fresher">Fresher</MenuItem>
+                <MenuItem value="Junior">Junior</MenuItem>
+                <MenuItem value="Senior">Senior</MenuItem>
+                <MenuItem value="Middle">Middle</MenuItem>
+                <MenuItem value="Manager">Manager</MenuItem>
+              </Select>
             </div>
             <div className="space-y-2">
               {/* Province */}
@@ -377,6 +420,16 @@ const CreateJob = () => {
                   onChange={(e) => setNumberOfRecruits(e.target.value)}
                   className="w-full p-3 border rounded-lg"
                 />
+              </div>
+              <div>
+                <label htmlFor="requirement" className="block text-sm font-medium mb-2">Yêu cầu công việc</label>
+                <textarea
+                  id="requirement"
+                  placeholder="Yêu cầu công việc"
+                  value={requirement}
+                  onChange={(e) => setRequirement(e.target.value)}
+                  className="w-full p-1 border rounded-[5px] items-center"
+                ></textarea>
               </div>
               <div>
                 <label htmlFor="benefits" className="block text-sm font-medium mb-2">Phúc lợi</label>
