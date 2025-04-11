@@ -1,7 +1,8 @@
 import axios from "axios"
 
 export const api = axios.create({
-    baseURL: "https://jobplatformbackend.onrender.com"
+    // baseURL: "https://jobplatformbackend.onrender.com"
+    baseURL: "http://localhost:8080"
 })
 
 function getAccessToken() {
@@ -819,8 +820,6 @@ export async function fetchNotifications(userId = null, page = 0, size = 10) {
         if (userId) {
             params.id = userId;
         }
-        console.log("USERID", userId)
-
         const response = await api.get(`users/${userId}/notifications`, { params });
 
         const notifications = response.data;
@@ -1051,3 +1050,147 @@ export async function evaluateCvFile(id) {
         }
     }
 }
+
+export async function fetchChatMessages(sender, receiver, page = 0, size = 10) {
+    try {
+        const response = await api.get('/chat-message',{
+            params:{
+                sender,
+                receiver,
+                page,
+                size,
+            },
+        });
+        return { data: response.data, error: null, headers: response.headers };
+    } catch (error) {
+        console.log("Error fetching chat messages", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }else{
+            return { data: null, error: 'Network Error', status: 500};
+        }
+    }
+}
+
+export async function fetchAllReceiver() {
+    try {
+        const response = await api.get('/chat-message/receiver');
+        return { data: response.data, error: null};
+    } catch (error) {
+        console.log("Error fetching chat receiver", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }else{
+            return { data: null, error: 'Network Error', status: 500};
+        }
+    }
+}
+
+export async function deleteMessage(id) {
+    try {
+        await api.delete(`/chat-message/${id}`);
+        return { data: null, error: null };
+    } catch (error) {
+        console.log("Error deleting message", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function updateMessage(id, content) {
+    try {
+        await api.patch(`/chat-message/${id}`, { content });
+        return { data: null, error: null };
+    } catch (error) {
+        console.log("Error editing message", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function startQuiz(timeLimit, numberOfQuestion) {
+    try {
+        const response = await api.post("/quiz/start",{
+            timeLimit,
+            numberOfQuestion
+        });
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error start quiz", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+        return {data:null, error: error.message, status: null};
+    }
+}
+
+export async function submitQuiz(quizAttemptId) {
+    try {
+        const response = await api.post(`/quiz/${quizAttemptId}/submit`);
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error submit quiz", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+        return { data: null, error: error.message, status: null };
+    }
+}
+
+export async function getQuizAttemp(id) {
+    try {
+        const response = await api.get(`/quiz/${id}`);
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error fetching quiz", error);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        } else {
+            return { data: null, error: "Network Error", status: null };
+        }
+    }
+}
+
+export async function findBestJob(idCv, limit) {
+    try{
+        const response = await api.get(`/cvs/${idCv}/best-job`,{
+            params: {limit}
+        });
+        return {data: response.data, error: null};
+    }catch(error){
+        console.log("Error find best job", error)
+        if(error.response){
+            return {data: null, error: error.response};
+        }
+    }  
+}
+
+export async function getBestCvMatch(idJob, limit) {
+    try {
+        const response = await api.get(`/jobs/${idJob}/best-cv`,{
+            params: { limit }
+        });
+        return {data: response.data, error: null};
+    } catch (error) {
+        console.log("Error get best cv", error);
+        if(error.response){
+            return {data: null, error: error.response};
+        }
+    }
+}
+
+export async function extendJob(jobId) {
+    try {
+        const response = await api.post(`/jobs/${jobId}/extends`);
+        return { data: response.data, error: null, status: response.status };
+    } catch (error) {
+        console.log("Error extend job", error.response || error.message);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+        return { data: null, error: error.message, status: null };
+    }
+}
+

@@ -12,6 +12,7 @@ const MomoCallback = () => {
     isProcessed.current = true;
 
     const params = Object.fromEntries(searchParams.entries());
+    const orderId = params.orderId || "";
 
     const processCallback = async () => {
       try {
@@ -22,8 +23,10 @@ const MomoCallback = () => {
         } else {
           alert("Xử lý thanh toán thành công!");
           console.log("Callback Response:", data);
-
-          navigate("/dashboard/tao-cong-viec");
+          if(orderId.includes("PREMIUM"))
+            navigate("/");
+          else
+            navigate("/dashboard/tao-cong-viec");
         }
       } catch (err) {
         console.error("Unexpected error in callback processing:", err);

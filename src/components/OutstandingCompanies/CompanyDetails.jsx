@@ -7,6 +7,7 @@ import { addJobSave, deleteJobSave, fetchJobSavesByUser, fetchJobsByCompany, get
 import JobApplicationPopup from "../JobDetail/JobApplicationPopup";
 import { ClipLoader } from "react-spinners";
 import { toast } from "react-toastify";
+import MapComponent from "../MapComponent/MapComponent";
 
 function calculateDaysRemaining(deadline) {
     const deadlineDate = parseISO(deadline);
@@ -182,138 +183,140 @@ const CompanyDetails = () => {
                 </div>
             </div>
 
-            <div className="mt-8 grid grid-cols-3 gap-6">
-                {/* Giới thiệu công ty */}
-                <div className="col-span-2 bg-white p-6 shadow-md rounded-lg">
-                    <h2 className="text-xl font-bold text-green-700 mb-4">Giới thiệu công ty</h2>
-                    <p className="text-gray-600">
-                        {company.description}
-                    </p>
+            <div className="mt-8 grid grid-cols-3 gap-6 items-start">
+                <div className="col-span-2 space-y-5">
+                    <div className=" bg-white p-6 shadow-md rounded-lg flex flex-col">
+                        <h2 className="text-xl font-bold text-green-700 mb-4">Giới thiệu công ty</h2>
+                        <p className="text-gray-600">
+                            {company.description}
+                        </p>
+                    </div>
+                    <div className="bg-white shadow-md rounded-lg p-6 mt-5">
+                        <h2 className="text-xl font-bold text-green-700 mb-4">Tuyển dụng</h2>
+
+                        {/* Thanh tìm kiếm */}
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="relative flex-1">
+                                <FaSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Tên công việc, vị trí ứng tuyển..."
+                                    className="w-full pl-10 pr-4 py-2 border rounded-lg shadow-sm focus:outline-none"
+                                    value={searchJob}
+                                    onChange={(e) => setSearchJob(e.target.value)}
+                                />
+                            </div>
+                            <button className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700">
+                                <FaSearch />
+                                Tìm kiếm
+                            </button>
+                        </div>
+
+                        {/* Danh sách công việc */}
+
+                        {filteredJobs.length > 0 ? (
+                            filteredJobs.map((job, index) => (
+                                <div
+                                    key={index}
+                                    className="flex items-center gap-4 border rounded-lg p-4 mb-4 bg-white shadow-sm hover:shadow-lg hover:bg-gray-50 group"
+                                >
+                                    <div className="w-20 h-20 flex-shrink-0">
+                                        <img
+                                            src={job.companyImages}
+                                            alt="Logo"
+                                            className="w-full h-full object-cover rounded-md border"
+                                        />
+                                    </div>
+
+                                    {/* Thông tin công việc */}
+                                    <div className="flex-1">
+                                        <Link to={`/viec-lam/${job.id}`}>
+                                            <h3 className="text-lg font-bold text-gray-800 group-hover:text-green-600 group-hover:underline flex items-center gap-2">
+                                                {job.title}
+                                            </h3>
+                                        </Link>
+                                        <p className="text-gray-600 text-sm mb-3">
+                                            {job.company}
+                                        </p>
+                                        <div className="flex space-x-4">
+                                            <span className="bg-gray-200 px-3 rounded-xl">{job.companyLocation}</span>
+                                            <span className="bg-gray-200 px-3 rounded-xl">
+                                                {job.deadline
+                                                    ? calculateDaysRemaining(job.deadline)
+                                                    : 'Không có deadline'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Mức lương, nút ứng tuyển và trái tim */}
+                                    <div className="text-right">
+                                        <p className="text-green-700 font-semibold text-sm flex items-center gap-1 justify-end">
+                                            {job.salary.toLocaleString()} VNĐ
+                                        </p>
+                                        <div className="flex items-center space-x-4">
+                                            <button
+                                                onClick={() => handleApplyClick(job)}
+                                                className="mt-2 px-4 py-2 bg-green-600 text-white text-sm rounded-xl hover:bg-green-700"
+                                            >
+                                                Ứng tuyển
+                                            </button>
+                                            <button
+                                                onClick={() => toggleFavorite(job.id)}
+                                                className="mt-2 text-green-500 hover:text-green-700 bg-gray-100 p-2 rounded-full"
+                                            >
+                                                {savedJobs.includes(job.id) ? (
+                                                    <FaHeart size={18} />
+                                                ) : (
+                                                    <FaRegHeart size={18} />
+                                                )}
+                                            </button>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-gray-500 italic">Không tìm thấy công việc nào.</p>
+                        )}
+                        {isPopupOpen && selectedJob && (
+                            <JobApplicationPopup
+                                isPopupOpen={isPopupOpen}
+                                job={selectedJob}
+                                handleCloseClick={handleCloseClick}
+                                userId={userId}
+                            />
+                        )}
+                        <div className="flex justify-center mt-4 space-x-2">
+                            {[...Array(totalPages)].map((_, index) => (
+                                <button
+                                    key={index}
+                                    className={`px-3 py-1 border rounded ${index === currentPage
+                                        ? "bg-blue-500 text-white"
+                                        : "bg-gray-100 hover:bg-gray-200"
+                                        }`}
+                                    onClick={() => handlePageChange(index)}
+                                    disabled={index === currentPage}
+                                >
+                                    {index + 1}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
+                {/* Giới thiệu công ty */}
 
                 {/* Thông tin liên hệ */}
-                <div className="bg-white p-6 shadow-md rounded-lg">
+                <div className="col-span-1 bg-white p-6 shadow-md rounded-lg flex flex-col">
                     <h2 className="text-xl font-bold text-green-700 mb-4">Thông tin liên hệ</h2>
                     <p className="text-gray-600">
                         📍 <strong>Địa chỉ công ty:</strong> {company.location}
                     </p>
+                    <MapComponent address={company.location} companyName={company.name} />
                 </div>
             </div>
+
             {/* Tuyển dụng */}
-            <div className="bg-white shadow-md rounded-lg p-6 mt-5">
-                <h2 className="text-xl font-bold text-green-700 mb-4">Tuyển dụng</h2>
 
-                {/* Thanh tìm kiếm */}
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="relative flex-1">
-                        <FaSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Tên công việc, vị trí ứng tuyển..."
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg shadow-sm focus:outline-none"
-                            value={searchJob}
-                            onChange={(e) => setSearchJob(e.target.value)}
-                        />
-                    </div>
-                    <button className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700">
-                        <FaSearch />
-                        Tìm kiếm
-                    </button>
-                </div>
-
-                {/* Danh sách công việc */}
-
-                {filteredJobs.length > 0 ? (
-                    filteredJobs.map((job, index) => (
-                        <div
-                            key={index}
-                            className="flex items-center gap-4 border rounded-lg p-4 mb-4 bg-white shadow-sm hover:shadow-lg hover:bg-gray-50 group"
-                        >
-                            <div className="w-20 h-20 flex-shrink-0">
-                                <img
-                                    src={job.companyImages}
-                                    alt="Logo"
-                                    className="w-full h-full object-cover rounded-md border"
-                                />
-                            </div>
-
-                            {/* Thông tin công việc */}
-                            <div className="flex-1">
-                                <Link to={`/viec-lam/${job.id}`}>
-                                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-green-600 group-hover:underline flex items-center gap-2">
-                                        {job.title}
-                                    </h3>
-                                </Link>
-                                <p className="text-gray-600 text-sm mb-3">
-                                    {job.company}
-                                </p>
-                                <div className="flex space-x-4">
-                                    <span className="bg-gray-200 px-3 rounded-xl">{job.companyLocation}</span>
-                                    <span className="bg-gray-200 px-3 rounded-xl">
-                                        {job.deadline
-                                            ? calculateDaysRemaining(job.deadline)
-                                            : 'Không có deadline'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Mức lương, nút ứng tuyển và trái tim */}
-                            <div className="text-right">
-                                <p className="text-green-700 font-semibold text-sm flex items-center gap-1 justify-end">
-                                    {job.salary.toLocaleString()} VNĐ
-                                </p>
-                                <div className="flex items-center space-x-4">
-                                    <button
-                                        onClick={() => handleApplyClick(job)}
-                                        className="mt-2 px-4 py-2 bg-green-600 text-white text-sm rounded-xl hover:bg-green-700"
-                                    >
-                                        Ứng tuyển
-                                    </button>
-                                    <button
-                                        onClick={() => toggleFavorite(job.id)}
-                                        className="mt-2 text-green-500 hover:text-green-700 bg-gray-100 p-2 rounded-full"
-                                    >
-                                        {savedJobs.includes(job.id) ? (
-                                            <FaHeart size={18} />
-                                        ) : (
-                                            <FaRegHeart size={18} />
-                                        )}
-                                    </button>
-                                    {isPopupOpen && (
-                                        <JobApplicationPopup isPopupOpen={isPopupOpen} job={job} handleCloseClick={handleCloseClick} userId={userId} />
-                                    )}
-                                </div>
-                            </div>
-
-                        </div>
-                    ))
-                ) : (
-                    <p className="text-gray-500 italic">Không tìm thấy công việc nào.</p>
-                )}
-                {isPopupOpen && selectedJob && (
-                    <JobApplicationPopup
-                        isPopupOpen={isPopupOpen}
-                        job={selectedJob}
-                        handleCloseClick={handleCloseClick}
-                        userId={userId}
-                    />
-                )}
-                <div className="flex justify-center mt-4 space-x-2">
-                    {[...Array(totalPages)].map((_, index) => (
-                        <button
-                            key={index}
-                            className={`px-3 py-1 border rounded ${index === currentPage
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-100 hover:bg-gray-200"
-                                }`}
-                            onClick={() => handlePageChange(index)}
-                            disabled={index === currentPage}
-                        >
-                            {index + 1}
-                        </button>
-                    ))}
-                </div>
-            </div>
         </div>
     );
 };

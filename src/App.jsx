@@ -31,6 +31,8 @@ import Dashboard from './pages/Employer/Dashboard.jsx';
 import CreateJob from './pages/Employer/CreateJob.jsx';
 import ManageJobs from './pages/Employer/ManageJobs.jsx';
 import ManageCV from './pages/Employer/ManageCV.jsx';
+import Message from './pages/Message/Message.jsx';
+import Chat from './pages/Message/Chat.jsx';
 import Admin from './pages/Admin/AdminPage.jsx';
 import { useEffect, useState } from 'react';
 import CvList from './pages/JobSeeker/CVList.jsx';
@@ -47,13 +49,15 @@ import LoginGoogleCallback from './pages/Login/LoginGoogleCallback.jsx';
 import { AuthProvider, useAuth } from './service/AuthProvider.jsx';
 import MomoCallback from './pages/Employer/MomoCallback.jsx';
 import MyCompany from './pages/Employer/MyCompany.jsx';
+import IQQuiz from './pages/IQQuiz/IQQuiz.jsx';
+import IQHome from './pages/IQQuiz/IQHome.jsx';
 
 
 
 const App = () => {
   const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Set loading to true initially
+  const [isLoading, setIsLoading] = useState(true);
   const { currentUserRole, updateRole } = useAuth();
 
   // Load the role from localStorage once at the start
@@ -62,7 +66,7 @@ const App = () => {
     if (cachedRole) {
       updateRole(cachedRole);
     }
-    setIsLoading(false); // Set loading to false once role is determined
+    setIsLoading(false); 
   }, [updateRole]);
 
   // Fetch user role from token if available
@@ -96,6 +100,7 @@ const App = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen w-full">
+    {/* min-h-screen */}
       {!shouldHideHeader && <Header />}
       <ToastContainer />
       <div className="w-full mx-auto">
@@ -110,6 +115,9 @@ const App = () => {
           <Route path="/cong-ti/:id" element={<CompanyDetails />} />
           <Route path="/viec-lam/:id" element={<JobDetail />} />
           <Route path="/tim-viec-lam" element={<JobsSearch />} />
+          <Route path="/tin-nhan" element={<Message/>} />
+          <Route path="/iq-test" element={<IQQuiz/>} />
+          <Route path="/iq-home" element={<IQHome/>} />
           <Route path="/403" element={<Forbidden />} />
           <Route
             path="/admin/*"
@@ -149,6 +157,7 @@ const App = () => {
           <Route path="/summary" element={<PrivateRouteForJobSeeker element={<Summary />} />} />
           <Route path="/extra" element={<PrivateRouteForJobSeeker element={<Extra />} />} />
           <Route path="/preview" element={<PrivateRouteForJobSeeker element={<Preview />} />} />
+          {/* <Route path="/message" element={<PrivateRouteForJobSeeker element={<Message/>}/>}/> */}
         </Routes>
       </div>
     </div>

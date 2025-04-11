@@ -76,7 +76,7 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
     if (loading) {
         return (
             isPopupOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-opacity-100 flex items-center justify-center z-50">
                     <div className="bg-white w-full max-w-lg p-6 rounded-xl shadow-lg relative">
                         <div className="flex justify-center items-center min-h-screen">
                             <ClipLoader color="#4caf50" size={40} />
@@ -89,7 +89,7 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
 
     return (
         isPopupOpen && (
-            <div className="mt-20 fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="mt-20 fixed inset-0 bg-opacity-100  flex items-center justify-center z-50">
                 <div className="bg-white w-full max-w-lg p-6 rounded-xl shadow-lg relative">
                     <h2 className="text-xl font-bold mb-4 text-green-600">
                         Ứng tuyển <span className="font-bold">{job.title || job[0].title} tại {job.companyLocation || job[0].companyLocation}</span>
@@ -111,7 +111,7 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
                                             >
                                                 <div className="flex items-center justify-between px-4 py-2">
                                                     <div className="flex items-center space-x-2">
-                                                        <p className="text-gray-700">{cv.jobPosition || "CV không tên"}</p>
+                                                        <p className="text-gray-700 truncate w-40">{cv.jobPosition || "CV không tên"}</p>
                                                         <button
                                                             className="text-green-600 hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
                                                             onClick={() => handleCvClick(cv)}
@@ -144,7 +144,7 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
                                             >
                                                 <div className="flex items-center justify-between px-4 py-2">
                                                     <div className="flex items-center space-x-2">
-                                                        <p className="text-gray-700">{cv.cvName || "CV không tên"}</p>
+                                                        <p className="text-gray-700 truncate w-40">{cv.cvName || "CV không tên"}</p>
                                                         <Link
                                                             to={cv.cvUrl}
                                                             className="text-green-600 hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
@@ -173,8 +173,8 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
                         {selectedCV && (
                             <div className="flex items-center justify-between border border-green-500 rounded-xl px-4 py-2">
                                 <div className="flex items-center space-x-2">
-                                    <p className="font-semibold text-green-600">
-                                        {selectedCV.type}: <span className="text-gray-700">{selectedCV.jobPosition ?? selectedCV.cvName}</span>
+                                    <p className="font-semibold text-green-600 truncate w-40">
+                                        {selectedCV.type}: <span className="text-gray-700 truncate w-20">{selectedCV.jobPosition ?? selectedCV.cvName}</span>
                                     </p>
                                     <Link
                                         to={selectedCV.cvUrl}

@@ -6,7 +6,7 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
-import { fetchJobs, fetchApplications, fetchUserById, fetchJobById, getCvFile, getCv, updateApplicationStatus } from '../../utils/ApiFunctions';
+import { fetchJobs, fetchApplications, fetchUserById, fetchJobById, getCvFile, getCv, updateApplicationStatus, getBestCvMatch } from '../../utils/ApiFunctions';
 import StatusModal from './StatusModal';
 import InterviewInviteModal from './InterviewInviteModal';
 import { CircularProgress } from "@mui/material";
@@ -27,20 +27,35 @@ const ManageCV = () => {
   const navigate = useNavigate();
 
 
-  const loadJobs = async () => {
+  const loadAllJobs = async () => {
     setLoading(true);
     const token = localStorage.getItem('accessToken');
     if (token) {
       const decodedToken = jwtDecode(token);
       setUserId(decodedToken.user_id);
     }
-    const result = await fetchJobs(userId);
-    console.log("RESUWWWWW", result)
-    if (result && result.data) {
-      setJobs(result.data);
-    } else {
-      console.error("Lỗi khi gọi API:", result.error, result.status);
+
+    let allJobs = [];
+    let page = 0;
+    let totalPages = 1;
+
+    try {
+      while (page < totalPages) {
+        const result = await fetchJobs(userId, page, 10);
+        if (result.data) {
+          allJobs = [...allJobs, ...result.data];
+          totalPages = result.totalPages;
+          page++;
+        } else {
+          console.error("Lỗi khi gọi API:", result.error, result.status);
+          break;
+        }
+      }
+      setJobs(allJobs);
+    } catch (err) {
+      console.error("Error loading jobs:", err);
     }
+
     setLoading(false);
   };
 
@@ -102,7 +117,7 @@ const ManageCV = () => {
   };
 
   useEffect(() => {
-    loadJobs();
+    loadAllJobs();
   }, []);
 
   useEffect(() => {
@@ -110,6 +125,7 @@ const ManageCV = () => {
       loadApplications(selectedJobId, statusFilter);
     }
   }, [selectedJobId, statusFilter, searchTerm, jobs]);
+  console.log(selectedJobId)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -189,6 +205,10 @@ const ManageCV = () => {
     }
   };
 
+  const uniqueJobs = Array.from(
+    new Map(jobs.map((job) => [job.title, job])).values()
+  );
+
   return (
     <div className="p-8 bg-white">
       <h2 className="text-2xl font-semibold mb-6">Quản lý CV ứng viên</h2>
@@ -219,7 +239,7 @@ const ManageCV = () => {
           className="w-48"
         >
           <MenuItem value="">Chọn tin tuyển dụng</MenuItem>
-          {jobs.map((job) => (
+          {uniqueJobs.map((job) => (
             <MenuItem key={job.id} value={job.id}>
               {job.title}
             </MenuItem>
