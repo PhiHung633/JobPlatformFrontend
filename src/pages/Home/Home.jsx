@@ -41,11 +41,11 @@ const Home = () => {
 
     const loadJobs = async (currentPage, industry = "", address = "") => {
         setLoading(true);
-        console.log("INDUSTRY", industry);
         const response = await fetchAllJobs(currentPage, 9, '', false, industry, address);
         if (response && response.data) {
             // Lọc công việc có status === "SHOW"
-            const filteredJobs = response.data.filter(job => job.status === "SHOW");
+            console.log("LACHINHAN",response.data)
+            const filteredJobs = response.data.filter(job => job.status === "SHOW" && new Date(job.deadline) > new Date());
             setJobs(filteredJobs);
 
             // Tính lại totalPages và totalElements dựa trên công việc đã lọc

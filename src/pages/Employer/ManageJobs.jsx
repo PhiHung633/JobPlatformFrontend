@@ -9,9 +9,10 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import { jwtDecode } from "jwt-decode";
-import { fetchJobs, updateJob } from '../../utils/ApiFunctions';
+import { extendJob, fetchJobs, getBestCvMatch, getCv, getCvFile, updateJob } from '../../utils/ApiFunctions';
 import Swal from 'sweetalert2';
 import Tooltip from '@mui/material/Tooltip';
+import { ClipLoader } from 'react-spinners';
 
 
 const ManageJobs = () => {
@@ -21,7 +22,10 @@ const ManageJobs = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [userId, setUserId] = useState('');
+  const [openModal, setOpenModal] = useState(false);
+  const [cvs, setCvs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loading1, setLoading1] = useState(true);
   const navigate = useNavigate();
 
   const loadJobs = async (page = 0) => {
@@ -104,6 +108,7 @@ const ManageJobs = () => {
         id: job.id,
         title: job.title,
         description: job.description,
+        requirement: job.requirement,
         workExperience: job.workExperience,
         benefits: job.benefits,
         salary: job.salary,
@@ -135,6 +140,72 @@ const ManageJobs = () => {
     loadJobs(newPage);
   };
 
+  const handleFindSuitableCandidates = async (jobId) => {
+    setLoading1(true);
+    if (jobId) {
+      try {
+        const response = await getBestCvMatch(jobId, 10);
+        console.log("THIRALAVAY", response.data);
+        setCvs(response.data);
+        setOpenModal(true);
+        setLoading1(false);
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách CV:", error);
+        alert("Đã có lỗi xảy ra khi tìm ứng viên.");
+      }
+    } else {
+      alert("Vui lòng chọn một tin tuyển dụng trước.");
+    }
+  };
+
+  const handleExtendJob = async (jobId) => {
+    if (!jobId) return;
+
+    const confirmExtend = window.confirm("Nếu gia hạn bạn sẽ mất một lần đăng tin. Bạn có chắc chắn muốn gia hạn?");
+    if (!confirmExtend) return;
+
+    try {
+      const response = await extendJob(jobId);
+      if (response.status === 200) {
+        alert("Bạn đã gia hạn thành công");
+      }
+    } catch (error) {
+      console.error("Lỗi khi gia hạn công việc:", error);
+      alert("Đã có lỗi xảy ra khi gia hạn công việc");
+    }
+  };
+
+  const handleCvClick = async (cv) => {
+    console.log("CVNE456", cv)
+    // if (cv.cvType === "UPLOADED_CV") {
+    //   try {
+    //     const result = await getCvFile(cv.cvId);
+    //     if (result.data) {
+    //       window.open(result.data.cvUrl, "_blank");
+    //     } else {
+    //       console.error("Không tìm thấy CV tải lên:", result.error);
+    //       alert("Không thể mở CV tải lên.");
+    //     }
+    //   } catch (error) {
+    //     console.error("Lỗi khi lấy CV tải lên:", error);
+    //   }
+    // } else if (cv.cvType === "CREATED_CV") {
+    try {
+      const result = await getCv(cv.id);
+      if (result.data) {
+        localStorage.setItem("selectedCvData", JSON.stringify(result.data));
+        window.open("/tao-cv", "_blank");
+      } else {
+        console.error("Không tìm thấy CV tạo:", result.error);
+        alert("Không thể mở CV tạo.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy CV tạo:", error);
+    }
+    // } else {
+    //   alert("Loại CV không hợp lệ.");
+    // }
+  };
   useEffect(() => {
     loadJobs(currentPage);
   }, [currentPage, searchTerm]);
@@ -179,7 +250,6 @@ const ManageJobs = () => {
         </div>
       ) : (
         <>
-
           {/* Search bar with icon */}
           <div className="relative mb-6">
             <input
@@ -212,25 +282,41 @@ const ManageJobs = () => {
                       <td className="py-4 px-6 border-b">
                         {new Date(job.deadline) > new Date() ? 'Đang tuyển' : 'Hết hạn'}
                       </td>
-                      <td className="py-4 px-6 border-b">
+                      <td className="py-4 px-4 border-b">
                         <Button
                           variant="outlined"
                           startIcon={<FolderOpenIcon />}
                           onClick={() => handleManageCV(job.title, job.id)}
-                          className="py-1 px-4 bg-blue-500 text-white rounded-lg transition duration-200"
+                          className="py-1 px-2 bg-blue-500 text-white rounded-lg transition duration-200"
                         >
                           {job.cvCount} CV ứng tuyển
                         </Button>
                       </td>
-                      <td className="py-4 px-6 border-b">
-                        <Button
-                          variant="contained"
-                          startIcon={<EditOutlinedIcon />}
-                          onClick={() => handleEdit(job)}
-                          className="py-1 px-4 bg-yellow-500 text-white rounded-lg transition duration-200"
-                        >
-                          Sửa
-                        </Button>
+                      <td className="py-2 px-6 border-b">
+                        <Tooltip title="Sửa" arrow>
+                          <Button
+                            onClick={() => handleEdit(job)}
+                            className="min-w-0 w-8 h-8 bg-yellow-500 text-white rounded-full hover:opacity-80"
+                          >
+                            ✏️
+                          </Button>
+                        </Tooltip>
+                        <Tooltip title="Tìm ứng viên phù hợp" arrow>
+                          <Button
+                            onClick={() => handleFindSuitableCandidates(job.id)}
+                            className="min-w-0 w-8 h-8 bg-purple-600 text-white rounded-full hover:opacity-80"
+                          >
+                            🔍
+                          </Button>
+                        </Tooltip>
+                        <Tooltip title="Gia hạn công việc" arrow>
+                          <Button
+                            onClick={() => handleExtendJob(job.id)}
+                            className="min-w-0 w-8 h-8 bg-purple-600 text-white rounded-full hover:opacity-80"
+                          >
+                            ⏳
+                          </Button>
+                        </Tooltip>
                       </td>
                       <td className="py-4 px-6 border-b">
                         {(() => {
@@ -267,17 +353,17 @@ const ManageJobs = () => {
                             case 'HIDE':
                               return (
                                 <>
-                                <Tooltip title="Đang ở trạng thái Ẩn. Click để Hiển thị">
-                                <Button
-                                  variant="contained"
-                                  sx={{ width: '150px' }}
-                                  startIcon={<VisibilityOffOutlinedIcon />}
-                                  onClick={() => handleStatusChange(job.id, 'SHOW')}
-                                  className="py-1 px-4 bg-gray-500 text-white rounded-lg hover:bg-green-600 transition duration-200"
-                                >
-                                  Đang ẩn
-                                </Button>
-                                </Tooltip>
+                                  <Tooltip title="Đang ở trạng thái Ẩn. Click để Hiển thị">
+                                    <Button
+                                      variant="contained"
+                                      sx={{ width: '150px' }}
+                                      startIcon={<VisibilityOffOutlinedIcon />}
+                                      onClick={() => handleStatusChange(job.id, 'SHOW')}
+                                      className="py-1 px-4 bg-gray-500 text-white rounded-lg hover:bg-green-600 transition duration-200"
+                                    >
+                                      Đang ẩn
+                                    </Button>
+                                  </Tooltip>
                                 </>
                               );
                             case 'DISQUALIFIED':
@@ -310,6 +396,50 @@ const ManageJobs = () => {
                 )}
               </tbody>
             </table>
+            {openModal && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div className="bg-white rounded-lg shadow-lg p-6 max-w-xl w-full">
+                  <h3 className="text-xl font-bold mb-4">Ứng viên phù hợp</h3>
+                  {loading1 ? (
+                    <div className="flex justify-center items-center mb-10">
+                      <ClipLoader color="#4caf50" size={40} />
+                    </div>
+                  ) : (<>
+                    <ul className="space-y-4 max-h-[400px] overflow-y-auto">
+                      {cvs.filter(item => item.score > 0).length > 0 ? (
+                        cvs
+                          .filter(item => item.score > 0)
+                          .map((item, index) => (
+                            <li key={index} className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50 transition">
+                              <span className="font-medium">{item.cv.fullName}</span>
+                              <button
+                                onClick={() => handleCvClick(item.cv)}
+                                className="text-blue-600 hover:underline"
+                              >
+                                Xem CV
+                              </button>
+                            </li>
+                          ))
+                      ) : (
+                        !loading1 && (
+                          <p className="text-gray-500 p-4">Không tìm thấy ứng viên phù hợp.</p>
+                        )
+                      )}
+                    </ul>
+                  </>
+                  )}
+                  <div className="mt-6 text-right">
+                    <button
+                      onClick={() => setOpenModal(false)}
+                      className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 transition"
+                    >
+                      Đóng
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* Pagination */}

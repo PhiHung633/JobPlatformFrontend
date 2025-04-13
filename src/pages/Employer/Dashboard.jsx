@@ -69,6 +69,7 @@ const Dashboard = () => {
     const paymentData = {
       amount: parseInt(amountToDeposit.replace(/\D/g, ""), 10),
       account: userData?.email,
+      type:"JOB_POST"
     };
 
     try {

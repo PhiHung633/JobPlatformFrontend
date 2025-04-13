@@ -179,7 +179,7 @@ const JobDetail = () => {
         if (id) {
             loadJobAndCheckSaveStatus();
         }
-    }, [id]);    
+    }, [id]);
 
     const handleApplyClick = () => {
         if (!userId) {
