@@ -1109,3 +1109,27 @@ export async function createQuestion(question) {
         }
     }
 }
+
+export async function editQuestion(question, id) {
+    try {
+        const response = await api.patch(`/questions/${id}`, question );
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error editting question", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function deleteQuestion(id) {
+    try {
+        const response = await api.delete(`/questions/${id}`);
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.log("Error deleting question", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}

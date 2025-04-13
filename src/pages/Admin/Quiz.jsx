@@ -1,19 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { getQuestions, createQuestion, uploadImage } from '../../utils/ApiFunctions';
-import CircularProgress from '@mui/material/CircularProgress';
-import Snackbar from '@mui/material/Snackbar';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  MenuItem,
+  Select,
+  Snackbar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+  CircularProgress,
+  Paper
+} from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
+import { Add, Close, Delete, Edit } from '@mui/icons-material';
+import {
+  getQuestions,
+  createQuestion,
+  uploadImage,
+  editQuestion,
+  deleteQuestion
+} from '../../utils/ApiFunctions';
 
 const PAGE_SIZE = 5;
-const API_URL = 'http://localhost:8080/questions';
-
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-  },
-});
 
 const Quiz = () => {
   const [questions, setQuestions] = useState([]);
@@ -24,11 +43,10 @@ const Quiz = () => {
     content: '',
     image: '',
     answers: [''],
-    correctAnswer: '',
+    correctAnswer: ''
   });
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-
   const [feedback, setFeedback] = useState({ type: '', message: '', open: false });
 
   useEffect(() => {
@@ -50,15 +68,16 @@ const Quiz = () => {
   const openModal = (question = null) => {
     if (question) {
       setForm({ ...question });
-      setSelectedImageFile(null);
       setEditingId(question.id);
     } else {
-      setForm({ content: '', image: '', answers: [''], correctAnswer: '' });
-      setSelectedImageFile(null);
+      setForm({ content: '', image: '', answers: [''], correctAnswer: '-- Chọn câu trả lời đúng --' });
       setEditingId(null);
     }
+    setSelectedImageFile(null);
     setShowModal(true);
   };
+  
+  
 
   const closeModal = () => {
     setShowModal(false);
@@ -73,8 +92,15 @@ const Quiz = () => {
 
   const handleAnswerChange = (index, value) => {
     const updatedAnswers = [...form.answers];
+    const oldAnswer = updatedAnswers[index];
     updatedAnswers[index] = value;
-    setForm((prev) => ({ ...prev, answers: updatedAnswers }));
+
+    let updatedCorrect = form.correctAnswer;
+    if (oldAnswer === form.correctAnswer && value !== form.correctAnswer) {
+      updatedCorrect = '';
+    }
+
+    setForm((prev) => ({ ...prev, answers: updatedAnswers, correctAnswer: updatedCorrect }));
   };
 
   const addAnswerField = () => {
@@ -82,14 +108,17 @@ const Quiz = () => {
   };
 
   const removeAnswerField = (index) => {
+    const removedAnswer = form.answers[index];
     const updatedAnswers = form.answers.filter((_, i) => i !== index);
-    setForm((prev) => ({ ...prev, answers: updatedAnswers }));
+    const updatedCorrect = removedAnswer === form.correctAnswer ? '' : form.correctAnswer;
+    setForm((prev) => ({ ...prev, answers: updatedAnswers, correctAnswer: updatedCorrect }));
   };
 
   const validateForm = () => {
-    if (!form.content.trim()) return 'Content is required.';
-    if (form.answers.some(a => !a.trim())) return 'All answers must be filled.';
-    if (!form.correctAnswer.trim()) return 'Correct answer must be selected.';
+    if (!form.content.trim()) return 'Nội dung câu hỏi không được để trống.';
+    if (form.answers.some(a => !a.trim())) return 'Câu trả lời không được để trống.';
+    if (!form.correctAnswer.trim() || form.correctAnswer === '-- Chọn câu trả lời đúng --') return 'Vui lòng chọn câu trả lời đúng.';
+    if (!form.answers.includes(form.correctAnswer)) return 'Câu trả lời đúng phải nằm trong các câu trả lời.';
     return null;
   };
 
@@ -110,226 +139,205 @@ const Quiz = () => {
       const payload = { ...form, image: imageUrl?.data || '' };
 
       if (editingId) {
-        await api.patch(`/${editingId}`, payload);
+        await editQuestion(payload, editingId);
       } else {
         await createQuestion(payload);
       }
 
       await fetchQuestions();
       closeModal();
-      setFeedback({ type: 'success', message: `Question ${editingId ? 'updated' : 'created'} successfully!`, open: true });
+      setFeedback({
+        type: 'success',
+        message: `Câu hỏi ${editingId ? 'đã cập nhật' : 'đã tạo'} thành công!`,
+        open: true
+      });
     } catch (err) {
       console.error('Failed to save question', err);
-      setFeedback({ type: 'error', message: 'Failed to save question. Please try again.', open: true });
+      setFeedback({ type: 'error', message: 'Có lỗi xảy ra. Vui lòng thử lại sau.', open: true });
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteQuestion = async (id) => {
+  const handleDeleteQuestion = async (id) => {
     try {
-      await api.delete(`/${id}`);
+      await deleteQuestion(id);
       fetchQuestions();
     } catch (err) {
       console.error('Failed to delete question', err);
-      setFeedback({ type: 'error', message: 'Failed to delete question.', open: true });
+      setFeedback({ type: 'error', message: 'Có lỗi xảy ra. Vui lòng thử lại sau.', open: true });
     }
   };
 
   const totalPages = Math.ceil(questions.length / PAGE_SIZE);
-  const paginatedQuestions = questions.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
+  const paginatedQuestions = questions.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Question Manager</h1>
-        <button
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          onClick={() => openModal()}
-        >
-          + Add Question
-        </button>
-      </div>
+    <Box p={4}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4">Quản lý câu hỏi IQ</Typography>
+        <Button variant="contained" startIcon={<Add />} onClick={() => openModal()}>
+          Thêm câu hỏi
+        </Button>
+      </Box>
 
-      <table className="w-full border text-sm">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="p-2 border">#</th>
-            <th className="p-2 border">Content</th>
-            <th className="p-2 border">Image</th>
-            <th className="p-2 border">Answers</th>
-            <th className="p-2 border">Correct</th>
-            <th className="p-2 border">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedQuestions.map((q, index) => (
-            <tr key={q.id}>
-              <td className="p-2 border">{(currentPage - 1) * PAGE_SIZE + index + 1}</td>
-              <td className="p-2 border">{q.content}</td>
-              <td className="p-2 border">
-                {q.image ? <img src={q.image} alt="question" className="w-16" /> : 'N/A'}
-              </td>
-              <td className="p-2 border">
-                <ul className="list-disc ml-4">
-                  {q.answers.map((a, i) => (
-                    <li key={i}>{a}</li>
-                  ))}
-                </ul>
-              </td>
-              <td className="p-2 border font-semibold">{q.correctAnswer}</td>
-              <td className="p-2 border text-center space-x-2">
-                <button
-                  onClick={() => openModal(q)}
-                  className="text-blue-600 hover:underline"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteQuestion(q.id)}
-                  className="text-red-600 hover:underline"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Paper>
+        <TableContainer>
+          <Table>
+            <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Nội dung</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Hình ảnh</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Câu trả lời</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Câu trả lời đúng</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Chỉnh sửa</TableCell>
+            </TableRow>
+            </TableHead>
+            <TableBody>
+              {paginatedQuestions.map((q, index) => (
+                <TableRow key={q.id}>
+                  <TableCell>{(currentPage - 1) * PAGE_SIZE + index + 1}</TableCell>
+                  <TableCell>{q.content}</TableCell>
+                  <TableCell>
+                    {q.image ? (
+                      <img src={q.image} alt="question" style={{ width: 60, borderRadius: 4 }} />
+                    ) : (
+                      'N/A'
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <ul style={{ paddingLeft: 16 }}>
+                      {q.answers.map((a, i) => (
+                        <li key={i}>{a}</li>
+                      ))}
+                    </ul>
+                  </TableCell>
+                  <TableCell>{q.correctAnswer}</TableCell>
+                  <TableCell align="center">
+                    <IconButton onClick={() => openModal(q)} color="primary">
+                      <Edit />
+                    </IconButton>
+                    <IconButton onClick={() => handleDeleteQuestion(q.id)} color="error">
+                      <Delete />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
       {/* Pagination */}
-      <div className="mt-4 flex justify-center gap-2">
+      <Box mt={2} display="flex" justifyContent="center" gap={1}>
         {Array.from({ length: totalPages }, (_, i) => (
-          <button
+          <Button
             key={i}
-            className={`px-3 py-1 border rounded ${
-              currentPage === i + 1 ? 'bg-blue-600 text-white' : ''
-            }`}
+            variant={currentPage === i + 1 ? 'contained' : 'outlined'}
             onClick={() => setCurrentPage(i + 1)}
           >
             {i + 1}
-          </button>
+          </Button>
         ))}
-      </div>
+      </Box>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-xl">
-            <h2 className="text-xl font-semibold mb-4">
-              {editingId ? 'Edit Question' : 'Create Question'}
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block font-medium">Content</label>
-                <textarea
-                  className="w-full border p-2 rounded"
-                  value={form.content}
-                  onChange={(e) => handleInputChange('content', e.target.value)}
-                />
-              </div>
+      {/* Dialog Modal */}
+      <Dialog open={showModal} onClose={closeModal} fullWidth maxWidth="md">
+        <DialogTitle>{editingId ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi'}</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                label="Nội dung câu hỏi"
+                fullWidth
+                multiline
+                rows={3}
+                value={form.content}
+                onChange={(e) => handleInputChange('content', e.target.value)}
+              />
+            </Grid>
 
-              <div>
-                <label className="block font-medium">Upload Image (optional)</label>
+            <Grid item xs={12}>
+              <Button component="label" variant="outlined" fullWidth>
+                Tải ảnh lên
                 <input
                   type="file"
+                  hidden
                   accept="image/*"
-                  className="w-full border p-2 rounded"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setSelectedImageFile(file);
-                    }
-                  }}
+                  onChange={(e) => setSelectedImageFile(e.target.files?.[0])}
                 />
-                {selectedImageFile && (
-                  <div className="mt-2">
-                    <img src={URL.createObjectURL(selectedImageFile)} alt="Preview" className="w-32 rounded" />
-                  </div>
-                )}
-                {!selectedImageFile && form.image && (
-                  <div className="mt-2">
-                    <img src={form.image} alt="Current" className="w-32 rounded" />
-                  </div>
-                )}
-              </div>
+              </Button>
+              {(selectedImageFile || form.image) && (
+                <Box mt={2}>
+                  <img
+                    src={selectedImageFile ? URL.createObjectURL(selectedImageFile) : form.image}
+                    alt="preview"
+                    style={{ width: 100, borderRadius: 8 }}
+                  />
+                </Box>
+              )}
+            </Grid>
 
-              <div>
-                <label className="block font-medium mb-1">Answers</label>
-                {form.answers.map((answer, idx) => (
-                  <div key={idx} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      className="flex-1 border p-2 rounded"
-                      value={answer}
-                      onChange={(e) => handleAnswerChange(idx, e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeAnswerField(idx)}
-                      className="text-red-600"
-                      disabled={form.answers.length <= 1}
-                    >
-                      ✕
-                    </button>
-                  </div>
+            {form.answers.map((answer, index) => (
+              <Grid item xs={12} key={index} container spacing={1} alignItems="center">
+                <Grid item xs>
+                  <TextField
+                    fullWidth
+                    value={answer}
+                    onChange={(e) => handleAnswerChange(index, e.target.value)}
+                    label={`Câu trả lời ${index + 1}`}
+                  />
+                </Grid>
+                <Grid item>
+                  <IconButton
+                    color="error"
+                    onClick={() => removeAnswerField(index)}
+                    disabled={form.answers.length <= 1}
+                  >
+                    <Close />
+                  </IconButton>
+                </Grid>
+              </Grid>
+            ))}
+
+            <Grid item xs={12}>
+              <Button variant="text" onClick={addAnswerField} startIcon={<Add />}>
+                Thêm câu trả lời
+              </Button>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Select
+                fullWidth
+                displayEmpty
+                value={form.correctAnswer}
+                onChange={(e) => handleInputChange('correctAnswer', e.target.value)}
+              >
+                <MenuItem value="" disabled>
+                  -- Chọn câu trả lời đúng --
+                </MenuItem>
+                {form.answers.map((a, i) => (
+                  <MenuItem key={i} value={a}>
+                    {a}
+                  </MenuItem>
                 ))}
-                <button
-                  type="button"
-                  className="text-blue-600 hover:underline"
-                  onClick={addAnswerField}
-                >
-                  + Add Answer
-                </button>
-              </div>
+              </Select>
+            </Grid>
+          </Grid>
+        </DialogContent>
 
-              <div>
-                <label className="block font-medium">Correct Answer</label>
-                <select
-                  className="w-full border p-2 rounded"
-                  value={form.correctAnswer}
-                  onChange={(e) => handleInputChange('correctAnswer', e.target.value)}
-                >
-                  <option value="">-- Select correct answer --</option>
-                  {form.answers.map((a, i) => (
-                    <option key={i} value={a}>
-                      {a}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-4">
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveQuestion}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                {editingId ? 'Update' : 'Create'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Loading Overlay */}
-      {loading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="flex flex-col items-center justify-center">
-            <CircularProgress size={60} style={{ color: '#fff' }} />
-            <p className="text-white mt-4 text-lg">Loading...</p>
-          </div>
-        </div>
-      )}
+        <DialogActions>
+          <Button onClick={closeModal}>Hủy</Button>
+          <Button
+            variant="contained"
+            onClick={saveQuestion}
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={24} color="inherit" /> : editingId ? 'Cập nhật' : 'Tạo'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar Feedback */}
       <Snackbar
@@ -347,7 +355,25 @@ const Quiz = () => {
           {feedback.message}
         </MuiAlert>
       </Snackbar>
-    </div>
+
+      {/* Loading Overlay */}
+      {loading && (
+        <Box
+          position="fixed"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          bgcolor="rgba(0,0,0,0.5)"
+          zIndex={1300}
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+        >
+          <CircularProgress size={60} style={{ color: '#fff' }} />
+        </Box>
+      )}
+    </Box>
   );
 };
 
