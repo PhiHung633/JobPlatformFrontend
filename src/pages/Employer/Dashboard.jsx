@@ -69,7 +69,7 @@ const Dashboard = () => {
     const paymentData = {
       amount: parseInt(amountToDeposit.replace(/\D/g, ""), 10),
       account: userData?.email,
-      type:"JOB_POST"
+      type: "JOB_POST"
     };
 
     try {
@@ -103,7 +103,7 @@ const Dashboard = () => {
       <Header />
       <div className="flex h-screen overflow-hidden">
         {/* Sidebar */}
-        <div className="w-72 h-screen bg-white p-6 shadow-lg border-r border-gray-200 sticky top-0 overflow-hidden">
+        <div className="w-72 h-screen bg-white p-6 shadow-xl border-r border-gray-200 sticky top-0 rounded-tr-2xl rounded-br-2xl">
           {/* User Info Section */}
           <div className="mb-6">
             <div className="flex items-center space-x-3">
@@ -175,8 +175,8 @@ const Dashboard = () => {
           </ul>
         </div>
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white rounded-xl shadow-lg w-96 p-6">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-96 p-6 animate-fade-in">
               <h3 className="text-xl font-semibold text-gray-800">Nạp tiền</h3>
               <p className="mt-4 text-sm font-semibold text-red-600">
                 (*) Lưu ý: Với <span className="text-blue-500 font-bold">100.000 VNĐ</span>, bạn sẽ được một lần đăng tin

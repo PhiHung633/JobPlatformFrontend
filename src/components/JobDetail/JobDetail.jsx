@@ -149,8 +149,8 @@ const JobDetail = () => {
                     setLoading(false);
                     return;
                 }
-    
-                console.log("JOBBDAAA",jobData)
+
+                console.log("JOBBDAAA", jobData)
                 if (jobData.status === "SHOW") {
                     setJob(jobData);
                 } else {
@@ -159,7 +159,7 @@ const JobDetail = () => {
                     setLoading(false);
                     return;
                 }
-    
+
                 const { data: savesData, error: savesError } = await fetchJobSavesByUser();
                 if (savesError) {
                     console.error("Error fetching job saves:", savesError);
@@ -175,7 +175,7 @@ const JobDetail = () => {
                 setLoading(false);
             }
         };
-    
+
         if (id) {
             loadJobAndCheckSaveStatus();
         }
@@ -257,7 +257,7 @@ const JobDetail = () => {
             {/* Left Column: Job Detail and Job Description */}
             <div className="flex flex-col gap-6 w-full lg:w-4/5">
                 {/* Job Detail Section */}
-                <div className="bg-white shadow-md rounded-lg p-6">
+                <div className="bg-white shadow-md rounded-xl p-6">
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">
                         {job.title} tại {job.companyLocation}
                     </h2>
@@ -267,7 +267,7 @@ const JobDetail = () => {
                             <FontAwesomeIcon icon={faDollarSign} className="text-white text-xl mr-2 bg-green-600 px-4 py-3 rounded-full" />
                             <div>
                                 <p className="font-medium">Mức lương</p>
-                                <p className="text-sm font-bold">Trên {job.salary}</p>
+                                <p className="text-sm font-bold">Trên {Number(job.salary).toLocaleString('vi-VN')}</p>
                             </div>
                         </div>
 
@@ -311,7 +311,7 @@ const JobDetail = () => {
                 </div>
 
                 {/* Job Description Section */}
-                <div className="bg-white shadow-md rounded-lg p-6">
+                <div className="bg-white shadow-md rounded-xl p-6">
                     <h3 className='text-xl font-bold text-gray-900 border-green-500 border-l-8 pl-2 '>Chi tiết tuyển dụng</h3>
                     <div className='mt-3'>
                         <h4 className="text-base font-semibold text-gray-800 mb-4">Mô tả công việc</h4>
@@ -358,7 +358,7 @@ const JobDetail = () => {
                         </button>
                     </div>
                 </div>
-                <div className="bg-white shadow-md rounded-lg p-6 mt-6">
+                <div className="bg-white shadow-md rounded-xl p-6 mt-6">
                     <h3 className="text-xl font-bold text-gray-900 border-green-500 border-l-8 pl-2 mb-4">
                         Đánh giá công việc
                     </h3>
@@ -413,7 +413,7 @@ const JobDetail = () => {
                                         onChange={(e) => setFeedback(e.target.value)}
                                         className="border rounded-md w-full p-2"
                                         rows="4"
-                                        placeholder="Nhập phản hồi của bạn"
+                                        placeholder="Hãy chia sẻ suy nghĩ của bạn về công việc này..."
                                         required
                                     ></textarea>
                                 </div>
@@ -441,7 +441,7 @@ const JobDetail = () => {
             {/* Right Column: Company Details */}
             <div className="flex flex-col gap-4 w-full lg:w-2/5">
                 {/* Company Details Block */}
-                <div className="bg-white shadow-md rounded-lg p-4">
+                <div className="bg-white shadow-md rounded-xl p-4">
                     <div className="flex items-center mb-4">
                         <img
                             src={job.companyImages}
@@ -470,14 +470,14 @@ const JobDetail = () => {
                         </span>
                     </div>
 
-                    <button className="flex items-center text-green-400 pt-2 w-full justify-center text-sm font-bold">
+                    <button className="flex items-center text-green-400 pt-2 w-full justify-center text-sm font-bold cursor-pointer hover:underline">
                         Xem trang công ty
                         <FontAwesomeIcon icon={faExternalLinkAlt} className="ml-1 text-xs" />
                     </button>
                 </div>
 
                 {/* Thông tin chung Block */}
-                <div className="bg-white shadow-md rounded-lg p-4">
+                <div className="bg-white shadow-md rounded-xl p-4">
                     <h4 className="text-lg font-semibold text-gray-800 mb-4">Thông tin chung</h4>
 
                     <div className="text-gray-600 mb-3 flex items-center">

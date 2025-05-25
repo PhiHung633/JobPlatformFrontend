@@ -2,8 +2,8 @@ import axios from "axios"
 // import { param } from "jquery";
 
 export const api = axios.create({
-    // baseURL: "https://jobplatformbackend.onrender.com"
-    baseURL: "http://localhost:8080"
+    baseURL: "https://jobplatformbackend.onrender.com"
+    // baseURL: "http://localhost:8080"
 })
 
 function getAccessToken() {
@@ -1272,6 +1272,26 @@ export async function deleteQuestion(id) {
         console.log("Error deleting question", error.response);
         if (error.response) {
             return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function markReadNotification(id, isRead) {
+    try {
+        const payload = {
+            isRead: isRead,
+        };
+
+        const response = await api.post(`/users/notifications/${id}`, payload);
+
+        return response;
+    } catch (error) {
+        console.log("Error", error.response ? error.response.data : error.message);
+
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        } else {
+            throw new Error(`Mark notification error: ${error.message}`);
         }
     }
 }

@@ -8,6 +8,9 @@ import Button from '@mui/material/Button';
 import JobApplicationPopup from "../../components/JobDetail/JobApplicationPopup";
 import { fetchJobSavesByUser, fetchJobById, deleteJobSave } from "../../utils/ApiFunctions";
 import { ClipLoader } from "react-spinners";
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
+
 
 function calculateDaysRemaining(deadline) {
     const deadlineDate = parseISO(deadline);
@@ -73,11 +76,45 @@ const JobSaved = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
-                <ClipLoader color="#4caf50" size={40} />
+            <div className="flex max-w-5xl mx-auto gap-6 mt-10">
+                <div className="w-full bg-white rounded-xl shadow-md overflow-hidden self-start">
+                    <div className="bg-gradient-to-r from-green-600 to-green-400 p-6 text-white">
+                        <Skeleton width={200} height={24} />
+                        <Skeleton count={2} className="mt-2" />
+                    </div>
+
+                    <div className="p-4 space-y-4">
+                        {[...Array(3)].map((_, index) => (
+                            <div key={index} className="bg-white border border-green-400 p-4 rounded-lg shadow-md">
+                                <div className="flex items-start mb-3">
+                                    <Skeleton width={96} height={96} className="rounded-xl mr-3" />
+                                    <div className="flex flex-col w-full">
+                                        <div className="flex justify-between items-center">
+                                            <Skeleton width="60%" height={20} />
+                                            <Skeleton width="30%" height={20} />
+                                        </div>
+                                        <Skeleton width="40%" height={16} className="mt-4 mb-2" />
+                                        <Skeleton width="30%" height={12} />
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center mb-3">
+                                    <div className="flex gap-5">
+                                        <Skeleton width={120} height={24} />
+                                        <Skeleton width={140} height={24} />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Skeleton width={80} height={32} />
+                                        <Skeleton width={80} height={32} />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
         );
     }
+
     // console.log("SAVEJOB", savedJobs)
     return (
         <div className="flex max-w-5xl mx-auto gap-6 mt-10">

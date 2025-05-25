@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FaBars, FaBell, FaUserCircle, FaSignOutAlt, FaFacebookMessenger } from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
 import { format } from 'date-fns';
@@ -6,10 +6,10 @@ import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { onMessage } from "firebase/messaging";
 import { messaging } from '../../utils/firebase.js'
-import { fetchNotifications } from "../../utils/ApiFunctions";
+import { fetchNotifications, markReadNotification } from "../../utils/ApiFunctions";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMessage } from "@fortawesome/free-solid-svg-icons";
+import { faEllipsis, faMessage } from "@fortawesome/free-solid-svg-icons";
 
 
 // function formatDate(dateString) {
@@ -32,6 +32,15 @@ const Header = () => {
   const [userId, setUserId] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
+  const [selectedNotiId, setSelectedNotiId] = useState(null);
+  const bottomRef = useRef(null);
+  const menuRef = useRef(null);
+  const notificationRef = useRef(null);
+
+
+  const toggleMenuNoti = (notiId) => {
+    setSelectedNotiId((prevId) => (prevId === notiId ? null : notiId));
+  };
   let tempIdCounter = 0;
 
   useEffect(() => {
@@ -85,6 +94,28 @@ const Header = () => {
     }
   }, [userId, pagination.page]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
+        setIsNotificationPopupOpen(false);
+        setSelectedNotiId(null);
+      }
+    };
+
+    if (isNotificationPopupOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isNotificationPopupOpen]);
+
   const loadMore = () => {
     if (pagination.page + 1 < pagination.totalPages) {
       setPagination((prev) => ({
@@ -93,6 +124,31 @@ const Header = () => {
       }));
     }
   };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && pagination.page + 1 < pagination.totalPages) {
+          loadMore();
+        }
+      },
+      {
+        root: null,
+        rootMargin: '0px',
+        threshold: 1.0,
+      }
+    );
+
+    if (bottomRef.current) {
+      observer.observe(bottomRef.current);
+    }
+
+    return () => {
+      if (bottomRef.current) {
+        observer.unobserve(bottomRef.current);
+      }
+    };
+  }, [pagination.page, pagination.totalPages]);
 
   useEffect(() => {
     const count = notifications.filter((notification) => !notification.isRead).length;
@@ -129,9 +185,43 @@ const Header = () => {
     return () => unsubscribe();
   }, []);
 
+  const handleMarkAllAsRead = async () => {
+    try {
+      const unreadNotis = notifications.filter(noti => !noti.isRead);
+      await Promise.all(
+        unreadNotis.map(noti => markReadNotification(noti.id, true))
+      );
+
+      setNotifications(prev =>
+        prev.map(noti =>
+          !noti.isRead ? { ...noti, isRead: true } : noti
+        )
+      );
+      fetchData();
+
+    } catch (error) {
+      console.log("Lỗi khi đánh dấu tất cả là đã đọc:", error);
+    }
+  }
+
+  const handleIsReadNotification = async (id, isRead) => {
+    const newIsRead = !isRead;  // Toggle the isRead state
+    const response = await markReadNotification(id, newIsRead);
+    if (!response.error) {
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((noti) =>
+          noti.id === id ? { ...noti, isRead: newIsRead } : noti
+        )
+      );
+      fetchData();
+      setSelectedNotiId(null);
+    } else {
+      console.log("Lỗi khi đánh dấu thông báo", response.error);
+    }
+  };
 
   return (
-    <div className="flex justify-between items-center bg-blue-900 text-white p-4 shadow-md relative sticky top-0 z-50">
+    <div className="flex justify-between items-center bg-gradient-to-r from-blue-800 to-blue-600 text-white px-6 py-3 shadow-lg sticky top-0 z-50">
       {/* Logo and Menu */}
       <div className="flex items-center space-x-3">
         <FaBars className="text-xl cursor-pointer" />
@@ -143,7 +233,7 @@ const Header = () => {
         {/* Notification Icon */}
         <div className="relative">
           <FaBell
-            className="text-xl cursor-pointer"
+            className="text-xl cursor-pointer hover:text-blue-300 transition duration-200"
             onClick={toggleNotificationPopup}
           />
           {unreadCount > 0 && (
@@ -152,18 +242,18 @@ const Header = () => {
             </span>
           )}
           {isNotificationPopupOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white text-gray-800 rounded-lg shadow-lg z-50">
+            <div ref={notificationRef} className="absolute right-0 mt-3 w-80 bg-white text-gray-800 rounded-xl shadow-xl border border-gray-200 z-50">
               <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
                 <span className="font-semibold text-gray-800">Thông báo</span>
                 <button
-                  onClick={() => setIsNotificationPopupOpen(false)}
+                  onClick={handleMarkAllAsRead}
                   className="text-sm text-blue-600 hover:underline"
                 >
-                  Đóng
+                  Đánh dấu là đã đọc
                 </button>
               </div>
               <div className="p-4 max-h-96 overflow-y-auto">
-                {loading && pagination.page === 0 ? (
+                {pagination.size === 0 ? (
                   <div className="text-center text-gray-500">Đang tải...</div>
                 ) : notifications.length === 0 ? (
                   <div className="text-sm text-gray-500 text-center">
@@ -175,18 +265,56 @@ const Header = () => {
                       {notifications.map((notification, index) => (
                         <div
                           key={notification.id || index}
-                          className="mb-3 p-3 hover:bg-green-50 rounded-lg group"
+                          className="relative mb-3 p-3 hover:bg-green-50 rounded-lg group"
                         >
-                          <h4 className="font-medium text-gray-900 group-hover:text-green-600">
-                            {notification.message}
-                          </h4>
-                          <p className="text-sm text-gray-500">
-                            {new Date(notification.createdAt).toLocaleDateString('en-GB')}
-                          </p>
+                          <div className="flex justify-between">
+                            <Link to={notification.link} onClick={(e) => {
+                              if (!notification.isRead) {
+                                e.preventDefault();
+                                handleIsReadNotification(notification.id, notification.isRead);
+                              }
+                            }} className="flex-1">
+                              <h4 className={`${!notification.isRead ? 'font-bold text-gray-900' : 'font-normal text-gray-700'} group-hover:text-green-600`}>
+                                {notification.message}
+                              </h4>
+                              <p className="text-sm text-gray-500">
+                                {new Date(notification.createdAt).toLocaleDateString('en-GB')}
+                              </p>
+                            </Link>
+
+                            <FontAwesomeIcon
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleMenuNoti(notification.id);
+                              }}
+                              className="mt-12 opacity-0 group-hover:opacity-100 transition-opacity right-0 cursor-pointer"
+                              icon={faEllipsis}
+                            />
+                          </div>
+                          {selectedNotiId === notification.id && (
+                            <div
+                              ref={menuRef}
+                              className="absolute right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg text-sm z-10"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleIsReadNotification(notification.id, notification.isRead);
+                                  setSelectedNotiId(null);
+                                }}
+                                className="block w-full px-4 py-2 hover:bg-gray-700"
+                              >
+                                {notification.isRead ? 'Đánh dấu chưa đọc' : 'Đánh dấu đã đọc'}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </ul>
-                    {pagination.page + 1 < pagination.totalPages && (
+                    {/* {pagination.page + 1 < pagination.totalPages && (
                       <div className="text-center mt-4">
                         <button
                           onClick={loadMore}
@@ -195,7 +323,9 @@ const Header = () => {
                           Tải thêm
                         </button>
                       </div>
-                    )}
+                    )} */}
+                    <div ref={bottomRef}></div>
+
                   </>
                 )}
               </div>
@@ -210,7 +340,7 @@ const Header = () => {
         {/* User Icon */}
         <div className="relative">
           <FaUserCircle
-            className="text-2xl cursor-pointer"
+            className="text-2xl cursor-pointer hover:text-blue-300 transition duration-200"
             onClick={toggleUserPopup}
           />
           {isUserPopupOpen && (

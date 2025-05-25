@@ -1,36 +1,53 @@
 import { faLocationDot, faSearch, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { fetchAllJobs } from '../../utils/ApiFunctions';
 
-const SearchBarv2 = ({searchTitle = ''}) => {
+const SearchBarv2 = ({ searchTitle = '' }) => {
     const [searchData, setSearchData] = useState({
         jobTitle: searchTitle,
         location: '',
         industry: ''
     });
     const [isInputFocused, setIsInputFocused] = useState(false);
-    const [results, setResults] = useState([]);
-    const [jobSuggestions, setJobSuggestions] = useState([
-        { title: "Frontend Developer", companyName: "ABC Company", salary: "$3000", logo: "path/to/logo" },
-        { title: "Backend Developer", companyName: "XYZ Corp", salary: "$2500", logo: "path/to/logo" }
-    ]);
+    const [jobSuggestions, setJobSuggestions] = useState([]);
     const [filterOption, setFilterOption] = useState("1");
 
-    // Fetch data based on search input value
-    const fetchData = (value) => {
-        fetch("https://jsonplaceholder.typicode.com/users")
-            .then((response) => response.json())
-            .then((json) => {
-                const result = json.filter((user) => {
-                    return (
-                        value &&
-                        user &&
-                        user.name &&
-                        user.name.toLowerCase().includes(value.toLowerCase())  // Match input value with user name
-                    );
-                });
-                setResults(result);
-            });
+    const formRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (formRef.current && !formRef.current.contains(event.target)) {
+                setIsInputFocused(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    // Fetch job data từ API
+    const fetchJobs = async () => {
+        try {
+            let job = searchData.industry;
+            let city = searchData.location;
+            console.log("UAPHAIKOTA", searchData)
+            if (job === "Tất cả ngành nghề") job = "";
+            if (city === "Tất cả tỉnh/thành phố") city = "";
+
+            const { data, error } = await fetchAllJobs(0, 10, searchData.jobTitle, true, job, city);
+
+            if (!error) {
+                setJobSuggestions(data);
+            } else {
+                console.error("Lỗi:", error);
+            }
+        } catch (err) {
+            console.error("Lỗi hệ thống:", err.message);
+        }
     };
 
     const handleFilterChange = (e) => {
@@ -43,20 +60,21 @@ const SearchBarv2 = ({searchTitle = ''}) => {
             [e.target.name]: e.target.value
         });
 
-        // If the input is from jobTitle, fetch data based on it
+        // Nếu người dùng nhập vào tên công việc thì gọi API
         if (e.target.name === "jobTitle") {
-            fetchData(e.target.value); // Pass the input value to fetchData
+            fetchJobs();
         }
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log('Search data:', searchData);
+        fetchJobs();
     };
 
     return (
-        <form onSubmit={handleSubmit} className="bg-[#19734E] p-4 rounded-lg flex justify-center ">
-            <div className="flex items-center w-full max-w-3xl bg-white rounded-xl overflow-hidden px-5 relative">
+        <form ref={formRef}
+            onSubmit={handleSubmit} className="bg-[#19734E] p-4 rounded-lg flex justify-center relative">
+            <div className="flex items-center w-full max-w-3xl bg-white rounded-xl overflow-hidden px-5">
                 <div className="relative w-full">
                     <FontAwesomeIcon
                         icon={faSearch}
@@ -84,7 +102,7 @@ const SearchBarv2 = ({searchTitle = ''}) => {
                         onChange={handleInputChange}
                         className="pl-10 pr-4 py-2 border-none focus:outline-none"
                     >
-                        <option value="">Địa điểm</option>
+                        <option value="">Tất cả tỉnh/thành phố</option>
                         <option value="Hà Nội">Hà Nội</option>
                         <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
                     </select>
@@ -98,7 +116,7 @@ const SearchBarv2 = ({searchTitle = ''}) => {
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:border-green-500"
                 >
-                    <option value="">Ngành nghề</option>
+                    <option value="">Tất cả ngành nghề</option>
                     <option value="Công nghệ thông tin">Công nghệ thông tin</option>
                     <option value="Marketing">Marketing</option>
                 </select>
@@ -129,42 +147,18 @@ const SearchBarv2 = ({searchTitle = ''}) => {
                                     />
                                     <label htmlFor="type-keyword-search-1">Tên việc làm</label>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <input
-                                        id="type-keyword-search-2"
-                                        type="radio"
-                                        name="type-keyword-temp"
-                                        value="2"
-                                        checked={filterOption === "2"}
-                                        onChange={handleFilterChange}
-                                        className="form-radio h-5 w-5"
-                                    />
-                                    <label htmlFor="type-keyword-search-2">Tên công ty</label>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <input
-                                        id="type-keyword-search-3"
-                                        type="radio"
-                                        name="type-keyword-temp"
-                                        value="3"
-                                        checked={filterOption === "3"}
-                                        onChange={handleFilterChange}
-                                        className="form-radio h-5 w-5"
-                                    />
-                                    <label htmlFor="type-keyword-search-3">Cả hai</label>
-                                </div>
                             </div>
                         </div>
 
                         <div className="flex flex-col mt-2 pt-2 w-full max-h-72 overflow-y-auto">
-                            {results.length > 0 ? (
-                                results.map((result, id) => (
+                            {jobSuggestions.length > 0 ? (
+                                jobSuggestions.map((result, id) => (
                                     <div key={id} className="p-2 w-full hover:bg-gray-200">
-                                        <p>{result.name}</p>
+                                        <p>{result.title}</p>
                                     </div>
                                 ))
                             ) : (
-                                <p className="p-2 text-gray-500">No results found.</p>
+                                <p className="p-2 text-gray-500 text-center italic">Không tìm thấy kết quả.</p>
                             )}
                         </div>
                     </div>
@@ -180,7 +174,7 @@ const SearchBarv2 = ({searchTitle = ''}) => {
                                 >
                                     <div className="mr-2">
                                         <img
-                                            src={job.logo}
+                                            src={job.companyImages}
                                             alt={job.companyName}
                                             className="w-24 h-auto"
                                         />
@@ -193,7 +187,7 @@ const SearchBarv2 = ({searchTitle = ''}) => {
                                             {job.companyName}
                                         </p>
                                         <div className="text-green-600 text-sm font-semibold">
-                                            {job.salary}
+                                            {job.salary.toLocaleString() || "Thoả thuận"} VNĐ
                                         </div>
                                     </div>
                                     <div className="ml-4 text-green-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100">

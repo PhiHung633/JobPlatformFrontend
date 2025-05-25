@@ -39,7 +39,7 @@ const Message = () => {
     const stompClientRef = useRef(null);
     const [selectedMessageId, setSelectedMessageId] = useState(null);
     const [editingMessage, setEditingMessage] = useState(null);
-    const [avatar, setAvatar] = useState(null);
+    const [avatar, setAvatar] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
     const menuRef = useRef(null);
 
@@ -237,6 +237,7 @@ const Message = () => {
             } else {
                 console.log("DAYLACON", data)
                 setAvatar(data.avatarUrl || data.companyImage)
+                console.log("DUNGMATA",avatar)
                 setContacts(data || []);
             }
         };
@@ -277,15 +278,15 @@ const Message = () => {
                     deletedAt: receivedMessage.deletedAt ?? null,
                 };
                 setMessages((prev) => [...prev, formattedMessage]);
-                toast.info(`📩 Tin nhắn mới từ ${receivedMessage.sender} với nội dung: ${receivedMessage.content}`, {
-                    position: "top-right",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
-                });
+                // toast.info(`📩 Tin nhắn mới từ ${receivedMessage.sender} với nội dung: ${receivedMessage.content}`, {
+                //     position: "top-right",
+                //     autoClose: 5000,
+                //     hideProgressBar: false,
+                //     closeOnClick: true,
+                //     pauseOnHover: true,
+                //     draggable: true,
+                //     progress: undefined,
+                // });
             });
         });
 
@@ -369,7 +370,7 @@ const Message = () => {
             setInput("");
         }
     };
-
+    console.log("UADAYMA",avatar)
     return (
         <div className="flex h-[650px] bg-white">
             {/* Sidebar */}
@@ -417,7 +418,7 @@ const Message = () => {
                     <>
                         {/* Header của trang chat */}
                         <div className="p-4 bg-white border-b flex gap-4">
-                            <img src={currentChat.companyImage} alt="Avatar" className="w-12 h-12 rounded-full object-cover" />
+                            <img src={role === "ROLE_JOB_SEEKER" ? currentChat.companyImage : currentChat.avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full object-cover" />
                             <div>
                                 <p className="font-bold">{currentChat.recruiterName || currentChat.fullName}</p>
                                 <p className="text-sm text-gray-300">{currentChat.companyName}</p>
@@ -435,7 +436,7 @@ const Message = () => {
                                 .map((msg) => (
                                     <div key={msg.id} className={`mb-4 flex ${msg.sender === email ? "justify-end" : "items-end"}`}>
                                         {msg.sender !== email && (
-                                            <img src={msg.avatarUrl || msg.companyImage} alt="avatar" className="w-10 h-10 rounded-full mr-2" />
+                                            <img src={role === "ROLE_JOB_SEEKER" ? currentChat.companyImage : currentChat.avatarUrl||avatar} alt="avatar" className="w-10 h-10 rounded-full mr-2" />
                                         )}
                                         <div className="relative group">
                                             <div className={`p-3 rounded-xl max-w-md ${msg.sender === email ? "bg-green-200" : "bg-gray-100"}`}>

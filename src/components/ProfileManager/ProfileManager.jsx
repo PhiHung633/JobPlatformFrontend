@@ -3,9 +3,13 @@ import { useState, useEffect } from 'react';
 import { jwtDecode } from "jwt-decode";
 import CVSelectionPopup from './CvSelectionPopup';
 import { fetchCvs, fetchCvsFile, updateCv } from '../../utils/ApiFunctions';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFile } from '@fortawesome/free-solid-svg-icons';
 
 const ProfileManager = () => {
     const [isJobSearchOn, setIsJobSearchOn] = useState(false);
+    const [email, setEmail] = useState("");
+    const [sdt, setSdt] = useState("");
     const [isAllowedNTD, setIsAllowedNTD] = useState(false);
     const [showPopup, setShowPopup] = useState(false);
 
@@ -21,6 +25,7 @@ const ProfileManager = () => {
         if (token) {
             const decodedToken = jwtDecode(token);
             setUserId(decodedToken.user_id);
+            setEmail(decodedToken.sub)
         }
     }, []);
 
@@ -32,6 +37,8 @@ const ProfileManager = () => {
 
                 if (onlineResponse.data) {
                     setOnlineCVs(onlineResponse.data.cvs);
+                    setSdt(onlineResponse.data.cvs[0].phone)
+                    setIsAllowedNTD(onlineResponse.data.cvs[0].status);
                 }
 
                 if (uploadedResponse.data) {
@@ -43,7 +50,7 @@ const ProfileManager = () => {
         };
 
         fetchCVsData();
-    }, [userId]);
+    }, [userId, isAllowedNTD]);
 
     const handleToggleJobSearch = () => {
         if (!isJobSearchOn) {
@@ -57,7 +64,7 @@ const ProfileManager = () => {
         try {
             const onlineResponse = await fetchCvs(userId, 0, 10);
             const cvsToUpdate = onlineResponse?.data?.cvs || [];
-    
+            
             if (!isAllowedNTD) {
                 const updatePromises = cvsToUpdate.map((cv) =>
                     updateCv(cv.id, { status: "True" })
@@ -143,7 +150,7 @@ const ProfileManager = () => {
                 <label className="inline-flex items-center cursor-pointer px-3">
                     <input type="checkbox" className="sr-only peer" checked={isAllowedNTD} onChange={handleToggleNTD} />
                     <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-300">
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-300 ml-2">
                         {isAllowedNTD ? 'Cho phép NTD xem hồ sơ' : 'Chưa cho phép NTD xem hồ sơ'} 
                         {/* tìm kiếm */}
                     </span>
@@ -153,7 +160,8 @@ const ProfileManager = () => {
                 </p>
                 <ul className='ml-3 text-gray-600 text-sm list-none mt-2'>
                     {/* <li>1. Nhắn tin qua Top Connect trên TopCV</li> */}
-                    <li>Email và Số điện thoại của bạn</li>
+                    <li>Email của bạn: {email}</li>
+                    <li>Số điện thoại của bạn: {sdt}</li>
                 </ul>
             </div>
 

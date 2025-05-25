@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowRightFromBracket,
@@ -22,6 +22,8 @@ import {
   faUserCog,
   faArrowUp,
   faWebAwesome,
+  faEllipsis,
+  faBrain,
 } from "@fortawesome/free-solid-svg-icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { format } from 'date-fns';
@@ -33,7 +35,7 @@ import { onMessage } from "firebase/messaging";
 import { messaging } from '../../utils/firebase.js'
 
 import DropdownItem from "../../components/DropdownItem/DropdownItem";
-import { fetchNotifications, fetchUserById, processMomoPayment } from "../../utils/ApiFunctions";
+import { fetchNotifications, fetchUserById, markReadNotification, processMomoPayment } from "../../utils/ApiFunctions";
 
 
 function formatDate(dateString) {
@@ -61,6 +63,14 @@ const Header = () => {
   const [showModal, setShowModal] = useState(false);
   const [amountToDeposit, setAmountToDeposit] = useState("100.000");
   let tempIdCounter = 0;
+  const [selectedNotiId, setSelectedNotiId] = useState(null);
+  const menuRef = useRef(null);
+
+  const toggleMenuNoti = (notiId) => {
+    setSelectedNotiId((prevId) => (prevId === notiId ? null : notiId));
+  };
+  const bottomRef = useRef(null);
+
 
   const [pagination, setPagination] = useState({
     page: 0,
@@ -133,7 +143,10 @@ const Header = () => {
   const fetchData = async () => {
     const { data, error } = await fetchNotifications(userId, pagination.page, pagination.size);
     if (data) {
-      setNotifications(data.notifications);
+      setNotifications((prev) =>
+        pagination.page === 0 ? data.notifications : [...prev, ...data.notifications]
+      );
+      console.log("THATRALANHU&THE", data)
       setPagination((prev) => ({
         ...prev,
         totalPages: data.totalPages,
@@ -149,6 +162,31 @@ const Header = () => {
     const count = notifications.filter((notification) => !notification.isRead).length;
     setUnreadCount(count);
   }, [notifications]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && pagination.page + 1 < pagination.totalPages) {
+          loadMore();
+        }
+      },
+      {
+        root: null,
+        rootMargin: '0px',
+        threshold: 1.0,
+      }
+    );
+
+    if (bottomRef.current) {
+      observer.observe(bottomRef.current);
+    }
+
+    return () => {
+      if (bottomRef.current) {
+        observer.unobserve(bottomRef.current);
+      }
+    };
+  }, [pagination.page, pagination.totalPages]);
 
 
   const loadMore = () => {
@@ -225,6 +263,41 @@ const Header = () => {
     return parseInt(value.replace(/\D/g, ""), 10).toLocaleString("vi-VN");
   };
 
+  const handleIsReadNotification = async (id, isRead) => {
+    const newIsRead = !isRead;  // Toggle the isRead state
+    const response = await markReadNotification(id, newIsRead);
+    if (!response.error) {
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((noti) =>
+          noti.id === id ? { ...noti, isRead: newIsRead } : noti
+        )
+      );
+      fetchData();
+      setSelectedNotiId(null);
+    } else {
+      console.log("Lỗi khi đánh dấu thông báo", response.error);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      const unreadNotis = notifications.filter(noti => !noti.isRead);
+      await Promise.all(
+        unreadNotis.map(noti => markReadNotification(noti.id, true))
+      );
+
+      setNotifications(prev =>
+        prev.map(noti =>
+          !noti.isRead ? { ...noti, isRead: true } : noti
+        )
+      );
+      fetchData();
+
+    } catch (error) {
+      console.log("Lỗi khi đánh dấu tất cả là đã đọc:", error);
+    }
+  }
+
   const handlePayment = async () => {
     if (!amountToDeposit || parseInt(amountToDeposit.replace(/\D/g, ""), 10) <= 0) {
       alert("Vui lòng nhập số tiền hợp lệ.");
@@ -258,7 +331,6 @@ const Header = () => {
       alert("Có lỗi xảy ra trong quá trình xử lý thanh toán.");
     }
   };
-
   return (
     <header className="w-full bg-white sticky top-0 z-50 shadow-sm px-4">
       <div className="flex items-center justify-between">
@@ -306,7 +378,17 @@ const Header = () => {
               <div className="absolute top-full left-0 bg-white rounded-lg py-2 px-3 w-80 opacity-0 invisible transform translate-y-2 transition ease-in-out duration-300 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
                 <ul>
                   <DropdownItem icon={faBuilding} text="Danh sách công ty" to="/cong-ti" isActive={location.pathname === "/cong-ti"} />
-                  <DropdownItem icon={faStar} text="Top công ty" to="/top-cong-ti" isActive={location.pathname === "/top-cong-ti"} />
+                  {/* <DropdownItem icon={faStar} text="Top công ty" to="/top-cong-ti" isActive={location.pathname === "/top-cong-ti"} /> */}
+                </ul>
+              </div>
+            </li>
+          </Link>
+          <Link to={"/iq-home"}>
+            <li className={`relative group text-center font-semibold text-base cursor-pointer ${isActive("/iq-home", ["/iq-test"])}`}>
+              Công cụ
+              <div className="absolute top-full left-0 bg-white rounded-lg py-2 px-3 w-80 opacity-0 invisible transform translate-y-2 transition ease-in-out duration-300 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
+                <ul>
+                  <DropdownItem icon={faBrain} text="Trắc nghiệm IQ" to="/iq-home" isActive={location.pathname === "/iq-home"} />
                 </ul>
               </div>
             </li>
@@ -331,11 +413,11 @@ const Header = () => {
 
                 {/* Notification Popup */}
                 {isOpen && (
-                  <div className="absolute right-0 mt-2 w-80 h-44 overflow-y-auto bg-white shadow-lg rounded-lg border border-gray-200 z-50">
+                  <div className="absolute right-0 mt-2 w-96 h-44 overflow-y-auto bg-white shadow-lg rounded-lg border border-gray-200 z-50">
                     <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
                       <span className="font-semibold text-gray-800">Thông báo</span>
                       <button
-                        onClick={() => setIsOpen(false)}
+                        onClick={handleMarkAllAsRead}
                         className="text-sm text-green-600 hover:underline"
                       >
                         Đánh dấu là đã đọc
@@ -355,24 +437,56 @@ const Header = () => {
                       {notifications.map((notification, index) => (
                         <div
                           key={notification.id || index}
-                          className="mb-3 p-3 hover:bg-green-50 rounded-lg group"
+                          className="mb-3 p-3 hover:bg-green-50 rounded-lg group cursor-pointer relative"
                         >
-                          <h4 className="font-medium text-gray-900 group-hover:text-green-600">
-                            {notification.message}
-                          </h4>
-                          <p className="text-sm text-gray-500">
-                            {new Date(notification.createdAt).toLocaleDateString('en-GB')}
-                          </p>
+                          <div className="flex justify-between">
+                            <Link to={notification.link} onClick={(e) => {
+                              if (!notification.isRead) {
+                                e.preventDefault();
+                                handleIsReadNotification(notification.id, notification.isRead);
+                              }
+                            }} className="flex-1">
+                              <h4 className={`${!notification.isRead ? 'font-bold text-gray-900' : 'font-normal text-gray-700'} group-hover:text-green-600`}>
+                                {notification.message}
+                              </h4>
+                              <p className="text-sm text-gray-500">
+                                {new Date(notification.createdAt).toLocaleDateString('en-GB')}
+                              </p>
+                            </Link>
+
+                            <FontAwesomeIcon
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleMenuNoti(notification.id);
+                              }}
+                              className="mt-12 opacity-0 group-hover:opacity-100 transition-opacity right-0 cursor-pointer"
+                              icon={faEllipsis}
+                            />
+                          </div>
+
+                          {selectedNotiId === notification.id && (
+                            <div
+                              ref={menuRef}
+                              className="absolute top-full right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg text-sm z-10"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleIsReadNotification(notification.id, notification.isRead);
+                                }}
+                                className="block w-full px-4 py-2 hover:bg-gray-700"
+                              >
+                                {notification.isRead ? 'Đánh dấu chưa đọc' : 'Đánh dấu đã đọc'}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
-                      {pagination.page + 1 < pagination.totalPages && (
-                        <button
-                          onClick={loadMore}
-                          className="mt-2 w-full text-green-600 text-sm hover:underline"
-                        >
-                          Xem thêm
-                        </button>
-                      )}
+                      <div ref={bottomRef}></div>
+
                     </div>
                   </div>
                 )}

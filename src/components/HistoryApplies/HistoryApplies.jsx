@@ -1,9 +1,11 @@
-import { faCheck, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faChevronDown, faChevronUp, faEye } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { toast } from 'react-toastify';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 import { fetchJobById, getCv, getCvFile } from '../../utils/ApiFunctions';
 
 
@@ -113,8 +115,33 @@ const HistoryApplies = ({ applications, loading, error, onStatusChange }) => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
-                <ClipLoader color="#4caf50" size={40} />
+            <div className="bg-gray-100 min-h-screen w-full ml-12">
+                <div className="container mx-auto px-6 max-w-screen-lg bg-white rounded-xl shadow-lg pb-5">
+                    <div className="flex justify-between items-center mb-5 pt-5">
+                        <Skeleton width={200} height={24} />
+                        <Skeleton width={120} height={40} />
+                    </div>
+
+                    {[...Array(3)].map((_, i) => (
+                        <div key={i} className="border border-gray-200 rounded-md mb-4 p-4">
+                            <div className="flex">
+                                <div className="flex-shrink-0 mr-5">
+                                    <Skeleton height={96} width={96} />
+                                </div>
+                                <div className="flex-1">
+                                    <Skeleton height={20} width="70%" className="mb-2" />
+                                    <Skeleton height={16} width="40%" className="mb-2" />
+                                    <Skeleton height={14} width="30%" className="mb-2" />
+                                    <div className="flex justify-between items-center">
+                                        <Skeleton height={16} width="40%" />
+                                        <Skeleton height={30} width={100} />
+                                    </div>
+                                    <Skeleton height={14} width="30%" className="mt-3" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     }
@@ -135,7 +162,7 @@ const HistoryApplies = ({ applications, loading, error, onStatusChange }) => {
                             onClick={toggleDropdown}
                         >
                             {isSelected}
-                            <span className="ml-5 text-gray-400">&#9660;</span>
+                            <span className="ml-5 text-gray-400"><FontAwesomeIcon icon={isOpen ? faChevronUp : faChevronDown}/></span>
                         </button>
                         <ul
                             className={`absolute mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto w-full py-2 z-10 ${isOpen ? 'block' : 'hidden'}`}

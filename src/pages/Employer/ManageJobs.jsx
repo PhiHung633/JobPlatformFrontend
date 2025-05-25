@@ -121,6 +121,25 @@ const ManageJobs = () => {
       },
     });
   };
+  const handleAddJobSample = (job) => {
+    navigate('/dashboard/tao-cong-viec', {
+      state: {
+        id: "",
+        title: job.title,
+        description: job.description,
+        requirement: job.requirement,
+        workExperience: job.workExperience,
+        benefits: job.benefits,
+        salary: job.salary,
+        industry: job.industry,
+        level: job.level,
+        workType: job.workType,
+        address: job.address,
+        numberOfRecruits: job.numberOfRecruits,
+        deadline: job.deadline,
+      },
+    });
+  };
 
   const handleAdd = () => {
     navigate('/dashboard/tao-cong-viec');
@@ -140,23 +159,37 @@ const ManageJobs = () => {
     loadJobs(newPage);
   };
 
-  const handleFindSuitableCandidates = async (jobId) => {
-    setLoading1(true);
+  const handleFindSuitableCandidates = (jobTitle, jobId) => {
     if (jobId) {
-      try {
-        const response = await getBestCvMatch(jobId, 10);
-        console.log("THIRALAVAY", response.data);
-        setCvs(response.data);
-        setOpenModal(true);
-        setLoading1(false);
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách CV:", error);
-        alert("Đã có lỗi xảy ra khi tìm ứng viên.");
-      }
+      navigate('/dashboard/quan-li-cv', {
+        state: {
+          jobTitle,
+          jobId,
+          mode: "search"
+        },
+      });
     } else {
       alert("Vui lòng chọn một tin tuyển dụng trước.");
     }
   };
+
+  // const handleFindSuitableCandidates = async (jobId) => {
+  //   setLoading1(true);
+  //   if (jobId) {
+  //     try {
+  //       const response = await getBestCvMatch(jobId, 10);
+  //       console.log("THIRALAVAY", response.data);
+  //       setCvs(response.data);
+  //       setOpenModal(true);
+  //       setLoading1(false);
+  //     } catch (error) {
+  //       console.error("Lỗi khi lấy danh sách CV:", error);
+  //       alert("Đã có lỗi xảy ra khi tìm ứng viên.");
+  //     }
+  //   } else {
+  //     alert("Vui lòng chọn một tin tuyển dụng trước.");
+  //   }
+  // };
 
   const handleExtendJob = async (jobId) => {
     if (!jobId) return;
@@ -224,6 +257,18 @@ const ManageJobs = () => {
         </Button>
       </div>
 
+      {/* Search bar with icon */}
+      <div className="relative mb-6">
+        <input
+          type="text"
+          placeholder="Tìm kiếm tên công việc..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}  // Cập nhật searchTerm khi người dùng nhập
+          className="w-full p-3 pl-4 pr-12 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none transition duration-200"
+        />
+        <FaSearch className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500" />
+      </div>
+
       {loading ? (
         <div className="flex justify-center items-center py-10">
           <svg
@@ -250,17 +295,7 @@ const ManageJobs = () => {
         </div>
       ) : (
         <>
-          {/* Search bar with icon */}
-          <div className="relative mb-6">
-            <input
-              type="text"
-              placeholder="Tìm kiếm tên công việc..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}  // Cập nhật searchTerm khi người dùng nhập
-              className="w-full p-3 pl-4 pr-12 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none transition duration-200"
-            />
-            <FaSearch className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500" />
-          </div>
+
 
           {/* Jobs table */}
           <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
@@ -287,36 +322,46 @@ const ManageJobs = () => {
                           variant="outlined"
                           startIcon={<FolderOpenIcon />}
                           onClick={() => handleManageCV(job.title, job.id)}
-                          className="py-1 px-2 bg-blue-500 text-white rounded-lg transition duration-200"
+                          className="py-3 px-12 w-36 bg-blue-500 text-white rounded-lg transition duration-200"
                         >
-                          {job.cvCount} CV ứng tuyển
+                          {job.cvCount} <p className='text-xs'>CV ứng viên</p>
                         </Button>
                       </td>
-                      <td className="py-2 px-6 border-b">
-                        <Tooltip title="Sửa" arrow>
-                          <Button
-                            onClick={() => handleEdit(job)}
-                            className="min-w-0 w-8 h-8 bg-yellow-500 text-white rounded-full hover:opacity-80"
-                          >
-                            ✏️
-                          </Button>
-                        </Tooltip>
-                        <Tooltip title="Tìm ứng viên phù hợp" arrow>
-                          <Button
-                            onClick={() => handleFindSuitableCandidates(job.id)}
-                            className="min-w-0 w-8 h-8 bg-purple-600 text-white rounded-full hover:opacity-80"
-                          >
-                            🔍
-                          </Button>
-                        </Tooltip>
-                        <Tooltip title="Gia hạn công việc" arrow>
-                          <Button
-                            onClick={() => handleExtendJob(job.id)}
-                            className="min-w-0 w-8 h-8 bg-purple-600 text-white rounded-full hover:opacity-80"
-                          >
-                            ⏳
-                          </Button>
-                        </Tooltip>
+                      <td className="py-2 px-3 border-b">
+                        <div className="flex gap-1">
+                          <Tooltip title="Sửa" arrow>
+                            <Button
+                              onClick={() => handleEdit(job)}
+                              className="min-w-0 w-6 h-6 text-xs bg-yellow-500 text-white rounded-full hover:opacity-80"
+                            >
+                              ✏️
+                            </Button>
+                          </Tooltip>
+                          <Tooltip title="Tìm ứng viên phù hợp" arrow>
+                            <Button
+                              onClick={() => handleFindSuitableCandidates(job.title, job.id)}
+                              className="min-w-0 w-6 h-6 text-xs bg-purple-600 text-white rounded-full hover:opacity-80"
+                            >
+                              🔍
+                            </Button>
+                          </Tooltip>
+                          <Tooltip title="Gia hạn công việc" arrow>
+                            <Button
+                              onClick={() => handleExtendJob(job.id)}
+                              className="min-w-0 w-6 h-6 text-xs bg-purple-600 text-white rounded-full hover:opacity-80"
+                            >
+                              ⏳
+                            </Button>
+                          </Tooltip>
+                          <Tooltip title="Tạo công việc theo mẫu" arrow>
+                            <Button
+                              onClick={() => handleAddJobSample(job)}
+                              className="min-w-0 w-6 h-6 text-xs bg-purple-600 text-white rounded-full hover:opacity-80"
+                            >
+                              📝
+                            </Button>
+                          </Tooltip>
+                        </div>
                       </td>
                       <td className="py-4 px-6 border-b">
                         {(() => {

@@ -7,6 +7,8 @@ import LocationCarousel from '../../components/LocationCarousel/LocationCarousel
 import ImageSlider from '../../components/ImageSlider/ImageSlider';
 import { fetchAllJobs } from '../../utils/ApiFunctions';
 import { ClipLoader } from 'react-spinners';
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 const images = [
     { src: 'register.webp', alt: 'Image 3' },
@@ -44,7 +46,7 @@ const Home = () => {
         const response = await fetchAllJobs(currentPage, 9, '', false, industry, address);
         if (response && response.data) {
             // Lọc công việc có status === "SHOW"
-            console.log("LACHINHAN",response.data)
+            console.log("LACHINHAN", response.data)
             const filteredJobs = response.data.filter(job => job.status === "SHOW" && new Date(job.deadline) > new Date());
             setJobs(filteredJobs);
 
@@ -91,7 +93,7 @@ const Home = () => {
         setSelectedItem(item);
         // console.log("Item được chọn từ LocationCarousel:", item);
     };
-    
+
 
     return (
         <>
@@ -179,8 +181,16 @@ const Home = () => {
                         <div className="mt-12">
                             <div className="pb-1">
                                 {loading ? (
-                                    <div className="flex justify-center items-center min-h-screen">
-                                        <ClipLoader color="#4caf50" size={40} />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {Array(6).fill(0).map((_, index) => (
+                                            <div key={index} className="p-2">
+                                                <Skeleton height={180} />
+                                                <div className="mt-2">
+                                                    <Skeleton height={20} width={`80%`} />
+                                                    <Skeleton height={15} width={`60%`} className="mt-1" />
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 ) : jobs.length === 0 ? (
                                     <p>Hiện tại chưa có công việc phù hợp với yêu cầu của bạn</p>

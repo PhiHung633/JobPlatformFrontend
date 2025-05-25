@@ -94,13 +94,7 @@ const Company = () => {
             <div>
                 {activeTab === 'list' && (
                     <div>
-                        {isLoading &&
-                            <div className="flex justify-center items-center min-h-screen">
-                                <ClipLoader color="#4caf50" size={40} />
-                            </div>
-                        }
-                        {/* {error && <p className="text-red-500">{error}</p>} */}
-                        {!isLoading && !error && <CompanyOutstanding companies={companies} />}
+                        <CompanyOutstanding companies={companies} isLoading={isLoading} />
                     </div>
                 )}
             </div>

@@ -10,13 +10,19 @@ import { fetchJobs, fetchApplications, fetchUserById, fetchJobById, getCvFile, g
 import StatusModal from './StatusModal';
 import InterviewInviteModal from './InterviewInviteModal';
 import { CircularProgress } from "@mui/material";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
+
 
 const ManageCV = () => {
   const [cvs, setCvs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [jobs, setJobs] = useState([]);
   const location = useLocation();
-  const [selectedJobId, setSelectedJobId] = useState(location.state?.jobId || '');
+  const { jobId, jobTitle, mode } = location.state || {};
+  const [selectedJobId, setSelectedJobId] = useState(() => {
+    return mode === 'search' ? '' : jobId || '';
+  });
   const [statusFilter, setStatusFilter] = useState('');
   const [userId, setUserId] = useState("");
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -121,10 +127,12 @@ const ManageCV = () => {
   }, []);
 
   useEffect(() => {
+    if (mode === 'search') return;
+
     if (selectedJobId || jobs.length > 0) {
       loadApplications(selectedJobId, statusFilter);
     }
-  }, [selectedJobId, statusFilter, searchTerm, jobs]);
+  }, [selectedJobId, statusFilter, searchTerm, jobs, mode]);
   console.log(selectedJobId)
 
   useEffect(() => {
@@ -167,8 +175,42 @@ const ManageCV = () => {
       } catch (error) {
         console.error("Lỗi khi lấy CV tạo:", error);
       }
+    } else if (cv.workExperience) {
+      try {
+        const result = await getCv(cv.id);
+        if (result.data) {
+          localStorage.setItem("selectedCvData", JSON.stringify(result.data));
+          navigate("/tao-cv");
+        } else {
+          console.error("Không tìm thấy CV tạo:", result.error);
+          alert("Không thể mở CV tạo.");
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy CV tạo:", error);
+      }
     } else {
       alert("Loại CV không hợp lệ.");
+    }
+  };
+
+  useEffect(() => {
+    if (mode === "search" && jobId) {
+      fetchBestCVs(jobId);
+    }
+  }, [mode, jobId]);
+
+  const fetchBestCVs = async (jobId) => {
+    setLoading(true);
+    try {
+      const response = await getBestCvMatch(jobId, 10);
+      const filteredCvs = response.data.filter(item => item.score > 0);
+      setCvs(filteredCvs);
+      console.log("DAYNEEE@#", filteredCvs)
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách CV phù hợp:", error);
+      alert("Không thể tìm ứng viên phù hợp.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -239,6 +281,14 @@ const ManageCV = () => {
           className="w-48"
         >
           <MenuItem value="">Chọn tin tuyển dụng</MenuItem>
+
+          {/* Nếu đang ở chế độ tìm kiếm, thêm tạm jobTitle làm item "giả" */}
+          {mode === 'search' && !selectedJobId && jobTitle && (
+            <MenuItem value="" disabled>
+              {jobTitle}
+            </MenuItem>
+          )}
+
           {uniqueJobs.map((job) => (
             <MenuItem key={job.id} value={job.id}>
               {job.title}
@@ -262,8 +312,17 @@ const ManageCV = () => {
       {/* Display CVs or Empty State */}
       <div className="overflow-auto rounded-lg border border-gray-200">
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <CircularProgress />
+          <div className="p-6 space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between px-4 py-2 border-b">
+                <Skeleton circle width={32} height={32} />
+                <Skeleton width={100} />
+                <Skeleton width={120} />
+                <Skeleton width={100} />
+                <Skeleton width={80} />
+                <Skeleton width={40} />
+              </div>
+            ))}
           </div>
         ) : cvs.length === 0 ? (
           <div className="text-center py-10">
@@ -284,99 +343,102 @@ const ManageCV = () => {
               </tr>
             </thead>
             <tbody>
-              {cvs.map((cv, index) => (
-                <tr
-                  key={cv.id}
-                  className={`hover:bg-gray-50 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    }`}
-                >
-                  {/* Ứng viên */}
-                  <td className="px-6 py-4 text-gray-900">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gray-300 rounded-full text-center flex items-center justify-center">
-                        {cv.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-semibold">{cv.name}</p>
-                      </div>
-                    </div>
-                  </td>
+              {cvs.map((cvItem, index) => {
+                const actualCv = mode === 'search' ? cvItem.cv : cvItem;
 
-                  {/* Chiến dịch */}
-                  <td className="px-6 py-4">
-                    <p>{cv.position}</p>
-                  </td>
-
-                  {/* Thông tin liên hệ */}
-                  <td className="px-6 py-4">
-                    <p>{cv.email}</p>
-                    <p className="text-xs text-gray-500">{cv.phone}</p>
-                  </td>
-
-                  {/* Insights */}
-                  <td className="px-6 py-4">
-                    <p>🔍 {cv.cvType === "UPLOADED_CV" ? "CV tải lên" : (cv.cvType ? "CV tạo trên JobSearch" : "Không có dữ liệu")}</p>
-                    <p className="text-xs text-gray-500">{cv.appliedAt}</p>
-                  </td>
-
-                  {/* Trạng thái */}
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${cv.status === "Phù hợp"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-blue-100 text-blue-700"
-                        }`}
-                    >
-                      {cv.status}
-                    </span>
-                  </td>
-
-                  {/* Hành động */}
-                  <td className="px-10 py-4 text-center relative">
-                    <div className="inline-block">
-                      <button
-                        onClick={() => toggleMenu(cv.id)}
-                        className="py-1 px-2 text-gray-600 hover:text-gray-900"
-                      >
-                        <FontAwesomeIcon icon={faEllipsis} />
-                      </button>
-                      {openMenuId === cv.id && (
-                        <div className="absolute right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                          <button
-                            onClick={() => handleCvClick(cv)}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Xem CV
-                          </button>
-                          <button
-                            onClick={() => handleUpdateStatus(cv)}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Cập nhật trạng thái
-                          </button>
-                          <button
-                            onClick={() => handleSendInterviewInvite(cv)}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Gửi thư mời phỏng vấn
-                          </button>
+                return (
+                  <tr
+                    key={actualCv.id || index}
+                    className={`hover:bg-gray-50 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
+                  >
+                    {/* Ứng viên */}
+                    <td className="px-6 py-4 text-gray-900">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-gray-300 rounded-full text-center flex items-center justify-center">
+                          {(actualCv.name || actualCv.fullName)?.charAt(0).toUpperCase()}
                         </div>
-                      )}
-                      <StatusModal
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
-                        onSave={handleSaveStatus}
-                      />
-                      <InterviewInviteModal
-                        isOpen={isInviteModalOpen}
-                        onClose={() => setIsInviteModalOpen(false)}
-                        cv={currentCv}
-                        onSuccess={handleSuccess}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        <div>
+                          <p className="font-semibold">{actualCv.name || actualCv.fullName}</p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Chiến dịch */}
+                    <td className="px-6 py-4">
+                      <p>{actualCv.position || jobTitle}</p>
+                    </td>
+
+                    {/* Thông tin liên hệ */}
+                    <td className="px-6 py-4">
+                      <p>{actualCv.email}</p>
+                      <p className="text-xs text-gray-500">{actualCv.phone}</p>
+                    </td>
+
+                    {/* Insights */}
+                    <td className="px-6 py-4">
+                      <p>🔍 {actualCv.cvType === "UPLOADED_CV" ? "CV tải lên" : (actualCv.cvType ? "CV tạo trên JobSearch" : "CV tải lên")}</p>
+                      <p className="text-xs text-gray-500">{actualCv.appliedAt || actualCv.createdAt}</p>
+                    </td>
+
+                    {/* Trạng thái */}
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${actualCv.status === "Phù hợp"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-blue-100 text-blue-700"
+                          }`}
+                      >
+                        {mode==="search"?"Phù hợp" :actualCv.status }
+                      </span>
+                    </td>
+
+                    {/* Hành động */}
+                    <td className="px-10 py-4 text-center relative">
+                      <div className="inline-block">
+                        <button
+                          onClick={() => toggleMenu(actualCv.id)}
+                          className="py-1 px-2 text-gray-600 hover:text-gray-900"
+                        >
+                          <FontAwesomeIcon icon={faEllipsis} />
+                        </button>
+                        {openMenuId === actualCv.id && (
+                          <div className="absolute right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                            <button
+                              onClick={() => handleCvClick(actualCv)}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Xem CV
+                            </button>
+                            <button
+                              onClick={() => handleUpdateStatus(actualCv)}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Cập nhật trạng thái
+                            </button>
+                            <button
+                              onClick={() => handleSendInterviewInvite(actualCv)}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Gửi thư mời phỏng vấn
+                            </button>
+                          </div>
+                        )}
+                        <StatusModal
+                          isOpen={isModalOpen}
+                          onClose={() => setIsModalOpen(false)}
+                          onSave={handleSaveStatus}
+                        />
+                        <InterviewInviteModal
+                          isOpen={isInviteModalOpen}
+                          onClose={() => setIsInviteModalOpen(false)}
+                          cv={currentCv}
+                          onSuccess={handleSuccess}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

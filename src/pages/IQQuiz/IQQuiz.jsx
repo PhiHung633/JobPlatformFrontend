@@ -25,7 +25,7 @@ const IQQuiz = () => {
             if (quizId) {
                 const { data, error } = await getQuizAttemp(quizId);
                 if (data) {
-                    console.log("CUUTUI",data)
+                    console.log("CUUTUI", data)
                     setQuiz(data);
                     setSelectedAnswers(
                         data.questions.reduce((acc, q) => {
@@ -36,6 +36,7 @@ const IQQuiz = () => {
                         }, {})
                     );
                     setTimeLeft(calculateTimeLeft(data.startTime, data.timeLimit));
+                    console.log("DAYLAA1234",calculateTimeLeft(data.startTime, data.timeLimit))
                     connectWebSocket(quizId);
                     setLoading(false);
                     return;
@@ -43,7 +44,7 @@ const IQQuiz = () => {
             }
             startQuiz1();
         };
-    
+
         fetchQuiz();
     }, []);
 
@@ -111,15 +112,15 @@ const IQQuiz = () => {
         const token = localStorage.getItem("accessToken");
         const socket = new SockJS(`http://localhost:8080/ws?token=${token}`);
         const stomp = over(socket);
-    
+
         stomp.connect({}, () => {
             setStompClient(stomp);
-    
+
             stomp.subscribe(`/quiz/${quizId}/time`, (message) => {
                 console.log("Received WebSocket message:", message.body);
                 setTimeLeft(JSON.parse(message.body).timeLeft);
             });
-    
+
             stomp.subscribe(`/quiz/result/${quizId}`, (message) => {
                 const messageText = message.body;
                 const match = messageText.match(/Score:\s*(\d+)/);
@@ -131,7 +132,7 @@ const IQQuiz = () => {
             });
         });
     };
-    
+
 
     const handleSubmit = async () => {
         try {
@@ -171,39 +172,52 @@ const IQQuiz = () => {
     return (
         <div className="w-full mt-5 p-6 bg-white overflow-hidden">
             {isSubmitting && (
-                <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
-                    <div className="bg-white p-4 rounded-lg shadow-lg flex items-center justify-center">
+                <div className="fixed inset-0 z-50 flex justify-center items-center bg-black bg-opacity-60">
+                    <div className="bg-white p-6 rounded-xl shadow-2xl flex flex-col items-center space-y-4">
                         <ClipLoader color="#4caf50" size={40} />
-                        <p className="mt-2 text-lg font-semibold">Đang nộp bài...</p>
+                        <p className="text-lg font-semibold text-gray-700">Đang nộp bài...</p>
                     </div>
                 </div>
             )}
-            <h1 className="text-2xl font-bold text-center mb-4">IQ Quiz Test</h1>
+
+            <h1 className="text-3xl font-bold text-center text-green-600 mb-6">IQ Quiz Test</h1>
+
             {showResult ? (
-                <div className="text-center min-h-screen">
-                    <h2 className="text-xl font-bold">Kết quả của bạn:</h2>
-                    <p className="text-lg mt-2">Bạn đạt {score} / {quiz?.questions.length} điểm</p>
+                <div className="text-center py-10">
+                    <h2 className="text-2xl font-bold text-gray-800">Kết quả của bạn:</h2>
+                    <p className="text-xl mt-4 text-gray-700">
+                        Bạn đạt <span className="font-bold text-green-600">{score}</span> / {quiz?.questions.length} điểm
+                    </p>
                 </div>
             ) : (
                 <>
-                    <div className="flex justify-between items-center mb-4">
-                        <span className="text-lg font-semibold">Thời gian còn lại:</span>
-                        <span className="text-red-500 font-bold text-xl">
+                    <div className="flex justify-between items-center mb-6 px-2 py-3 bg-gray-50 rounded-lg shadow-sm">
+                        <span className="text-lg font-semibold text-gray-800">⏰ Thời gian còn lại:</span>
+                        <span className="text-red-600 font-extrabold text-xl">
                             {Math.floor(timeLeft / 60)}:{("0" + (timeLeft % 60)).slice(-2)}
                         </span>
                     </div>
-                    {quiz?.questions.map((q) => (
-                        q.content && q.answers.length > 0 && (
-                            <div key={q.id} className="mb-4">
-                                <h2 className="font-semibold">{q.id}. {q.content}</h2>
+
+                    {quiz?.questions.map((q,index) =>
+                        q.content && q.answers.length > 0 ? (
+                            <div key={q.id} className="mb-8 p-4 border border-gray-200 rounded-xl bg-gray-50 shadow-sm">
+                                <h2 className="font-semibold text-lg text-gray-800">{index+1}. {q.content}</h2>
+
                                 {q.image && (
-                                    <img src={q.image} alt={`Question ${q.id}`} className="my-2 max-w-full rounded-md border"/>
+                                    <img
+                                        src={q.image}
+                                        alt={`Question ${q.id}`}
+                                        className="my-4 w-full max-h-64 object-contain rounded-md"
+                                    />
                                 )}
-                                <div className="grid grid-cols-2 gap-2 mt-2">
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                                     {q.answers.map((option, index) => (
                                         <button
                                             key={index}
-                                            className={`p-2 border rounded-lg text-left ${selectedAnswers[q.id] === option ? "bg-blue-300" : "bg-gray-100"
+                                            className={`p-3 border rounded-lg text-left transition-colors duration-200 ${selectedAnswers[q.id] === option
+                                                ? "bg-blue-500 text-white border-blue-600"
+                                                : "bg-white hover:bg-blue-50 text-gray-800"
                                                 }`}
                                             onClick={() => handleAnswerChange(q.id, option)}
                                         >
@@ -212,13 +226,14 @@ const IQQuiz = () => {
                                     ))}
                                 </div>
                             </div>
-                        )
-                    ))}
+                        ) : null
+                    )}
+
                     <button
-                        className="w-full mt-4 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600"
+                        className="w-full mt-6 bg-green-600 text-white py-3 rounded-xl shadow-lg hover:bg-green-700 transition-all duration-200"
                         onClick={handleSubmit}
                     >
-                        Nộp bài
+                        ✅ Nộp bài
                     </button>
                 </>
             )}

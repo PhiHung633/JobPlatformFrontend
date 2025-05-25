@@ -119,9 +119,9 @@ const App = () => {
           <Route path="/tim-viec-lam" element={<JobsSearch />} />
           <Route path="/auth/verify-email" element={<VerifyMailSuccess />} />
           <Route path="/auth/password-reset" element={<PasswordResetForm />} />
-          <Route path="/tin-nhan" element={<Message/>} />
+          {/* <Route path="/tin-nhan" element={<Message/>} />
           <Route path="/iq-test" element={<IQQuiz/>} />
-          <Route path="/iq-home" element={<IQHome/>} />
+          <Route path="/iq-home" element={<IQHome/>} /> */}
           <Route path="/403" element={<Forbidden />} />
           <Route
             path="/admin/*"
@@ -161,7 +161,9 @@ const App = () => {
           <Route path="/summary" element={<PrivateRouteForJobSeeker element={<Summary />} />} />
           <Route path="/extra" element={<PrivateRouteForJobSeeker element={<Extra />} />} />
           <Route path="/preview" element={<PrivateRouteForJobSeeker element={<Preview />} />} />
-          {/* <Route path="/message" element={<PrivateRouteForJobSeeker element={<Message/>}/>}/> */}
+          <Route path="/tin-nhan" element={<PrivateRouteForJobSeeker element={<Message/>}/>}/>
+          <Route path="/iq-test" element={<PrivateRouteForJobSeeker element={<IQQuiz/>}/>}/>
+          <Route path="/iq-home" element={<PrivateRouteForJobSeeker element={<IQHome/>}/>}/>
         </Routes>
       </div>
     </div>

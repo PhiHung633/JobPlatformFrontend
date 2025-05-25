@@ -189,6 +189,8 @@ const Searchbar = () => {
   const handleClickOutside = (event) => {
     if (searchbarRef.current && !searchbarRef.current.contains(event.target)) {
       setIsInputFocused(false);
+      setIsJobOpen(false);
+      setIsCityOpen(false);
     }
   };
 
