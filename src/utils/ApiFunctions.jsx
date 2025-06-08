@@ -2,8 +2,8 @@ import axios from "axios"
 // import { param } from "jquery";
 
 export const api = axios.create({
-    baseURL: "https://jobplatformbackend.onrender.com"
-    // baseURL: "http://localhost:8080"
+    // baseURL: "https://jobplatformbackend.onrender.com"
+    baseURL: "http://localhost:8080"
 })
 
 function getAccessToken() {

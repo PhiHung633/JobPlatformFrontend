@@ -28,39 +28,66 @@
 
 .download-mode .cv-content {
   max-height: 1530px;
-  overflow-y: auto; 
+  overflow-y: auto;
 }
 
 .fixed-bg {
   background-attachment: fixed;
   background-position: center;
-  background-size: cover; /* Đảm bảo hình ảnh không bị cắt */
+  background-size: cover;
+  /* Đảm bảo hình ảnh không bị cắt */
 }
+
 /* Tùy chỉnh cho mũi tên Swiper */
 .swiper-button-prev,
 .swiper-button-next {
-  background-color: white; /* Màu nền trắng */
-  border: 2px solid #00c853; /* Viền màu xanh lá */
-  color: #00c853; /* Màu mũi tên xanh lá */
-  width: 40px; /* Kích thước rộng */
-  height: 40px; /* Kích thước cao */
-  border-radius: 50%; /* Tạo hình tròn */
+  background-color: white;
+  /* Màu nền trắng */
+  border: 2px solid #00c853;
+  /* Viền màu xanh lá */
+  color: #00c853;
+  /* Màu mũi tên xanh lá */
+  width: 40px;
+  /* Kích thước rộng */
+  height: 40px;
+  /* Kích thước cao */
+  border-radius: 50%;
+  /* Tạo hình tròn */
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease; /* Hiệu ứng hover */
+  transition: all 0.3s ease;
+  /* Hiệu ứng hover */
 }
 
 .swiper-button-prev::after,
 .swiper-button-next::after {
-  font-size: 16px; /* Kích thước mũi tên */
+  font-size: 16px;
+  /* Kích thước mũi tên */
   font-weight: bold;
 }
 
 /* Hover hiệu ứng */
 .swiper-button-prev:hover,
 .swiper-button-next:hover {
-  background-color: #00c853; /* Nền màu xanh lá */
-  color: white; /* Màu mũi tên trắng */
+  background-color: #00c853;
+  /* Nền màu xanh lá */
+  color: white;
+  /* Màu mũi tên trắng */
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}

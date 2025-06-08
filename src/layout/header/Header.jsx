@@ -35,7 +35,7 @@ import { onMessage } from "firebase/messaging";
 import { messaging } from '../../utils/firebase.js'
 
 import DropdownItem from "../../components/DropdownItem/DropdownItem";
-import { fetchNotifications, fetchUserById, markReadNotification, processMomoPayment } from "../../utils/ApiFunctions";
+import { fetchInterviewInvitations, fetchNotifications, fetchUserById, markReadNotification, processMomoPayment } from "../../utils/ApiFunctions";
 
 
 function formatDate(dateString) {
@@ -64,6 +64,7 @@ const Header = () => {
   const [amountToDeposit, setAmountToDeposit] = useState("100.000");
   let tempIdCounter = 0;
   const [selectedNotiId, setSelectedNotiId] = useState(null);
+  const [selectedInterview, setSelectedInterview] = useState(null);
   const menuRef = useRef(null);
 
   const toggleMenuNoti = (notiId) => {
@@ -71,6 +72,9 @@ const Header = () => {
   };
   const bottomRef = useRef(null);
 
+  const showInterviewPopup = (interview) => {
+    setSelectedInterview(interview);
+  };
 
   const [pagination, setPagination] = useState({
     page: 0,
@@ -146,7 +150,6 @@ const Header = () => {
       setNotifications((prev) =>
         pagination.page === 0 ? data.notifications : [...prev, ...data.notifications]
       );
-      console.log("THATRALANHU&THE", data)
       setPagination((prev) => ({
         ...prev,
         totalPages: data.totalPages,
@@ -331,6 +334,9 @@ const Header = () => {
       alert("Có lỗi xảy ra trong quá trình xử lý thanh toán.");
     }
   };
+  const normalizeDate = (dateString) => {
+    return new Date(dateString.replace(/(\.\d{3})\d+/, '$1'));
+  };
   return (
     <header className="w-full bg-white sticky top-0 z-50 shadow-sm px-4">
       <div className="flex items-center justify-between">
@@ -440,10 +446,34 @@ const Header = () => {
                           className="mb-3 p-3 hover:bg-green-50 rounded-lg group cursor-pointer relative"
                         >
                           <div className="flex justify-between">
-                            <Link to={notification.link} onClick={(e) => {
+                            <Link to={notification.link} onClick={async (e) => {
                               if (!notification.isRead) {
                                 e.preventDefault();
                                 handleIsReadNotification(notification.id, notification.isRead);
+                              }
+                              if (notification.message.toLowerCase().includes("mời phỏng vấn")) {
+                                e.preventDefault();
+
+                                const { data, error } = await fetchInterviewInvitations(null, userId);
+                                console.log("DATAAA", data)
+                                if (data && Array.isArray(data)) {
+                                  // Convert thời gian để so khớp chính xác ±5 giây
+                                  const notifTime = normalizeDate(notification.createdAt).getTime();
+
+                                  const match = data.find(inv => {
+                                    const invTime = normalizeDate(inv.createAt).getTime();
+                                    return Math.abs(invTime - notifTime) < 5000;
+                                  });
+
+
+                                  if (match) {
+                                    showInterviewPopup(match);
+                                  } else {
+                                    alert("Không tìm thấy nội dung thư mời phù hợp.");
+                                  }
+                                } else {
+                                  alert("Không thể tải thư mời phỏng vấn.");
+                                }
                               }
                             }} className="flex-1">
                               <h4 className={`${!notification.isRead ? 'font-bold text-gray-900' : 'font-normal text-gray-700'} group-hover:text-green-600`}>
@@ -483,6 +513,31 @@ const Header = () => {
                               </button>
                             </div>
                           )}
+                          {selectedInterview && (
+                            <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-center z-50">
+                              <div className="bg-white rounded-2xl shadow-2xl p-8 w-[90%] max-w-md relative animate-fadeIn">
+                                <h3 className="text-xl font-semibold text-gray-800 mb-4">📩 Thư mời phỏng vấn</h3>
+                                <p className="text-gray-700 whitespace-pre-line">{selectedInterview.content}</p>
+                                <p className="text-sm text-gray-500 mt-4">
+                                  ⏰ Gửi lúc: {new Date(selectedInterview.createAt).toLocaleString("vi-VN")}
+                                </p>
+                                <button
+                                  className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition"
+                                  onClick={() => setSelectedInterview(null)}
+                                  aria-label="Đóng"
+                                >
+                                  ✖
+                                </button>
+                                {/* <button
+                                  className="mt-6 w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition"
+                                  onClick={() => setSelectedInterview(null)}
+                                >
+                                  Đóng
+                                </button> */}
+                              </div>
+                            </div>
+                          )}
+
                         </div>
                       ))}
                       <div ref={bottomRef}></div>
@@ -632,135 +687,137 @@ const Header = () => {
         </button>
       </div>
 
-      {menuOpen && (
-        <div className="lx:hidden bg-white shadow-md rounded-b-lg mt-2 p-4">
-          {isLoggedIn ? (
-            <div className="mt-4">
-              <div className="flex items-center mb-4" onClick={() => toggleDropdown("profile")}>
-                <img
-                  src={avatar}
-                  alt="Avatar"
-                  className="mr-2 w-10 h-10 rounded-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src =
-                      "https://media4.giphy.com/media/xTk9ZvMnbIiIew7IpW/giphy.gif?cid=6c09b952souzn361oda9jrwdqfbhyupzrijte9zxczqrfh69&ep=v1_internal_gif_by_id&rid=giphy.gif&ct=g";
-                  }
-                  }
-                />
-                <div>
-                  <p className="font-semibold">Phi Hùng</p>
-                  <p className="text-xs text-gray-500">
-                    Mã ứng viên: <span className="font-bold">#3666666</span>
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    nguyenhoangphihung633@gmail.com
-                  </p>
-                </div>
-              </div>
-              {dropdownOpen.profile && (
-                <ul>
-                  <DropdownItem icon={faEnvelope} text="Tin nhắn" />
-                  <DropdownItem icon={faFile} text="Hồ sơ của tôi" />
-                  <DropdownItem icon={faSquare} text="Thông báo" />
-                  <DropdownItem icon={faShield} text="Bảo mật" />
-                  <DropdownItem icon={faGear} text="Cài đặt tài khoản" />
-                  <DropdownItem icon={faArrowRightFromBracket} text="Đăng xuất" />
-                </ul>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col space-y-2">
-              <a href="#" className="flex items-center justify-between w-full text-green-600">
-                Đăng nhập
-              </a>
-              <a href="#" className="flex items-center justify-between w-full text-green-600">
-                Đăng ký
-              </a>
-            </div>
-          )}
-          <hr className="border-t-2 my-2" />
-          <ul className="space-y-4">
-            <li className="relative group text-left font-semibold text-sm cursor-pointer list-none mb-5">
-              <div
-                className="flex items-center justify-between w-full text-green-600"
-                onClick={() => toggleDropdown("vieclam")}
-              >
-                Việc làm
-                <FontAwesomeIcon
-                  icon={faChevronRight}
-                  className={`transform transition-transform duration-200 ${dropdownOpen.vieclam ? "rotate-90" : ""
-                    }`}
-                />
-              </div>
-              {dropdownOpen.vieclam && (
-                <ul className="ml-4 mt-2 space-y-2">
-                  <DropdownItem icon={faMagnifyingGlass} text="Tìm việc làm" />
-                  <DropdownItem
-                    icon={faBriefcase}
-                    text="Việc làm đã ứng tuyển"
+      {
+        menuOpen && (
+          <div className="lx:hidden bg-white shadow-md rounded-b-lg mt-2 p-4">
+            {isLoggedIn ? (
+              <div className="mt-4">
+                <div className="flex items-center mb-4" onClick={() => toggleDropdown("profile")}>
+                  <img
+                    src={avatar}
+                    alt="Avatar"
+                    className="mr-2 w-10 h-10 rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src =
+                        "https://media4.giphy.com/media/xTk9ZvMnbIiIew7IpW/giphy.gif?cid=6c09b952souzn361oda9jrwdqfbhyupzrijte9zxczqrfh69&ep=v1_internal_gif_by_id&rid=giphy.gif&ct=g";
+                    }
+                    }
                   />
-                  <DropdownItem icon={faHeart} text="Việc làm đã lưu" />
-                  <DropdownItem icon={faCheckToSlot} text="Việc làm phù hợp" />
-                  <DropdownItem icon={faLaptopCode} text="Việc làm IT" />
-                  <DropdownItem icon={faMedal} text="Việc làm Senior" />
-                </ul>
-              )}
-            </li>
-            <li className="relative group text-left font-semibold text-sm cursor-pointer list-none mb-5">
-              <div
-                className="flex items-center justify-between w-full text-green-600"
-                onClick={() => toggleDropdown("hosocv")}
-              >
-                Hồ sơ & CV
-                <FontAwesomeIcon
-                  icon={faChevronRight}
-                  className={`transform transition-transform duration-200 ${dropdownOpen.hosocv ? "rotate-90" : ""
-                    }`}
-                />
+                  <div>
+                    <p className="font-semibold">Phi Hùng</p>
+                    <p className="text-xs text-gray-500">
+                      Mã ứng viên: <span className="font-bold">#3666666</span>
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      nguyenhoangphihung633@gmail.com
+                    </p>
+                  </div>
+                </div>
+                {dropdownOpen.profile && (
+                  <ul>
+                    <DropdownItem icon={faEnvelope} text="Tin nhắn" />
+                    <DropdownItem icon={faFile} text="Hồ sơ của tôi" />
+                    <DropdownItem icon={faSquare} text="Thông báo" />
+                    <DropdownItem icon={faShield} text="Bảo mật" />
+                    <DropdownItem icon={faGear} text="Cài đặt tài khoản" />
+                    <DropdownItem icon={faArrowRightFromBracket} text="Đăng xuất" />
+                  </ul>
+                )}
               </div>
-              {dropdownOpen.hosocv && (
-                <ul className="ml-4 mt-2 space-y-2">
-                  <DropdownItem icon={faFile} text="Tạo CV" />
-                  <DropdownItem icon={faFile} text="Quản lý CV" />
-                  <DropdownItem icon={faFile} text="Mẫu CV" />
-                  <DropdownItem icon={faFile} text="Tải CV lên" />
-                </ul>
-              )}
-            </li>
-
-            <li className="relative group text-left font-semibold text-sm cursor-pointer list-none mb-5">
-              <div
-                className="flex items-center justify-between w-full text-green-600"
-                onClick={() => toggleDropdown("congty")}
-              >
-                Công ty
-                <FontAwesomeIcon
-                  icon={faChevronRight}
-                  className={`transform transition-transform duration-200 ${dropdownOpen.congty ? "rotate-90" : ""
-                    }`}
-                />
+            ) : (
+              <div className="flex flex-col space-y-2">
+                <a href="#" className="flex items-center justify-between w-full text-green-600">
+                  Đăng nhập
+                </a>
+                <a href="#" className="flex items-center justify-between w-full text-green-600">
+                  Đăng ký
+                </a>
               </div>
-              {dropdownOpen.congty && (
-                <ul className="ml-4 mt-2 space-y-2">
-                  <DropdownItem icon={faBuilding} text="Danh sách công ty" />
-                  <DropdownItem icon={faStar} text="Top công ty" />
-                </ul>
-              )}
-            </li>
-
+            )}
             <hr className="border-t-2 my-2" />
-            <li className="group text-left font-semibold text-sm cursor-pointer list-none">
-              <div
-                className="flex items-center justify-between w-full text-green-600"
-              >
-                Đăng tuyển dụng
-              </div>
-            </li>
-          </ul>
-        </div>
-      )}
-    </header>
+            <ul className="space-y-4">
+              <li className="relative group text-left font-semibold text-sm cursor-pointer list-none mb-5">
+                <div
+                  className="flex items-center justify-between w-full text-green-600"
+                  onClick={() => toggleDropdown("vieclam")}
+                >
+                  Việc làm
+                  <FontAwesomeIcon
+                    icon={faChevronRight}
+                    className={`transform transition-transform duration-200 ${dropdownOpen.vieclam ? "rotate-90" : ""
+                      }`}
+                  />
+                </div>
+                {dropdownOpen.vieclam && (
+                  <ul className="ml-4 mt-2 space-y-2">
+                    <DropdownItem icon={faMagnifyingGlass} text="Tìm việc làm" />
+                    <DropdownItem
+                      icon={faBriefcase}
+                      text="Việc làm đã ứng tuyển"
+                    />
+                    <DropdownItem icon={faHeart} text="Việc làm đã lưu" />
+                    <DropdownItem icon={faCheckToSlot} text="Việc làm phù hợp" />
+                    <DropdownItem icon={faLaptopCode} text="Việc làm IT" />
+                    <DropdownItem icon={faMedal} text="Việc làm Senior" />
+                  </ul>
+                )}
+              </li>
+              <li className="relative group text-left font-semibold text-sm cursor-pointer list-none mb-5">
+                <div
+                  className="flex items-center justify-between w-full text-green-600"
+                  onClick={() => toggleDropdown("hosocv")}
+                >
+                  Hồ sơ & CV
+                  <FontAwesomeIcon
+                    icon={faChevronRight}
+                    className={`transform transition-transform duration-200 ${dropdownOpen.hosocv ? "rotate-90" : ""
+                      }`}
+                  />
+                </div>
+                {dropdownOpen.hosocv && (
+                  <ul className="ml-4 mt-2 space-y-2">
+                    <DropdownItem icon={faFile} text="Tạo CV" />
+                    <DropdownItem icon={faFile} text="Quản lý CV" />
+                    <DropdownItem icon={faFile} text="Mẫu CV" />
+                    <DropdownItem icon={faFile} text="Tải CV lên" />
+                  </ul>
+                )}
+              </li>
+
+              <li className="relative group text-left font-semibold text-sm cursor-pointer list-none mb-5">
+                <div
+                  className="flex items-center justify-between w-full text-green-600"
+                  onClick={() => toggleDropdown("congty")}
+                >
+                  Công ty
+                  <FontAwesomeIcon
+                    icon={faChevronRight}
+                    className={`transform transition-transform duration-200 ${dropdownOpen.congty ? "rotate-90" : ""
+                      }`}
+                  />
+                </div>
+                {dropdownOpen.congty && (
+                  <ul className="ml-4 mt-2 space-y-2">
+                    <DropdownItem icon={faBuilding} text="Danh sách công ty" />
+                    <DropdownItem icon={faStar} text="Top công ty" />
+                  </ul>
+                )}
+              </li>
+
+              <hr className="border-t-2 my-2" />
+              <li className="group text-left font-semibold text-sm cursor-pointer list-none">
+                <div
+                  className="flex items-center justify-between w-full text-green-600"
+                >
+                  Đăng tuyển dụng
+                </div>
+              </li>
+            </ul>
+          </div>
+        )
+      }
+    </header >
   );
 };
 

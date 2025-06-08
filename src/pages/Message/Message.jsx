@@ -9,6 +9,7 @@ import { ClipLoader } from 'react-spinners';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { deleteMessage, fetchAllReceiver, fetchApplications, fetchChatMessages, fetchJobById, fetchUserById, updateMessage } from "../../utils/ApiFunctions";
+import { useSearchParams } from "react-router-dom";
 
 
 function formatDate(dateString) {
@@ -41,6 +42,7 @@ const Message = () => {
     const [editingMessage, setEditingMessage] = useState(null);
     const [avatar, setAvatar] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
+    const [applicationsWithAvatar, setApplicationsWithAvatar] = useState([]);
     const menuRef = useRef(null);
 
     const toggleMenu = (messageId) => {
@@ -61,6 +63,11 @@ const Message = () => {
     const [isLoading1, setIsLoading1] = useState(false);
     const [isLoadingApplications, setIsLoadingApplications] = useState(false);
     const [hasMore, setHasMore] = useState(true);
+    const [searchParams] = useSearchParams();
+    const targetEmailFromParam = searchParams.get("email");
+    const targetUserIdFromParam = searchParams.get("userId");
+    const hasInitializedChat = useRef(false);
+
 
     const handleClickOutside = (event) => {
         if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -94,6 +101,7 @@ const Message = () => {
             });
 
             setFilteredContacts(filtered);
+            console.log(filtered)
             setIsLoading1(false);
         }, 300);
 
@@ -237,13 +245,65 @@ const Message = () => {
             } else {
                 console.log("DAYLACON", data)
                 setAvatar(data.avatarUrl || data.companyImage)
-                console.log("DUNGMATA",avatar)
+                console.log("DUNGMATA", avatar)
                 setContacts(data || []);
             }
         };
 
         loadContacts();
     }, [email]);
+
+    useEffect(() => {
+        const initChat = async () => {
+            if (!targetEmailFromParam || !targetUserIdFromParam || hasInitializedChat.current) return;
+
+            hasInitializedChat.current = true;//
+
+            const foundInContacts = contacts.find(
+                (c) => c.email === targetEmailFromParam || c.recruiterEmail === targetEmailFromParam
+            );
+            if (foundInContacts) {
+                setCurrentChat(foundInContacts);
+                return;
+            }
+
+            const foundInApplications = applicationsWithAvatar.find(
+                (c) => c.email === targetEmailFromParam || c.recruiterEmail === targetEmailFromParam
+            );
+            if (foundInApplications) {
+                setContacts((prev) => {
+                    if (!prev.some((c) => c.email === foundInApplications.email)) {
+                        return [...prev, foundInApplications];
+                    }
+                    return prev;
+                });
+                setCurrentChat(foundInApplications);
+                return;
+            }
+
+            const res = await fetchUserById(targetUserIdFromParam);
+            if (res.data) {
+                const tempContact = {
+                    id: res.data.id,
+                    email: res.data.email,
+                    fullName: res.data.fullName,
+                    avatarUrl: res.data.avatarUrl,
+                };
+                setContacts((prev) => {
+                    if (!prev.some((c) => c.email === tempContact.email)) {
+                        return [...prev, tempContact];
+                    }
+                    return prev;
+                });
+                setCurrentChat(tempContact);
+            } else {
+                toast.error("Không tìm thấy người dùng để bắt đầu cuộc trò chuyện.");
+            }
+        };
+
+        initChat();
+    }, [contacts, applicationsWithAvatar, targetEmailFromParam, targetUserIdFromParam]);
+
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -262,6 +322,7 @@ const Message = () => {
 
         const token = localStorage.getItem('accessToken');
         const socket = new SockJS(`http://localhost:8080/ws?token=${token}`);
+        // const socket = new SockJS(`https://jobplatformbackend.onrender.com/ws?token=${token}`);
         const client = Stomp.over(socket);
 
         client.connect({}, () => {
@@ -370,7 +431,47 @@ const Message = () => {
             setInput("");
         }
     };
-    console.log("UADAYMA",avatar)
+    useEffect(() => {
+        const fetchApplications = async () => {
+            const emailMap = new Map();
+            const filtered = [];
+
+            applications.forEach((company) => {
+                if (role === "ROLE_JOB_SEEKER") {
+                    if (!emailMap.has(company.recruiterEmail)) {
+                        emailMap.set(company.recruiterEmail, true);
+                        filtered.push(company);
+                    }
+                } else {
+                    const key = `${company.email}-${company.jobId}`;
+                    if (!emailMap.has(key)) {
+                        emailMap.set(key, true);
+                        filtered.push(company);
+                    }
+                }
+            });
+
+            if (role === "ROLE_RECRUITER") {
+                const enriched = await Promise.all(
+                    filtered.map(async (app) => {
+                        const res = await fetchUserById(app.userId);
+                        return {
+                            ...app,
+                            avatarUrl: res.data?.avatarUrl || "", // fallback rỗng
+                        };
+                    })
+                );
+                setApplicationsWithAvatar(enriched);
+            } else {
+                setApplicationsWithAvatar(filtered);
+            }
+        };
+
+        fetchApplications();
+    }, [applications, role]);
+
+
+    console.log("UADAYMA", role)
     return (
         <div className="flex h-[650px] bg-white">
             {/* Sidebar */}
@@ -404,7 +505,7 @@ const Message = () => {
                                     />
                                     <div className="flex flex-col">
                                         <span className="font-bold">{contact.recruiterName || contact.fullName}</span>
-                                        <span className="text-gray-400">{contact.companyName}</span>
+                                        <span className="text-gray-400">{role === "ROLE_JOB_SEEKER" ? contact.companyName : contact.email}</span>
                                     </div>
                                 </div>
                             ))
@@ -436,7 +537,7 @@ const Message = () => {
                                 .map((msg) => (
                                     <div key={msg.id} className={`mb-4 flex ${msg.sender === email ? "justify-end" : "items-end"}`}>
                                         {msg.sender !== email && (
-                                            <img src={role === "ROLE_JOB_SEEKER" ? currentChat.companyImage : currentChat.avatarUrl||avatar} alt="avatar" className="w-10 h-10 rounded-full mr-2" />
+                                            <img src={role === "ROLE_JOB_SEEKER" ? currentChat.companyImage : currentChat.avatarUrl || avatar} alt="avatar" className="w-10 h-10 rounded-full mr-2" />
                                         )}
                                         <div className="relative group">
                                             <div className={`p-3 rounded-xl max-w-md ${msg.sender === email ? "bg-green-200" : "bg-gray-100"}`}>
@@ -507,38 +608,33 @@ const Message = () => {
                 <div className="space-y-4">
                     {isLoadingApplications ? (
                         <div className="flex justify-center items-center">
-                            <ClipLoader color="#4caf50" size={40}/>
+                            <ClipLoader color="#4caf50" size={40} />
                         </div>
-                    ):(() => {
-                        const filteredApplications = [];
-                        const emailMap = new Map();
-
-                        applications.forEach((company) => {
-                            if (role === "ROLE_JOB_SEEKER") {
-                                // Nếu là job seeker, chỉ lấy email đầu tiên, bỏ các email trùng
-                                if (!emailMap.has(company.recruiterEmail)) {
-                                    emailMap.set(company.recruiterEmail, true);
-                                    filteredApplications.push(company);
-                                }
-                            } else {
-                                // Nếu là recruiter, chỉ loại bỏ nếu email và jobId đều trùng
-                                const key = `${company.email}-${company.jobId}`;
-                                if (!emailMap.has(key)) {
-                                    emailMap.set(key, true);
-                                    filteredApplications.push(company);
-                                }
-                            }
-                        });
-
-                        return filteredApplications.map((company) => (
-                            <div key={company.id} className="flex items-center gap-3 bg-gray-100 p-2 rounded-lg">
-                                <img src={company.companyImage} alt="Company Logo" className="w-10 h-10 rounded-full object-cover" />
+                    ) : (
+                        applicationsWithAvatar.map((company) => (
+                            <div
+                                key={company.id}
+                                className="flex items-center gap-3 bg-gray-100 p-2 rounded-lg"
+                            >
+                                <img
+                                    src={
+                                        role === "ROLE_JOB_SEEKER"
+                                            ? company.companyImage
+                                            : company.avatarUrl || "/default-avatar.png"
+                                    }
+                                    alt="Avatar"
+                                    className="w-10 h-10 rounded-full object-cover"
+                                />
                                 <div className="flex flex-col flex-1">
                                     <span className="font-bold text-sm truncate max-w-[120px] block">
-                                        {role === "ROLE_JOB_SEEKER" ? company.recruiterName : company.name}
+                                        {role === "ROLE_JOB_SEEKER"
+                                            ? company.recruiterName
+                                            : company.name}
                                     </span>
                                     <span className="text-gray-500 text-xs truncate max-w-[120px] block">
-                                        {role === "ROLE_JOB_SEEKER" ? company.companyName : company.position}
+                                        {role === "ROLE_JOB_SEEKER"
+                                            ? company.companyName
+                                            : company.position}
                                     </span>
                                 </div>
                                 <button
@@ -548,11 +644,12 @@ const Message = () => {
                                     Nhắn tin
                                 </button>
                             </div>
-                        ));
-                    })()}
+                        ))
+                    )}
                 </div>
+
             </div>
-        </div >
+        </div>
     );
 };
 export default Message;

@@ -421,6 +421,12 @@ const ManageCV = () => {
                             >
                               Gửi thư mời phỏng vấn
                             </button>
+                            <button
+                              onClick={() => navigate(`/tin-nhan?userId=${actualCv.userId}&email=${actualCv.email}`)}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Nhắn tin
+                            </button>
                           </div>
                         )}
                         <StatusModal

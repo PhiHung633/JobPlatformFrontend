@@ -6,14 +6,13 @@ import JobItem from "../../components/JobItem/JobItem";
 import LocationCarousel from '../../components/LocationCarousel/LocationCarousel';
 import ImageSlider from '../../components/ImageSlider/ImageSlider';
 import { fetchAllJobs } from '../../utils/ApiFunctions';
-import { ClipLoader } from 'react-spinners';
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 const images = [
     { src: 'register.webp', alt: 'Image 3' },
-    { src: 'register.webp', alt: 'Image 4' },
-    { src: 'register.webp', alt: 'Image 5' }
+    { src: 'recruitment.jpg', alt: 'Image 4' },
+    { src: 'jobfair.jpg', alt: 'Image 5' }
 ];
 
 const Home = () => {
