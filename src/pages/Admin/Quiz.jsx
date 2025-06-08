@@ -35,6 +35,9 @@ import {
 const PAGE_SIZE = 5;
 
 const Quiz = () => {
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -159,13 +162,24 @@ const Quiz = () => {
     }
   };
 
-  const handleDeleteQuestion = async (id) => {
+  const confirmDelete = (id) => {
+    setConfirmDeleteId(id);
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setDeleting(true); // Start loading
     try {
-      await deleteQuestion(id);
+      await deleteQuestion(confirmDeleteId);
       fetchQuestions();
+      setFeedback({ type: 'success', message: 'Xóa câu hỏi thành công!', open: true });
     } catch (err) {
       console.error('Failed to delete question', err);
       setFeedback({ type: 'error', message: 'Có lỗi xảy ra. Vui lòng thử lại sau.', open: true });
+    } finally {
+      setDeleting(false); // End loading
+      setConfirmDeleteOpen(false);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -218,7 +232,7 @@ const Quiz = () => {
                     <IconButton onClick={() => openModal(q)} color="primary">
                       <Edit />
                     </IconButton>
-                    <IconButton onClick={() => handleDeleteQuestion(q.id)} color="error">
+                    <IconButton  onClick={() => confirmDelete(q.id)} color="error">
                       <Delete />
                     </IconButton>
                   </TableCell>
@@ -269,12 +283,22 @@ const Quiz = () => {
                 />
               </Button>
               {(selectedImageFile || form.image) && (
-                <Box mt={2}>
-                  <img
-                    src={selectedImageFile ? URL.createObjectURL(selectedImageFile) : form.image}
-                    alt="preview"
-                    style={{ width: 100, borderRadius: 8 }}
-                  />
+                <Box mt={2} display="flex" alignItems="center" gap={2}>
+                <img
+                  src={selectedImageFile ? URL.createObjectURL(selectedImageFile) : form.image}
+                  alt="preview"
+                  style={{ width: 100, borderRadius: 8 }}
+                />
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => {
+                    setForm((prev) => ({ ...prev, image: '' }));
+                    setSelectedImageFile(null);
+                  }}
+                >
+                  Xóa ảnh
+                </Button>
                 </Box>
               )}
             </Grid>
@@ -335,6 +359,27 @@ const Quiz = () => {
             disabled={loading}
           >
             {loading ? <CircularProgress size={24} color="inherit" /> : editingId ? 'Cập nhật' : 'Tạo'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={confirmDeleteOpen}
+        onClose={() => setConfirmDeleteOpen(false)}
+      >
+        <DialogTitle>Xác nhận xóa</DialogTitle>
+        <DialogContent>
+          <Typography>Bạn có chắc chắn muốn xóa câu hỏi này không?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDeleteOpen(false)}>Hủy</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleConfirmDelete}
+            disabled={deleting}
+          >
+            {deleting ? <CircularProgress size={20} color="inherit" /> : 'Xóa'}
           </Button>
         </DialogActions>
       </Dialog>
