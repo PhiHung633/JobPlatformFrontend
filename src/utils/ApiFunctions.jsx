@@ -1161,6 +1161,20 @@ export async function getQuizAttemp(id) {
     }
 }
 
+export async function getUserQuizAttempts(){
+    try{
+        const response = await api.get("/quiz");
+        return {data:response.data, error: null};
+    } catch (error) {
+        console.log("Error fetching quiz", error);
+        if (error.response) {
+            return {data: null, error: error.response.data, status: error.response.status};
+        }else {
+            return {data: null, error: "Network Error", status:null};
+        }
+    }
+}
+
 export async function findBestJob(idCv, limit) {
     try{
         const response = await api.get(`/cvs/${idCv}/best-job`,{

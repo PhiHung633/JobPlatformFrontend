@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import SockJS from "sockjs-client/dist/sockjs";
 import { over } from "stompjs";
 import { ClipLoader } from 'react-spinners';
@@ -18,6 +18,9 @@ const IQQuiz = () => {
     const [score, setScore] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loading, setLoading] = useState(true);
+    const location = useLocation();
+    const { questions = [], isReview = false } = location.state || {};
+
 
     useEffect(() => {
         const fetchQuiz = async () => {
@@ -36,7 +39,7 @@ const IQQuiz = () => {
                         }, {})
                     );
                     setTimeLeft(calculateTimeLeft(data.startTime, data.timeLimit));
-                    console.log("DAYLAA1234",calculateTimeLeft(data.startTime, data.timeLimit))
+                    console.log("DAYLAA1234", calculateTimeLeft(data.startTime, data.timeLimit))
                     connectWebSocket(quizId);
                     setLoading(false);
                     return;
@@ -197,44 +200,88 @@ const IQQuiz = () => {
                             {Math.floor(timeLeft / 60)}:{("0" + (timeLeft % 60)).slice(-2)}
                         </span>
                     </div>
+                    {isReview ? (
+                        <div className="p-4">
+                            {questions.map((q, index) => (
+                                <div key={q.id} className="mb-6 border p-4 rounded shadow">
+                                    <h2 className="font-semibold">
+                                        Câu {index + 1}: {q.content}
+                                    </h2>
+                                    {q.image && <img src={q.image} alt="" className="mt-2 mb-2 max-h-60" />}
+                                    <ul className="mt-2">
+                                        {q.answers.map((ans, i) => {
+                                            const isCorrect = ans === q.correctAnswer;
+                                            const isSelected = ans === q.selectedAnswer;
+                                            let bgColor = "";
 
-                    {quiz?.questions.map((q,index) =>
-                        q.content && q.answers.length > 0 ? (
-                            <div key={q.id} className="mb-8 p-4 border border-gray-200 rounded-xl bg-gray-50 shadow-sm">
-                                <h2 className="font-semibold text-lg text-gray-800">{index+1}. {q.content}</h2>
+                                            if (isReview) {
+                                                if (isCorrect) bgColor = "bg-green-200";
+                                                else if (isSelected) bgColor = "bg-red-200";
+                                            } else if (isSelected) {
+                                                bgColor = "bg-blue-100";
+                                            }
 
-                                {q.image && (
-                                    <img
-                                        src={q.image}
-                                        alt={`Question ${q.id}`}
-                                        className="my-4 w-full max-h-64 object-contain rounded-md"
-                                    />
-                                )}
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                                    {q.answers.map((option, index) => (
-                                        <button
-                                            key={index}
-                                            className={`p-3 border rounded-lg text-left transition-colors duration-200 ${selectedAnswers[q.id] === option
-                                                ? "bg-blue-500 text-white border-blue-600"
-                                                : "bg-white hover:bg-blue-50 text-gray-800"
-                                                }`}
-                                            onClick={() => handleAnswerChange(q.id, option)}
-                                        >
-                                            {option}
-                                        </button>
-                                    ))}
+                                            return (
+                                                <li
+                                                    key={i}
+                                                    className={`p-2 rounded mt-1 border ${bgColor}`}
+                                                >
+                                                    {ans}
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                    {isReview && (
+                                        <p className="mt-2 text-sm text-gray-600">
+                                            Đáp án đúng: <strong>{q.correctAnswer}</strong>
+                                            <br />
+                                            Bạn chọn: <strong>{q.selectedAnswer || "Không chọn"}</strong>
+                                        </p>
+                                    )}
                                 </div>
-                            </div>
-                        ) : null
-                    )}
+                            ))}
+                        </div>
+                    ) :
+                        (quiz?.questions.map((q, index) =>
+                            q.content && q.answers.length > 0 ? (
+                                <div key={q.id} className="mb-8 p-4 border border-gray-200 rounded-xl bg-gray-50 shadow-sm">
+                                    <h2 className="font-semibold text-lg text-gray-800">{index + 1}. {q.content}</h2>
 
-                    <button
-                        className="w-full mt-6 bg-green-600 text-white py-3 rounded-xl shadow-lg hover:bg-green-700 transition-all duration-200"
-                        onClick={handleSubmit}
-                    >
-                        ✅ Nộp bài
-                    </button>
+                                    {q.image && (
+                                        <img
+                                            src={q.image}
+                                            alt={`Question ${q.id}`}
+                                            className="my-4 w-full max-h-64 object-contain rounded-md"
+                                        />
+                                    )}
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                                        {q.answers.map((option, index) => (
+                                            <button
+                                                key={index}
+                                                className={`p-3 border rounded-lg text-left transition-colors duration-200 ${selectedAnswers[q.id] === option
+                                                    ? "bg-blue-500 text-white border-blue-600"
+                                                    : "bg-white hover:bg-blue-50 text-gray-800"
+                                                    }`}
+                                                onClick={() => handleAnswerChange(q.id, option)}
+                                            >
+                                                {option}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : null
+                        ))
+                    }
+
+                    {!isReview && (
+                        <button
+                            className="w-full mt-6 bg-green-600 text-white py-3 rounded-xl shadow-lg hover:bg-green-700 transition-all duration-200"
+                            onClick={handleSubmit}
+                        >
+                            ✅ Nộp bài
+                        </button>
+                    )}
                 </>
             )}
         </div>
