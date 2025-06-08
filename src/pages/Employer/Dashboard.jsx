@@ -74,15 +74,14 @@ const Dashboard = () => {
 
     try {
       const { data, error } = await processMomoPayment(paymentData);
-
       if (error) {
         alert(`Thanh toán thất bại: ${error.message || "Có lỗi xảy ra."}`);
         return;
       }
 
-      if (data?.shortLink) {
+      if (data?.payUrl) {
         alert("Đang chuyển hướng đến cổng thanh toán...");
-        window.location.href = data.shortLink;
+        window.location.href = data.payUrl;
         setShowModal(false);
       } else {
         alert("Không tìm thấy liên kết thanh toán.");

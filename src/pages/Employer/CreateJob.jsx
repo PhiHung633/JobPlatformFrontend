@@ -217,9 +217,9 @@ const CreateJob = () => {
         return;
       }
 
-      if (data?.shortLink) {
+      if (data?.payUrl) {
         alert("Đang chuyển hướng đến cổng thanh toán...");
-        window.location.href = data.shortLink;
+        window.location.href = data.payUrl;
         setShowModal(false);
       } else {
         alert("Không tìm thấy liên kết thanh toán.");
