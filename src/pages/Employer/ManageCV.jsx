@@ -12,6 +12,7 @@ import InterviewInviteModal from './InterviewInviteModal';
 import { CircularProgress } from "@mui/material";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import useDebounce from '../../utils/useDebounce';
 
 
 const ManageCV = () => {
@@ -30,6 +31,7 @@ const ManageCV = () => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [currentCv, setCurrentCv] = useState(null);
   const [loading, setLoading] = useState(false);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const navigate = useNavigate();
 
 
@@ -80,7 +82,7 @@ const ManageCV = () => {
     }
 
     queryParams.status = status || undefined;
-    queryParams.name = searchTerm || undefined;
+    queryParams.name = debouncedSearchTerm  || undefined;
     console.log("QUERYY", queryParams)
     const result = await fetchApplications(queryParams);
     console.log("Result", result);
@@ -132,7 +134,7 @@ const ManageCV = () => {
     if (selectedJobId || jobs.length > 0) {
       loadApplications(selectedJobId, statusFilter);
     }
-  }, [selectedJobId, statusFilter, searchTerm, jobs, mode]);
+  }, [selectedJobId, statusFilter, debouncedSearchTerm, jobs, mode]);
   console.log(selectedJobId)
 
   useEffect(() => {
@@ -388,7 +390,7 @@ const ManageCV = () => {
                           : "bg-blue-100 text-blue-700"
                           }`}
                       >
-                        {mode==="search"?"Phù hợp" :actualCv.status }
+                        {mode === "search" ? "Phù hợp" : actualCv.status}
                       </span>
                     </td>
 

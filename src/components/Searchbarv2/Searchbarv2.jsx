@@ -2,6 +2,8 @@ import { faLocationDot, faSearch, faArrowRight } from '@fortawesome/free-solid-s
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useRef, useState } from 'react';
 import { fetchAllJobs } from '../../utils/ApiFunctions';
+import { Link } from 'react-router-dom';
+import useDebounce from '../../utils/useDebounce';
 
 const SearchBarv2 = ({ searchTitle = '' }) => {
     const [searchData, setSearchData] = useState({
@@ -12,6 +14,7 @@ const SearchBarv2 = ({ searchTitle = '' }) => {
     const [isInputFocused, setIsInputFocused] = useState(false);
     const [jobSuggestions, setJobSuggestions] = useState([]);
     const [filterOption, setFilterOption] = useState("1");
+    const debouncedSearchTitle = useDebounce(searchData.jobTitle, 500);
 
     const formRef = useRef(null);
 
@@ -70,6 +73,12 @@ const SearchBarv2 = ({ searchTitle = '' }) => {
         e.preventDefault();
         fetchJobs();
     };
+
+    useEffect(() => {
+        if (debouncedSearchTitle.trim() !== "") {
+            fetchJobs();
+        }
+    }, [debouncedSearchTitle]);
 
     return (
         <form ref={formRef}
@@ -166,37 +175,43 @@ const SearchBarv2 = ({ searchTitle = '' }) => {
                     <div className="flex flex-col ml-5 hidden-on-small:ml-0">
                         <div className="font-semibold mb-2">Việc làm bạn có thể quan tâm</div>
                         <div className="flex flex-col">
-                            {jobSuggestions.map((job, index) => (
-                                <a
-                                    href={job.link}
-                                    className="flex items-center p-2 hover:bg-[#e0e7ff] transition-colors w-[500px] relative group"
-                                    key={index}
-                                >
-                                    <div className="mr-2">
-                                        <img
-                                            src={job.companyImages}
-                                            alt={job.companyName}
-                                            className="w-24 h-auto"
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-[#263a4d] font-semibold truncate">
-                                            {job.title}
-                                        </p>
-                                        <p className="text-gray-600 text-sm truncate">
-                                            {job.companyName}
-                                        </p>
-                                        <div className="text-green-600 text-sm font-semibold">
-                                            {job.salary.toLocaleString() || "Thoả thuận"} VNĐ
-                                        </div>
-                                    </div>
-                                    <div className="ml-4 text-green-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                                        <FontAwesomeIcon icon={faArrowRight} />
-                                    </div>
-                                </a>
-                            ))}
+                            {
+                                jobSuggestions.length > 0 ? (
+                                    jobSuggestions.map((job, index) => (
+                                        <Link
+                                            href={job.link}
+                                            className="flex items-center p-2 hover:bg-[#e0e7ff] transition-colors w-[600px] relative group"
+                                            key={index}
+                                        >
+                                            <div className="mr-2">
+                                                <img
+                                                    src={job.companyImages}
+                                                    alt={job.companyName}
+                                                    className="w-24 h-auto"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-[#263a4d] font-semibold truncate">
+                                                    {job.title}
+                                                </p>
+                                                <p className="text-gray-600 text-sm truncate">
+                                                    {job.companyName}
+                                                </p>
+                                                <div className="text-green-600 text-sm font-semibold">
+                                                    {job.salary ? `${job.salary.toLocaleString()} VNĐ` : "Thoả thuận"}
+                                                </div>
+                                            </div>
+                                            <div className="ml-4 text-green-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                                                <FontAwesomeIcon icon={faArrowRight} />
+                                            </div>
+                                        </Link>
+                                    ))
+                                ) : (
+                                    <p className="text-gray-500 text-center mt-4">Không có việc làm nào phù hợp.</p>
+                                )}
                         </div>
                     </div>
+
                 </div>
             )}
         </form>

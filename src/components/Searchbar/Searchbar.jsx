@@ -11,6 +11,7 @@ import { useState, useEffect, useRef } from "react";
 import { fetchAllJobs } from "../../utils/ApiFunctions";
 import { Link, useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
+import useDebounce from "../../utils/useDebounce";
 
 const Searchbar = () => {
   const cities = [
@@ -171,6 +172,8 @@ const Searchbar = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [debouncedInput] = useDebounce(searchTitle, 500);
+
 
   const handleSearch = () => {
     navigate("/tim-viec-lam", {
@@ -223,12 +226,12 @@ const Searchbar = () => {
       }
     };
 
-    if (searchTitle) {
+    if (debouncedInput && debouncedInput.trim() !== "") {
       fetchJobs();
     } else {
       setJobSuggestions([]);
     }
-  }, [searchTitle, selectedJob, selectedCity]);
+  }, [selectedJob, selectedCity, debouncedInput]);
   const fetchData = (value) => {
     fetch("https://jsonplaceholder.typicode.com/users")
       .then((response) => response.json())

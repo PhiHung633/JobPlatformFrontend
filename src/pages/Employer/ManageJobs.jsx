@@ -13,6 +13,7 @@ import { extendJob, fetchJobs, getBestCvMatch, getCv, getCvFile, updateJob } fro
 import Swal from 'sweetalert2';
 import Tooltip from '@mui/material/Tooltip';
 import { ClipLoader } from 'react-spinners';
+import useDebounce from '../../utils/useDebounce';
 
 
 const ManageJobs = () => {
@@ -26,6 +27,7 @@ const ManageJobs = () => {
   const [cvs, setCvs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loading1, setLoading1] = useState(true);
+  const [debouncedInput] = useDebounce(searchTerm, 500);
   const navigate = useNavigate();
 
   const loadJobs = async (page = 0) => {
@@ -241,7 +243,7 @@ const ManageJobs = () => {
   };
   useEffect(() => {
     loadJobs(currentPage);
-  }, [currentPage, searchTerm]);
+  }, [currentPage, debouncedInput]);
   console.log("JOBNE", jobs)
   return (
     <div className="p-8 mt-10 bg-white shadow rounded-lg">
