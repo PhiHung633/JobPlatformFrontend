@@ -321,8 +321,8 @@ const Message = () => {
         if (stompClientRef.current) return;
 
         const token = localStorage.getItem('accessToken');
-        const socket = new SockJS(`http://localhost:8080/ws?token=${token}`);
-        // const socket = new SockJS(`https://jobplatformbackend.onrender.com/ws?token=${token}`);
+        // const socket = new SockJS(`http://localhost:8080/ws?token=${token}`);
+        const socket = new SockJS(`https://jobplatformbackend.onrender.com/ws?token=${token}`);
         const client = Stomp.over(socket);
 
         client.connect({}, () => {

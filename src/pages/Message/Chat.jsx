@@ -9,7 +9,8 @@ const Chat = () => {
 
   useEffect(() => {
     console.log("Attempting WebSocket connection...");
-    const socket = new SockJS("http://localhost:8080/ws");
+    // const socket = new SockJS("http://localhost:8080/ws");
+    const socket = new SockJS("https://jobplatformbackend.onrender.com/ws");
     const stompClient = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
@@ -21,10 +22,10 @@ const Chat = () => {
       },
       onDisconnect: () => console.log("WebSocket Disconnected"),
     });
-  
+
     stompClient.activate();
     setClient(stompClient);
-  
+
     return () => {
       console.log("WebSocket Cleanup");
       if (stompClient) stompClient.deactivate();

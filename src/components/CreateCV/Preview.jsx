@@ -27,6 +27,10 @@ const Preview = () => {
         portfolios: [],
     });
 
+    // State for managing sidebar color and color picker visibility
+    const [sidebarColor, setSidebarColor] = useState('#1e3a8a'); // Default blue-900
+    const [showColorPicker, setShowColorPicker] = useState(false);
+
     useEffect(() => {
         const cvFormData = JSON.parse(localStorage.getItem('cvFormData')) || {};
         const skillsData = localStorage.getItem('skillsData') ? localStorage.getItem('skillsData').split('; ') : [];
@@ -167,7 +171,7 @@ const Preview = () => {
         } else {
             result = await createCv(formattedData);
         }
-        console.log("RESQQWESA",result)
+        console.log("RESQQWESA", result)
         if (result.status === 403) {
             console.error("Failed to save CV:", result.error);
             alert(`Error saving CV: ${result.error.message}`);
@@ -189,8 +193,12 @@ const Preview = () => {
     };
     console.log("PRO", profile)
 
+    const handleColorChange = (e) => {
+        setSidebarColor(e.target.value);
+    };
+
     return (
-        <div className="flex min-h-screen bg-gray-100 overflow-y-auto">
+        <div className="flex min-h-screen bg-gray-100 overflow-y-auto relative">
             <Sidebar currentStep={6} />
 
             <div className="ml-8 flex-1 mt-5">
@@ -201,7 +209,10 @@ const Preview = () => {
 
                 <div id="cv-content" className="flex min-h-[1123px]">
                     {/* Sidebar */}
-                    <div className="cv-sidebar w-1/4 bg-blue-900 text-white rounded-lg p-4 shadow-2xl space-y-6">
+                    <div
+                        className="cv-sidebar w-1/4 text-white rounded-lg p-4 shadow-2xl space-y-6"
+                        style={{ backgroundColor: sidebarColor }} // Apply dynamic color here
+                    >
                         <div className="text-center">
                             <div className="w-40 h-40 mb-5 mx-auto overflow-hidden bg-gray-300 rounded-full flex items-center justify-center shadow-lg">
                                 <img
@@ -210,12 +221,12 @@ const Preview = () => {
                                     alt="Profile"
                                 />
                             </div>
-                            <h3 className="text-2xl font-bold">{profile.name}</h3>
-                            <p className="text-sm">{profile.role}</p>
+                            <h3 className="text-2xl font-bold">{profile.fullName}</h3> {/* Changed to fullName */}
+                            <p className="text-sm">{profile.jobPosition}</p> {/* Changed to jobPosition */}
                         </div>
 
                         <div>
-                            <h4 className="text-lg font-semibold bg-blue-800 p-2 rounded-t-lg">Contact</h4>
+                            <h4 className="text-lg font-semibold p-2 rounded-t-lg" style={{ backgroundColor: darkenColor(sidebarColor, 20) }}>Contact</h4> {/* Darken sidebar color for heading */}
                             <p className="text-sm p-4 space-y-2">
                                 <span className="font-semibold">Address:</span> {profile.address} <br />
                                 <span className="font-semibold">Phone:</span> {profile.phone} <br />
@@ -225,7 +236,7 @@ const Preview = () => {
                         </div>
 
                         <div>
-                            <h4 className="text-lg font-semibold bg-blue-800 p-2 rounded-t-lg">Skills</h4>
+                            <h4 className="text-lg font-semibold p-2 rounded-t-lg" style={{ backgroundColor: darkenColor(sidebarColor, 20) }}>Skills</h4>
                             <div className="p-4">
                                 {profile.skills.map((skill, index) => (
                                     <div key={index} className="mb-3">
@@ -233,7 +244,7 @@ const Preview = () => {
                                         <div className="w-full bg-gray-300 rounded-full h-2 mt-2">
                                             <div
                                                 className="bg-yellow-500 h-2 rounded-full"
-                                                style={{ width: `${skill.level * 10}%` }}
+                                                style={{ width: `${skill.level}%` }} // Skill level is already 0-100
                                             ></div>
                                         </div>
                                     </div>
@@ -242,17 +253,11 @@ const Preview = () => {
                         </div>
 
                         <div>
-                            <h4 className="text-lg font-semibold bg-blue-800 p-2 rounded-t-lg">Languages</h4>
+                            <h4 className="text-lg font-semibold p-2 rounded-t-lg" style={{ backgroundColor: darkenColor(sidebarColor, 20) }}>Languages</h4>
                             <div className="p-4">
                                 {profile.languages.map((language, index) => (
                                     <div key={index} className="mb-3">
                                         <p className="font-semibold text-sm">{language.title}</p>
-                                        {/* <div className="w-full bg-gray-300 rounded-full h-2 mt-2">
-                                            <div
-                                                className="bg-yellow-500 h-2 rounded-full"
-                                                style={{ width: `${skill.level * 10}%` }}
-                                            ></div>
-                                        </div> */}
                                     </div>
                                 ))}
                             </div>
@@ -349,8 +354,63 @@ const Preview = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Floating button for color picker */}
+            <div className="fixed bottom-8 right-8 z-50">
+                <button
+                    onClick={() => setShowColorPicker(!showColorPicker)}
+                    className="bg-purple-600 text-white p-4 rounded-full shadow-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+                    title="Change Sidebar Color"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343V4a2 2 0 012-2h7a2 2 0 012 2v12a2 2 0 01-2 2h-2.343m-6.068.562L10 16m3-3h.01"
+                        />
+                    </svg>
+                </button>
+
+                {showColorPicker && (
+                    <div className="absolute bottom-16 right-0 bg-white p-4 rounded-lg shadow-xl border border-gray-200">
+                        <label htmlFor="color-picker" className="block text-gray-700 text-sm font-bold mb-2">
+                            Chọn màu Sidebar:
+                        </label>
+                        <input
+                            type="color"
+                            id="color-picker"
+                            value={sidebarColor}
+                            onChange={handleColorChange}
+                            className="w-24 h-10 border border-gray-300 rounded-md cursor-pointer"
+                        />
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
 
 export default Preview;
+
+// Helper function to darken a color (for heading backgrounds)
+function darkenColor(hex, percent) {
+    hex = hex.replace(/^#/, '');
+    if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    const newR = Math.max(0, r - (r * percent) / 100);
+    const newG = Math.max(0, g - (g * percent) / 100);
+    const newB = Math.max(0, b - (b * percent) / 100);
+
+    return `#${(Math.round(newR).toString(16).padStart(2, '0'))}${(Math.round(newG).toString(16).padStart(2, '0'))}${(Math.round(newB).toString(16).padStart(2, '0'))}`;
+}
