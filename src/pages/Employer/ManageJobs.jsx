@@ -27,7 +27,7 @@ const ManageJobs = () => {
   const [cvs, setCvs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loading1, setLoading1] = useState(true);
-  const [debouncedInput] = useDebounce(searchTerm, 500);
+  const debouncedInput = useDebounce(searchTerm, 500);
   const navigate = useNavigate();
 
   const loadJobs = async (page = 0) => {

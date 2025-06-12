@@ -172,7 +172,7 @@ const Searchbar = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const [debouncedInput] = useDebounce(searchTitle, 500);
+  const debouncedInput = useDebounce(searchTitle, 500);
 
 
   const handleSearch = () => {
@@ -213,7 +213,7 @@ const Searchbar = () => {
         console.log("JOBNE", selectedJob);
         console.log("CITYNE", selectedCity);
 
-        const { data, error } = await fetchAllJobs(0, 10, searchTitle, true, selectedJob, selectedCity);
+        const { data, error } = await fetchAllJobs(0, 10, debouncedInput?.trim(), true, selectedJob, selectedCity);
         if (!error) {
           setJobSuggestions(data);
         } else {
@@ -226,32 +226,18 @@ const Searchbar = () => {
       }
     };
 
-    if (debouncedInput && debouncedInput.trim() !== "") {
+    console.log("useEffect triggered with:", {
+      debouncedInput,
+      selectedJob,
+      selectedCity
+    });
+
+    if (debouncedInput?.trim()) {
       fetchJobs();
     } else {
       setJobSuggestions([]);
     }
   }, [selectedJob, selectedCity, debouncedInput]);
-  const fetchData = (value) => {
-    fetch("https://jsonplaceholder.typicode.com/users")
-      .then((response) => response.json())
-      .then((json) => {
-        const result = json.filter((user) => {
-          return (
-            value &&
-            user &&
-            user.name &&
-            user.name.toLowerCase().includes(value)
-          );
-        });
-        setResults(result);
-      });
-  };
-
-  const handleChange = (value) => {
-    setInput(value);
-    fetchData(value);
-  };
 
   const handleCityChange = (e) => {
     const value = e.target.value;
@@ -303,6 +289,11 @@ const Searchbar = () => {
       setIsJobOpen(false);
     }
   };
+  useEffect(() => {
+    console.log("searchTitle:", searchTitle);         // gõ xong: f → fp → fpt
+    console.log("debouncedInput:", debouncedInput);   // sau 500ms: fpt
+  }, [debouncedInput]);
+
 
   return (
     <div ref={searchbarRef} className="relative">
@@ -312,7 +303,10 @@ const Searchbar = () => {
             className="bg-transparent border-none w-full h-full text-xl focus:outline-none"
             placeholder="Vị trí tuyển dụng"
             value={searchTitle}
-            onChange={(e) => setSearchTitle(e.target.value)}
+            onChange={(e) => {
+              setSearchTitle(e.target.value)
+              console.log("onChange value:", e.target.value);
+            }}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
           />
@@ -320,10 +314,10 @@ const Searchbar = () => {
             icon={faCircleXmark}
             className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer"
             onClick={() => {
-              setInput("");
+              setSearchTitle("");
               setResults([]);
             }}
-            style={{ display: input ? "block" : "none" }}
+            style={{ display: searchTitle ? "block" : "none" }}
           />
         </div>
 
