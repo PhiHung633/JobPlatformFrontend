@@ -320,17 +320,19 @@ const JobDetail = () => {
                         </ul>
                     </div>
                     <div className='mt-3'>
-                        <h4 className="text-base font-semibold text-gray-800 mb-4">Yêu cầu ứng viên</h4>
+                        <h4 className="text-base font-semibold text-gray-800 mb-4">Quyền lợi</h4>
                         <ul className="list-disc list-inside text-gray-600 space-y-2 ml-4">
-                            <li>Develop and produce detailed and precise 3D models for a wide range of applications, contributing to the digital transformation of numerous iconic venues globally.</li>
-                            <li>Collaborate with fellow designers and developers to meet project requirements and ensure all models adhere to technical and artistic standards.</li>
-                            <li>Optimize models for performance without compromising quality, ensuring compatibility across various platforms and devices.</li>
+                            {job.requirement.split('\n').map((line, index) => (
+                                <li key={index}>{line.replace(/^•\s*/, '')}</li>
+                            ))}
                         </ul>
                     </div>
                     <div className='mt-3'>
                         <h4 className="text-base font-semibold text-gray-800 mb-4">Quyền lợi</h4>
                         <ul className="list-disc list-inside text-gray-600 space-y-2 ml-4">
-                            <li>{job.benefits}</li>
+                            {job.benefits.split('\n').map((line, index) => (
+                                <li key={index}>{line.replace(/^•\s*/, '')}</li>
+                            ))}
                         </ul>
                     </div>
                     <div className='mt-3'>
