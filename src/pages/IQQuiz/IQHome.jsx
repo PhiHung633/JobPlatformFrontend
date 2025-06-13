@@ -140,7 +140,7 @@ const IQHome = () => {
                             >
                                 <h3 className="font-semibold text-green-600">Bài {index + 1}</h3>
                                 <p className="text-sm text-gray-600">
-                                    Bắt đầu: {new Date(attempt.startTime).toLocaleString()}
+                                    Bắt đầu: {new Date(attempt.startTime.getTime() + 7 * 60 * 60 * 1000).toLocaleString()}
                                     <br />
                                     Giới hạn thời gian: {Math.floor(attempt.timeLimit / 60)} phút
                                 </p>

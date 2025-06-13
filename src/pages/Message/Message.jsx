@@ -558,7 +558,7 @@ const Message = () => {
                                                 </div>
                                             )}
                                             <span className="absolute left-1/2 -translate-x-1/2 z-50 bg-gray-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-100">
-                                                {msg.time || formatDate(msg.createdAt)}
+                                                {msg.time || new Date(new Date(msg.createdAt).getTime() + 7 * 60 * 60 * 1000).toLocaleString("vi-VN")}
                                             </span>
                                         </div>
                                     </div>
