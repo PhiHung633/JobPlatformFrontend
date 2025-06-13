@@ -151,7 +151,7 @@ const JobDetail = () => {
                 }
 
                 console.log("JOBBDAAA", jobData)
-                if (jobData.status === "SHOW") {
+                if (jobData.status === "SHOW" || jobData.status === "PENDING_APPROVAL") {
                     setJob(jobData);
                 } else {
                     setError1("Job is not available.");
@@ -319,22 +319,27 @@ const JobDetail = () => {
                             <li>{job.description}</li>
                         </ul>
                     </div>
-                    <div className='mt-3'>
-                        <h4 className="text-base font-semibold text-gray-800 mb-4">Quyền lợi</h4>
-                        <ul className="list-disc list-inside text-gray-600 space-y-2 ml-4">
-                            {job.requirement.split('\n').map((line, index) => (
-                                <li key={index}>{line.replace(/^•\s*/, '')}</li>
-                            ))}
-                        </ul>
-                    </div>
-                    <div className='mt-3'>
-                        <h4 className="text-base font-semibold text-gray-800 mb-4">Quyền lợi</h4>
-                        <ul className="list-disc list-inside text-gray-600 space-y-2 ml-4">
-                            {job.benefits.split('\n').map((line, index) => (
-                                <li key={index}>{line.replace(/^•\s*/, '')}</li>
-                            ))}
-                        </ul>
-                    </div>
+                    {job.requirement && (
+                        <div className='mt-3'>
+                            <h4 className="text-base font-semibold text-gray-800 mb-4">Yêu cầu</h4>
+                            <ul className="list-disc list-inside text-gray-600 space-y-2 ml-4">
+                                {job.requirement.split('\n').map((line, index) => (
+                                    <li key={index}>{line.replace(/^•\s*/, '')}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {job.benefits && (
+                        <div className='mt-3'>
+                            <h4 className="text-base font-semibold text-gray-800 mb-4">Quyền lợi</h4>
+                            <ul className="list-disc list-inside text-gray-600 space-y-2 ml-4">
+                                {job.benefits.split('\n').map((line, index) => (
+                                    <li key={index}>{line.replace(/^•\s*/, '')}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                     <div className='mt-3'>
                         <h4 className="text-base font-semibold text-gray-800 mb-2">Địa điểm làm việc</h4>
                         <ul className="list-none list-inside text-gray-600 space-y-2">
