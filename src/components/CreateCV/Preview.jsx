@@ -55,7 +55,15 @@ const Preview = () => {
         console.log("HISTORY", workHistoriesData)
         const formattedWorkExperience = workHistoriesData
             ? workHistoriesData.split('; ').map(item => {
-                const [startDate, jobTitle, employer, location, endDate, jobDescription] = item.split(' - ');
+                const parts = item.split(' - ');
+
+                // Ensure we have enough parts before destructuring
+                if (parts.length < 6) {
+                    console.error("Invalid work experience string format:", item);
+                    return null; // Or handle the error as appropriate
+                }
+
+                const [startDate, jobTitle, employer, location, endDateString, jobDescription] = parts;
 
                 const startDateParts = startDate.split(' ');
                 const formattedStartMonth = startDateParts.length >= 2
@@ -63,12 +71,23 @@ const Preview = () => {
                     : startDateParts[0] || '';
                 const formattedStartYear = startDateParts[2] && startDateParts[2].match(/\d{4}/) ? startDateParts[2] : '';
 
-                let formattedEndMonth = endDate.includes("Hiện tại") ? "Hiện tại" : '';
+                let formattedEndMonth = '';
                 let formattedEndYear = '';
-                if (endDate && !endDate.includes("Hiện tại")) {
-                    const [endMonth, endYear] = endDate.split(' ');
-                    formattedEndMonth = endMonth || '';
-                    formattedEndYear = endYear && endYear.match(/\d{4}/) ? endYear : '';
+
+                if (endDateString) {
+                    if (endDateString.includes("Hiện tại")) {
+                        formattedEndMonth = "Hiện tại";
+                        formattedEndYear = ''; // No year for "Hiện tại"
+                    } else {
+                        // Split the endDateString (e.g., "Tháng 8 2014")
+                        const endDateParts = endDateString.split(' ');
+                        if (endDateParts.length >= 2) {
+                            formattedEndMonth = `${endDateParts[0]} ${endDateParts[1]}`;
+                            formattedEndYear = endDateParts[2] && endDateParts[2].match(/\d{4}/) ? endDateParts[2] : '';
+                        } else if (endDateParts.length === 1) {
+                            formattedEndMonth = endDateParts[0];
+                        }
+                    }
                 }
 
                 return {
@@ -79,22 +98,22 @@ const Preview = () => {
                     location,
                     endMonth: formattedEndMonth,
                     endYear: formattedEndYear,
-                    jobDescription: jobDescription || '', // Thêm mô tả công việc
+                    jobDescription: jobDescription || '',
                 };
             })
+                .filter(item => item !== null) // Remove any null items if errors occurred
             : [];
-
 
         console.log("formattedWorkExperience", formattedWorkExperience);
 
         setProfile({
-            fullName: `${cvFormData.formData?.firstName || ''} ${cvFormData.formData?.surname || ''}`,
+            fullName: `${cvFormData.formData?.surname || ''} ${cvFormData.formData?.firstName || ''}`,
             jobPosition: cvFormData.formData?.profession || '',
             address: `${cvFormData.formData?.city || ''}`,
             phone: cvFormData.formData?.phone || '',
             email: cvFormData.formData?.email || '',
             image: selectedImage || '',
-            website: portfoliosData.length > 0 ? portfoliosData[0] : 'www.example.com',
+            website: portfoliosData.length > 0 ? portfoliosData[0] : '',
             skills: formattedSkillsData,
             summary: summaryData,
             workExperience: formattedWorkExperience,
@@ -140,6 +159,7 @@ const Preview = () => {
     const handleCreateCv = async (cvData) => {
         const selectedCvItem = JSON.parse(localStorage.getItem('selectedCvData'));
         const id = selectedCvItem?.id;
+        console.log("workne", cvData.workExperience)
         const formattedData = {
             ...cvData,
             skills: cvData.skills
@@ -162,6 +182,7 @@ const Preview = () => {
 
             languageSkill: cvData.languages.map(lang => lang.title).join("; "),
             portfolio: cvData.portfolios.map(portfolio => portfolio.title).join("; "),
+            summary: cvData.summary
         };
         console.log("FORMAT", formattedData)
 
@@ -231,7 +252,11 @@ const Preview = () => {
                                 <span className="font-semibold">Address:</span> {profile.address} <br />
                                 <span className="font-semibold">Phone:</span> {profile.phone} <br />
                                 <span className="font-semibold">E-mail:</span> {profile.email} <br />
-                                <span className="font-semibold">Website:</span> {profile.website}
+                                {profile.website && (
+                                    <span className="font-semibold">
+                                        Website: {profile.website}
+                                    </span>
+                                )}
                             </p>
                         </div>
 
@@ -244,7 +269,7 @@ const Preview = () => {
                                         <div className="w-full bg-gray-300 rounded-full h-2 mt-2">
                                             <div
                                                 className="bg-yellow-500 h-2 rounded-full"
-                                                style={{ width: `${skill.level}%` }} // Skill level is already 0-100
+                                                style={{ width: `${skill.level * 20}%` }}
                                             ></div>
                                         </div>
                                     </div>

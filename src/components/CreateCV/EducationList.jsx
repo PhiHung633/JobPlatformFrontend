@@ -40,19 +40,16 @@ const EducationList = () => {
     };
 
     const handleEdit = (entry, index) => {
-        const parts = entry.split(' - '); // Tách entry bằng dấu " - "
+        const parts = entry.split(' - ');
 
-        // Tách phần ngày tốt nghiệp (Tháng 1 2015)
         const graduationDate = parts[0] ? parts[0].split(' ') : [];
-        const graduationMonth = `${graduationDate[0]} ${graduationDate[1]}`.trim(); // Kết hợp "Tháng" và "1"
-        const graduationYear = graduationDate[2] ? graduationDate[2].trim() : ''; // Lấy "2015"
+        const graduationMonth = `${graduationDate[0]} ${graduationDate[1]}`.trim();
+        const graduationYear = graduationDate[2] ? graduationDate[2].trim() : '';
 
-        // Tách bằng cấp và lĩnh vực
         const degreeAndField = parts[1] ? parts[1].split(':') : [];
         const degree = degreeAndField[0] ? degreeAndField[0].trim() : '';
         const fieldOfStudy = degreeAndField[1] ? degreeAndField[1].trim() : '';
 
-        // Tách tên trường và vị trí
         const schoolInfo = parts[2] ? parts[2].split(',') : [];
         const schoolName = schoolInfo[0] ? schoolInfo[0].trim() : '';
         const schoolLocation = schoolInfo[1] ? schoolInfo[1].trim() : '';
@@ -64,8 +61,8 @@ const EducationList = () => {
                     schoolLocation,
                     degree,
                     fieldOfStudy,
-                    graduationMonth, // Lấy "Tháng 1"
-                    graduationYear,  // Lấy "2015"
+                    graduationMonth,
+                    graduationYear,
                 },
                 index
             }

@@ -13,7 +13,6 @@ const Company = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Fetch companies
     const loadCompanies = async (searchTerm = '') => {
         setIsLoading(true);
         setError(null);

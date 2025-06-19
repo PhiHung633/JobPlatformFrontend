@@ -182,6 +182,7 @@ const JobsFit = () => {
                                 const formatted = formatCurrency(e.target.value);
                                 setAmountToDeposit(formatted);
                             }}
+                            disabled
                             className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         />
                         <div className="mt-6 flex justify-end space-x-4">

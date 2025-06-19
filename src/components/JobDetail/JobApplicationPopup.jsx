@@ -3,13 +3,13 @@ import { addApplication, fetchCvs, fetchCvsFile } from "../../utils/ApiFunctions
 import { Link } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 
-const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => {
+const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId, onApplicationSuccess }) => {
     console.log("HULAA", job.title)
     const [onlineCVs, setOnlineCVs] = useState([]);
     const [uploadedCVs, setUploadedCVs] = useState([]);
     const [selectedCV, setSelectedCV] = useState(null);
     const [loading, setLoading] = useState(true);
-
+    const [isSubmitting, setIsSubmitting] = useState(false)
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -52,6 +52,7 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
             alert("Vui lòng chọn CV trước khi ứng tuyển.");
             return;
         }
+        setIsSubmitting(true);
         const cvType = selectedCV.type === "CV Online" ? "CREATED_CV" : "UPLOADED_CV";
 
         const applicationData = {
@@ -65,12 +66,15 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
         const { data, error } = await addApplication(applicationData);
 
         if (data) {
-            alert("Bạn đã ứng tuyển thành công!");
             handleCloseClick();
+            if (onApplicationSuccess) {
+                onApplicationSuccess();
+            }
         } else {
             console.error("Lỗi khi nộp hồ sơ:", error);
             alert("Có lỗi xảy ra, vui lòng thử lại sau.");
         }
+        setIsSubmitting(false);
     };
 
     if (loading) {
@@ -81,7 +85,7 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
                         <div className="flex justify-center items-center min-h-screen">
                             <ClipLoader color="#4caf50" size={40} />
                         </div>
-                   </div>
+                    </div>
                 </div>
             )
         );
@@ -120,7 +124,7 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
                                                         </button>
                                                     </div>
                                                     <button
-                                                        className="bg-green-500 text-white px-4 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        className="bg-green-500 text-white px-4 py-1 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
                                                         onClick={() => handleSelectCV({ type: "CV Online", ...cv })}
                                                     >
                                                         Chọn CV
@@ -204,9 +208,14 @@ const JobApplicationPopup = ({ isPopupOpen, job, handleCloseClick, userId }) => 
                         </button>
                         <button
                             className="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600"
-                            onClick={handleSubmitApplication} // Gọi hàm nộp hồ sơ ứng tuyển
+                            onClick={handleSubmitApplication}
+                            disabled={isSubmitting}
                         >
-                            Nộp hồ sơ ứng tuyển
+                            {isSubmitting ? (
+                                <ClipLoader color="#ffffff" size={20} />
+                            ) : (
+                                "Nộp hồ sơ ứng tuyển"
+                            )}
                         </button>
                     </div>
                 </div>

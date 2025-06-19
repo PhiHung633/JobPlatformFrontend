@@ -294,7 +294,7 @@ const Searchbar = () => {
     console.log("debouncedInput:", debouncedInput);   // sau 500ms: fpt
   }, [debouncedInput]);
 
-
+  console.log("JONOKEE",jobSuggestions)
   return (
     <div ref={searchbarRef} className="relative">
       <div className="bg-white w-full rounded-full h-16 px-4 py-5 shadow-md border border-gray-300 flex items-center">
@@ -470,7 +470,7 @@ const Searchbar = () => {
                   <ClipLoader color="#4caf50" size={40} />
                 </div>
               ) : jobSuggestions.length > 0 ? (
-                Array.from(new Set(jobSuggestions.map((job) => job.title))).map((title) => (
+                Array.from(new Set(jobSuggestions.filter((job)=>job.status === "SHOW").map((job) => job.title))).map((title) => (
                   <div key={title} className="p-2 w-full hover:bg-gray-200">
                     <p>{title}</p>
                   </div>
@@ -489,7 +489,7 @@ const Searchbar = () => {
                   <ClipLoader color="#4caf50" size={40} />
                 </div>
               ) : jobSuggestions.length > 0 ? (
-                Array.from(new Set(jobSuggestions.map(job => job.companyName))).map((companyName) => {
+                Array.from(new Set(jobSuggestions.filter((job) => job.status === "SHOW").map(job => job.companyName))).map((companyName) => {
                   const jobsForCompany = jobSuggestions.filter(job => job.companyName === companyName);
 
                   return (

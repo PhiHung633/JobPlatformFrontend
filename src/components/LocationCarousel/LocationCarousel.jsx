@@ -27,48 +27,74 @@ const LocationCarousel = ({ selectedOption, onItemSelect }) => {
     "Bất động sản",
   ];
 
-  const [selectedItem, setSelectedItem] = useState(""); // State để lưu item được chọn
+  const [selectedItem, setSelectedItem] = useState("");
 
   const dataToDisplay =
     selectedOption === "Địa điểm"
       ? locations
       : selectedOption === "Ngành nghề"
-      ? industries
-      : [];
+        ? industries
+        : [];
 
-  // Mặc định chọn item đầu tiên khi component render hoặc khi selectedOption thay đổi
+  const dynamicSwiperProps =
+    selectedOption === "Địa điểm"
+      ? {
+        spaceBetween: 100,
+        slidesPerView: 4,
+        loop: true,
+      }
+      : {
+        spaceBetween: 20,
+        slidesPerView: "auto",
+        loop: true,
+      };
+
+  // --- FIX START ---
+  // Mặc định chọn item đầu tiên CHỈ KHI selectedOption thay đổi
+  // hoặc khi component được mount lần đầu.
   useEffect(() => {
     if (dataToDisplay.length > 0) {
-      setSelectedItem(dataToDisplay[0]);
-      if (onItemSelect) onItemSelect(dataToDisplay[0]);
+      const defaultItem = dataToDisplay[0];
+      setSelectedItem(defaultItem);
+      // Gọi onItemSelect chỉ khi defaultItem thực sự thay đổi
+      // để tránh loop nếu parent component cũng có state dựa trên onItemSelect
+      if (onItemSelect) onItemSelect(defaultItem);
     }
-  }, [selectedOption]);
+  }, [selectedOption]); // <<< REMOVED dataToDisplay from dependencies
+  // --- FIX END ---
+
 
   const handleItemClick = (item) => {
-    setSelectedItem(item); // Cập nhật state selectedItem
-    if (onItemSelect) onItemSelect(item); // Gọi callback nếu có
+    setSelectedItem(item);
+    if (onItemSelect) onItemSelect(item);
   };
 
   return (
     <div className="relative w-full py-4">
-      {/* Swiper */}
       <Swiper
-        spaceBetween={100}
-        slidesPerView={4}
-        loop={true}
+        {...dynamicSwiperProps}
         navigation={true}
         modules={[Navigation]}
       >
         {dataToDisplay.map((item, index) => (
-          <SwiperSlide key={index}>
+          <SwiperSlide
+            key={index}
+            className={
+              selectedOption === "Ngành nghề" ? "!w-auto" : ""
+            }
+          >
             <button
               onClick={() => handleItemClick(item)}
-              className={`text-sm font-semibold rounded-3xl px-6 py-2 w-48 flex items-center justify-center
-                border ${
-                  selectedItem === item
-                    ? "bg-green-500 text-white border-green-600"
-                    : "bg-gray-200 text-black hover:bg-white hover:text-green-500 border-transparent"
-                } transition`}
+              className={`text-sm font-semibold rounded-3xl px-6 py-2 flex items-center justify-center
+                border ${selectedItem === item
+                  ? "bg-green-500 text-white border-green-600"
+                  : "bg-gray-200 text-black hover:bg-white hover:text-green-500 border-transparent"
+                } transition
+                ${selectedOption === "Địa điểm"
+                  ? "w-48"
+                  : "whitespace-nowrap"
+                }
+              `}
             >
               {item}
             </button>

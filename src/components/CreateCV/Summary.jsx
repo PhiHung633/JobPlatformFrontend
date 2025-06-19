@@ -6,16 +6,22 @@ const Summary = () => {
     const [summary, setSummary] = useState('');
     const navigate = useNavigate();
 
-    // Tải dữ liệu tóm tắt từ localStorage khi component được render
     useEffect(() => {
-        const storedSummary = localStorage.getItem('summaryData');
-        if (storedSummary) {
-            setSummary(storedSummary);
+        const selectedCvData = JSON.parse(localStorage.getItem('selectedCvData'));
+        let summaryFromSelectedCv = '';
+        if (selectedCvData && selectedCvData.summary) {
+            summaryFromSelectedCv = selectedCvData.summary;
         }
+
+        const storedSummary = localStorage.getItem('summaryData');
+        let summaryFromStorage = '';
+        if (storedSummary) {
+            summaryFromStorage = storedSummary;
+        }
+        setSummary(summaryFromSelectedCv.length > 0 ? summaryFromSelectedCv : summaryFromStorage);
     }, []);
 
     const handleNext = () => {
-        // Lưu dữ liệu tóm tắt vào localStorage
         localStorage.setItem('summaryData', summary);
         navigate('/extra');
     };
@@ -29,7 +35,7 @@ const Summary = () => {
 
                 <div className="mb-6">
                     <label className="block text-gray-700 font-semibold mb-2" htmlFor="summary">
-                        Tóm tắt nghề nghiệp:
+                        Tóm tắt bản thân:
                     </label>
                     <textarea
                         id="summary"

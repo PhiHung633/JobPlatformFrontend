@@ -1,16 +1,14 @@
 import { faClock, faDollar, faLocationDot } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react"; // Import useCallback
 import { parseISO, differenceInDays } from 'date-fns';
 import { Link } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import Button from '@mui/material/Button';
 import JobApplicationPopup from "../../components/JobDetail/JobApplicationPopup";
-import { fetchJobSavesByUser, fetchJobById, deleteJobSave } from "../../utils/ApiFunctions";
-import { ClipLoader } from "react-spinners";
+import { fetchJobSavesByUser, fetchJobById, deleteJobSave, checkJobApplied } from "../../utils/ApiFunctions"; // Import checkJobApplied
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
-
 
 function calculateDaysRemaining(deadline) {
     const deadlineDate = parseISO(deadline);
@@ -28,6 +26,8 @@ const JobSaved = () => {
     const [loading, setLoading] = useState(true);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [userId, setUserId] = useState("");
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [currentJobForApply, setCurrentJobForApply] = useState(null);
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
@@ -37,42 +37,73 @@ const JobSaved = () => {
         }
     }, []);
 
-    useEffect(() => {
-        const loadJobSaves = async () => {
-            const { data, error } = await fetchJobSavesByUser();
-            console.log("DATAAA", data)
-            if (data) {
-                const jobDetails = await Promise.all(
-                    data.map(async (save) => {
-                        const { data: jobDetail, error: jobError } = await fetchJobById(save.jobId);
-                        if (jobDetail) {
-                            return { ...jobDetail, savedAt: save.savedAt };
-                        } else {
-                            console.error("Error fetching job details:", jobError);
-                            return null;
+    const loadJobSaves = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        const { data, error } = await fetchJobSavesByUser();
+        if (data) {
+            const jobDetailsPromises = data.map(async (save) => {
+                const { data: jobDetail, error: jobError } = await fetchJobById(save.jobId);
+                if (jobDetail) {
+                    let hasApplied = false;
+                    if (userId) {
+                        const { data: appliedStatus, error: appliedError } = await checkJobApplied(userId, jobDetail.id);
+                        if (appliedStatus === true) {
+                            hasApplied = true;
+                        } else if (appliedError) {
+                            console.error(`Error checking applied status for job ${jobDetail.id}:`, appliedError);
                         }
-                    })
-                );
-                setSavedJobs(jobDetails.filter((job) => job !== null));
-            } else {
-                setError(error);
-            }
-            setLoading(false);
-        };
-        loadJobSaves();
-    }, []);
+                    }
+                    return { ...jobDetail, savedAt: save.savedAt, hasApplied };
+                } else {
+                    console.error("Error fetching job details:", jobError);
+                    return null;
+                }
+            });
+            const allJobDetails = await Promise.all(jobDetailsPromises);
+            setSavedJobs(allJobDetails.filter((job) => job !== null));
+        } else {
+            setError(error);
+        }
+        setLoading(false);
+    }, [userId]);
+
+    useEffect(() => {
+        if (userId) {
+            loadJobSaves();
+        }
+    }, [refreshTrigger, userId, loadJobSaves]);
 
     const handleFavoriteClick = async (jobId) => {
-        await deleteJobSave(jobId);
+        const { data, error } = await deleteJobSave(jobId);
+        if (!error) {
+            console.log("Job unsaved successfully!");
+            setRefreshTrigger(prev => prev + 1);
+        } else {
+            console.error("Error unsaving job:", error);
+            setError("Có lỗi xảy ra khi bỏ lưu công việc.");
+        }
     };
 
-    const handleApplyClick = () => {
+    const handleApplyClick = (job) => {
+        setCurrentJobForApply(job);
         setIsPopupOpen(true);
     };
 
     const handleCloseClick = () => {
         setIsPopupOpen(false);
+        setCurrentJobForApply(null);
+        setRefreshTrigger(prev => prev + 1);
     }
+
+    const handleApplicationSuccess = () => {
+        setSavedJobs(prevJobs =>
+            prevJobs.map(job =>
+                job.id === currentJobForApply.id ? { ...job, hasApplied: true } : job
+            )
+        );
+        handleCloseClick();
+    };
 
     if (loading) {
         return (
@@ -115,7 +146,6 @@ const JobSaved = () => {
         );
     }
 
-    // console.log("SAVEJOB", savedJobs)
     return (
         <div className="flex max-w-5xl mx-auto gap-6 mt-10">
             <div className="w-full bg-white rounded-xl shadow-md overflow-hidden self-start">
@@ -127,9 +157,9 @@ const JobSaved = () => {
                 </div>
 
                 {error ? (
-                    <p className="text-red-500 text-center">Có lỗi xảy ra khi tải dữ liệu.</p>
+                    <p className="text-red-500 text-center p-4">Có lỗi xảy ra khi tải dữ liệu.</p>
                 ) : savedJobs.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-3/5 py-2">
+                    <div className="flex flex-col items-center justify-center h-3/5 py-20"> {/* Increased py for better spacing */}
                         <img src="/empty.webp" alt="No jobs saved" className="w-36 h-28 mb-4" />
                         <p className="text-gray-600 text-center mb-4">Bạn chưa lưu công việc nào!</p>
                         <Link to={"/"}>
@@ -147,7 +177,7 @@ const JobSaved = () => {
                                     <div className="flex flex-col w-full">
                                         <div className="flex justify-between items-center">
                                             <h4 className="text-lg font-bold text-green-600 truncate-text w-80">{job.title}</h4>
-                                            <span className="flex ml-10 text-green-500 text-lg font-semibold">{job.salary.toLocaleString() || "Thỏa thuận"} VNĐ</span>
+                                            <span className="flex ml-10 text-green-500 text-lg font-semibold">{job.salary ? job.salary.toLocaleString() + ' VNĐ' : "Thỏa thuận"}</span>
                                         </div>
                                         <p className="text-gray-500 mb-3 mt-5">{job.companyName}</p>
                                         <p className="text-xs text-gray-400">Đã lưu: {new Date(job.savedAt).toLocaleDateString()}</p>
@@ -169,66 +199,46 @@ const JobSaved = () => {
                                         </span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button
-                                            variant="outlined"
-                                            onClick={handleApplyClick}
-                                            className="bg-green-500 text-white font-semibold py-1 px-4 rounded-lg">
-                                            Ứng tuyển
-                                        </Button>
+                                        {job.hasApplied ? (
+                                            <Button
+                                                variant="contained"
+                                                disabled
+                                                className="bg-gray-400 text-white font-semibold py-1 px-4 rounded-lg"
+                                            >
+                                                Đã ứng tuyển
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="outlined"
+                                                onClick={() => handleApplyClick(job)}
+                                                className="bg-green-500 text-white font-semibold py-1 px-4 rounded-lg hover:bg-green-600"
+                                            >
+                                                Ứng tuyển
+                                            </Button>
+                                        )}
                                         <Button
                                             variant="contained"
                                             onClick={() => handleFavoriteClick(job.id)}
-                                            className="bg-gray-200 text-gray-600 font-semibold py-1 px-4 rounded-lg hover:bg-red-600">
+                                            className="bg-gray-200 text-gray-600 font-semibold py-1 px-4 rounded-lg hover:bg-red-600"
+                                        >
                                             Bỏ lưu
                                         </Button>
                                     </div>
                                 </div>
-                                {isPopupOpen && (
-                                    <JobApplicationPopup isPopupOpen={isPopupOpen} job={job} handleCloseClick={handleCloseClick} userId={userId} />
+                                {isPopupOpen && currentJobForApply?.id === job.id && (
+                                    <JobApplicationPopup
+                                        isPopupOpen={isPopupOpen}
+                                        job={currentJobForApply}
+                                        handleCloseClick={handleCloseClick}
+                                        userId={userId}
+                                        onApplicationSuccess={handleApplicationSuccess}
+                                    />
                                 )}
                             </div>
                         ))}
                     </div>
                 )}
             </div>
-
-            {/* <div className="w-2/5 self-start">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">Có thể bạn quan tâm</h3>
-
-                <div className="bg-white rounded-xl shadow-md p-4 border border-green-400">
-                    <div className="p-2 rounded-lg mb-4">
-                        <div className="flex items-center mb-3">
-                            <img src="/logo-cong-ty-dat-xanh-mien-nam.jpg" alt="Company logo" className="w-14 h-14 rounded-full mr-3" />
-                            <div>
-                                <h4 className="text-base font-bold">Công ty CP Đầu tư và Dịch vụ Đất Xanh Miền Nam</h4>
-                            </div>
-                        </div>
-                        <ul className="space-y-5">
-                            <li className="flex flex-col space-y-3 text-gray-800">
-                                <span>Chuyên Viên Hành Chính - 2 Năm Kinh Nghiệm</span>
-                                <div className="flex gap-5">
-                                    <span className="flex items-center gap-1">
-                                        <span className="inline-flex justify-center items-center w-5 h-5 bg-green-400 rounded-full">
-                                            <FontAwesomeIcon icon={faDollar} className="text-white text-xs" />
-                                        </span>
-                                        <p className="text-sm text-green-500">Thỏa thuận</p>
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <span className="inline-flex justify-center items-center w-5 h-5 bg-green-400 rounded-full">
-                                            <FontAwesomeIcon icon={faLocationDot} className="text-white text-xs" />
-                                        </span>
-                                        <p className="text-sm text-gray-500">Hồ Chí Minh</p>
-                                    </span>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                    <button className="w-full bg-green-500 text-white font-semibold py-2 rounded-xl hover:bg-green-600">
-                        Tìm hiểu ngay
-                    </button>
-                </div>
-            </div> */}
-
         </div>
     );
 };

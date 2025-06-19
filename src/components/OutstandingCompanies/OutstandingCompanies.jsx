@@ -48,7 +48,17 @@ const CompanyOutstanding = ({ companies, isLoading }) => {
                                     />
                                     <h3 className="text-lg font-semibold">{company.name}</h3>
                                 </div>
-                                <p className="text-gray-600 text-sm break-words">{company.description}</p>
+                                <p
+                                    className="text-gray-600 text-sm overflow-hidden text-ellipsis whitespace-nowrap"
+                                    style={{
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: 'vertical',
+                                        whiteSpace: 'normal',
+                                    }}
+                                >
+                                    {company.description}
+                                </p>
                             </div>
                         </div>
                     ))}

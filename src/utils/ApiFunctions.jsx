@@ -2,8 +2,8 @@ import axios from "axios"
 // import { param } from "jquery";
 
 export const api = axios.create({
-    baseURL: "https://jobplatformbackend.onrender.com"
-    // baseURL: "http://localhost:8080"
+    // baseURL: "https://jobplatformbackend.onrender.com"
+    baseURL: "http://localhost:8080"
 })
 
 function getAccessToken() {
@@ -1029,11 +1029,11 @@ export async function googleLogin(code) {
 export async function processMomoPayment(paymentData) {
     try {
         const response = await api.post("/momo-payment", paymentData);
-        
+
         return { data: response.data, error: null };
     } catch (error) {
         console.error("Error processing MoMo payment", error.response);
-        
+
         if (error.response) {
             return { data: null, error: error.response.data, status: error.response.status };
         }
@@ -1086,8 +1086,8 @@ export async function evaluateCvFile(id) {
 
 export async function fetchChatMessages(sender, receiver, page = 0, size = 10) {
     try {
-        const response = await api.get('/chat-message',{
-            params:{
+        const response = await api.get('/chat-message', {
+            params: {
                 sender,
                 receiver,
                 page,
@@ -1099,8 +1099,8 @@ export async function fetchChatMessages(sender, receiver, page = 0, size = 10) {
         console.log("Error fetching chat messages", error.response);
         if (error.response) {
             return { data: null, error: error.response.data, status: error.response.status };
-        }else{
-            return { data: null, error: 'Network Error', status: 500};
+        } else {
+            return { data: null, error: 'Network Error', status: 500 };
         }
     }
 }
@@ -1108,13 +1108,13 @@ export async function fetchChatMessages(sender, receiver, page = 0, size = 10) {
 export async function fetchAllReceiver() {
     try {
         const response = await api.get('/chat-message/receiver');
-        return { data: response.data, error: null};
+        return { data: response.data, error: null };
     } catch (error) {
         console.log("Error fetching chat receiver", error.response);
         if (error.response) {
             return { data: null, error: error.response.data, status: error.response.status };
-        }else{
-            return { data: null, error: 'Network Error', status: 500};
+        } else {
+            return { data: null, error: 'Network Error', status: 500 };
         }
     }
 }
@@ -1133,7 +1133,7 @@ export async function deleteMessage(id) {
 
 export async function startQuiz(timeLimit, numberOfQuestion) {
     try {
-        const response = await api.post("/quiz/start",{
+        const response = await api.post("/quiz/start", {
             timeLimit,
             numberOfQuestion
         });
@@ -1143,7 +1143,7 @@ export async function startQuiz(timeLimit, numberOfQuestion) {
         if (error.response) {
             return { data: null, error: error.response.data, status: error.response.status };
         }
-        return {data:null, error: error.message, status: null};
+        return { data: null, error: error.message, status: null };
     }
 }
 
@@ -1161,44 +1161,44 @@ export async function getQuizAttemp(id) {
     }
 }
 
-export async function getUserQuizAttempts(){
-    try{
+export async function getUserQuizAttempts() {
+    try {
         const response = await api.get("/quiz");
-        return {data:response.data, error: null};
+        return { data: response.data, error: null };
     } catch (error) {
         console.log("Error fetching quiz", error);
         if (error.response) {
-            return {data: null, error: error.response.data, status: error.response.status};
-        }else {
-            return {data: null, error: "Network Error", status:null};
+            return { data: null, error: error.response.data, status: error.response.status };
+        } else {
+            return { data: null, error: "Network Error", status: null };
         }
     }
 }
 
 export async function findBestJob(idCv, limit) {
-    try{
-        const response = await api.get(`/cvs/${idCv}/best-job`,{
-            params: {limit}
+    try {
+        const response = await api.get(`/cvs/${idCv}/best-job`, {
+            params: { limit }
         });
-        return {data: response.data, error: null};
-    }catch(error){
+        return { data: response.data, error: null };
+    } catch (error) {
         console.log("Error find best job", error)
-        if(error.response){
-            return {data: null, error: error.response};
+        if (error.response) {
+            return { data: null, error: error.response };
         }
-    }  
+    }
 }
 
 export async function getBestCvMatch(idJob, limit) {
     try {
-        const response = await api.get(`/jobs/${idJob}/best-cv`,{
+        const response = await api.get(`/jobs/${idJob}/best-cv`, {
             params: { limit }
         });
-        return {data: response.data, error: null};
+        return { data: response.data, error: null };
     } catch (error) {
         console.log("Error get best cv", error);
-        if(error.response){
-            return {data: null, error: error.response};
+        if (error.response) {
+            return { data: null, error: error.response };
         }
     }
 }
@@ -1256,7 +1256,7 @@ export async function getQuestions() {
 
 export async function createQuestion(question) {
     try {
-        const response = await api.post('/questions', question );
+        const response = await api.post('/questions', question);
         return { data: response.data, error: null };
     } catch (error) {
         console.log("Error adding question", error.response);
@@ -1268,7 +1268,7 @@ export async function createQuestion(question) {
 
 export async function editQuestion(question, id) {
     try {
-        const response = await api.patch(`/questions/${id}`, question );
+        const response = await api.patch(`/questions/${id}`, question);
         return { data: response.data, error: null };
     } catch (error) {
         console.log("Error editting question", error.response);
@@ -1307,5 +1307,68 @@ export async function markReadNotification(id, isRead) {
         } else {
             throw new Error(`Mark notification error: ${error.message}`);
         }
+    }
+}
+
+export async function checkJobApplied(userId, jobId) {
+    try {
+        const response = await api.get("/jobs/checkApplied", {
+            params: {
+                userId,
+                jobId
+            }
+        });
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.error("Error checking job applied status", error.response);
+        if (error.response) {
+            return { data: null, error: error.response.data, status: error.response.status };
+        }
+    }
+}
+
+export async function fetchApplicationsPerMonth(userId, month = null, year = null) {
+    try {
+        const params = {
+            userId: userId,
+        };
+
+        if (month !== null) {
+            params.month = month;
+        }
+        
+        if (year !== null) {
+            params.year = year;
+        }
+
+        const response = await api.get(`/statistics/recruiter/applications-per-month`, {
+            params: params,
+        });
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.error("Error fetching applications per month:", error);
+        return {
+            data: null,
+            error: error.response?.data || 'An unexpected error occurred while fetching applications per month',
+            status: error.response?.status || 500,
+        };
+    }
+}
+
+export async function fetchApplicationsByJob(userId) {
+    try {
+        const response = await api.get(`/statistics/recruiter/applications-by-job`, {
+            params: {
+                userId: userId,
+            },
+        });
+        return { data: response.data, error: null };
+    } catch (error) {
+        console.error("Error fetching applications by job:", error);
+        return {
+            data: null,
+            error: error.response?.data || 'An unexpected error occurred while fetching applications by job',
+            status: error.response?.status || 500,
+        };
     }
 }

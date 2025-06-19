@@ -1,7 +1,9 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBusinessTime, faClock, faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
-// import { useEffect, useState } from 'react';
+import { jwtDecode } from "jwt-decode";
+import { useEffect, useState } from 'react';
+import { checkJobApplied } from '../../utils/ApiFunctions';
 // import { fetchCompanyById } from '../../utils/ApiFunctions';
 // import dayjs from 'dayjs';
 
@@ -16,6 +18,28 @@ const calculateRemainingDays = (deadline) => {
 const JobHoverDetail = ({ job }) => {
 
     const navigate = useNavigate();
+    const [hasApplied, setHasApplied] = useState(false);
+    const [userId, setUserId] = useState(null);
+
+    useEffect(() => {
+        const token = localStorage.getItem("accessToken");
+        if (token) {
+            const decoded = jwtDecode(token);
+            setUserId(decoded.user_id);
+        }
+    }, []);
+
+    useEffect(() => {
+        const checkApplied = async () => {
+            if (userId && job?.id) {
+                const { data, error } = await checkJobApplied(userId, job.id);
+                if (data === true) {
+                    setHasApplied(true);
+                }
+            }
+        };
+        checkApplied();
+    }, [userId, job?.id]);
 
     const handleApply = () => {
         navigate(`/viec-lam/${job.id}`);
@@ -89,9 +113,13 @@ const JobHoverDetail = ({ job }) => {
             <div className="flex justify-between items-center mt-8">
                 <button
                     onClick={handleApply}
-                    className="px-4 py-2 rounded-lg border border-green-500 text-green-500 font-semibold hover:bg-green-500
-                    hover:text-white transition duration-300">
-                    Ứng tuyển
+                    className={`px-4 py-2 rounded-lg font-semibold transition duration-300 ${hasApplied
+                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                            : "border border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
+                        }`}
+                    disabled={hasApplied}
+                >
+                    {hasApplied ? "Đã ứng tuyển" : "Ứng tuyển"}
                 </button>
                 <button
                     onClick={handleViewDetails}

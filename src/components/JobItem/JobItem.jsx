@@ -79,7 +79,7 @@ const JobItem = ({ job }) => {
                         </span>
                     </Link>
                     <div className="flex mt-3">
-                        <div className="flex gap-3">
+                        <div className="h-full space-x-1 flex flex-row justify-between">
                             <div className="font-semibold text-sm px-4 py-1 bg-green-100 rounded-full text-green-600">
                                 <span>{job.salary.toLocaleString()} VNĐ</span>
                             </div>

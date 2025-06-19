@@ -53,6 +53,7 @@ import IQQuiz from './pages/IQQuiz/IQQuiz.jsx';
 import IQHome from './pages/IQQuiz/IQHome.jsx';
 import VerifyMailSuccess from './pages/VerifyMail/VerifyMailSuccess.jsx'
 import PasswordResetForm from './pages/ForgotPassword/ResetPasswordForm.jsx';
+import DashboardContent from './pages/Employer/DashBoardContent.jsx';
 
 
 
@@ -68,7 +69,7 @@ const App = () => {
     if (cachedRole) {
       updateRole(cachedRole);
     }
-    setIsLoading(false); 
+    setIsLoading(false);
   }, [updateRole]);
 
   // Fetch user role from token if available
@@ -102,7 +103,7 @@ const App = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen w-full">
-    {/* min-h-screen */}
+      {/* min-h-screen */}
       {!shouldHideHeader && <Header />}
       <ToastContainer />
       <div className="w-full mx-auto">
@@ -139,6 +140,7 @@ const App = () => {
               </PrivateRoute>
             }
           >
+            <Route index element={<DashboardContent />} />
             <Route path="quan-li-cong-viec" element={<ManageJobs />} />
             <Route path="tao-cong-viec" element={<CreateJob />} />
             <Route path="quan-li-cv" element={<ManageCV />} />
@@ -161,9 +163,9 @@ const App = () => {
           <Route path="/summary" element={<PrivateRouteForJobSeeker element={<Summary />} />} />
           <Route path="/extra" element={<PrivateRouteForJobSeeker element={<Extra />} />} />
           <Route path="/preview" element={<PrivateRouteForJobSeeker element={<Preview />} />} />
-          <Route path="/tin-nhan" element={<PrivateRouteForJobSeeker element={<Message/>}/>}/>
-          <Route path="/iq-test" element={<PrivateRouteForJobSeeker element={<IQQuiz/>}/>}/>
-          <Route path="/iq-home" element={<PrivateRouteForJobSeeker element={<IQHome/>}/>}/>
+          <Route path="/tin-nhan" element={<PrivateRouteForJobSeeker element={<Message />} />} />
+          <Route path="/iq-test" element={<PrivateRouteForJobSeeker element={<IQQuiz />} />} />
+          <Route path="/iq-home" element={<PrivateRouteForJobSeeker element={<IQHome />} />} />
         </Routes>
       </div>
     </div>

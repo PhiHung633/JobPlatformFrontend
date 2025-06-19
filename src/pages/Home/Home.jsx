@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown, faChevronLeft, faChevronRight, faChevronUp, faFilter } from '@fortawesome/free-solid-svg-icons';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Searchbar from '../../components/Searchbar/Searchbar';
 import JobItem from "../../components/JobItem/JobItem";
 import LocationCarousel from '../../components/LocationCarousel/LocationCarousel';
@@ -25,74 +25,92 @@ const Home = () => {
     const [loading, setLoading] = useState(false);
     const options = [
         "Địa điểm",
-        // "Mức lương",
-        // "Kinh nghiệm",
+        // "Mức lương", // Uncomment if you add these features
+        // "Kinh nghiệm", // Uncomment if you add these features
         "Ngành nghề"
     ];
-    const [selectedItem, setSelectedItem] = useState("Hồ Chí Minh")
+    const [selectedItem, setSelectedItem] = useState("Tp Hồ Chí Minh");
+
+    const isInitialMount = useRef(true);
 
     const handleChange = (option) => {
         setSelectedOption(option);
         setIsOpen(false);
+        setPage(0);
+        if (option === "Địa điểm") {
+            setSelectedItem("Tp Hồ Chí Minh");
+        } else if (option === "Ngành nghề") {
+            setSelectedItem("Công nghệ thông tin");
+        }
     };
 
     const toggleDropdown = () => {
         setIsOpen(!isOpen);
     };
 
-    const loadJobs = async (currentPage, industry = "", address = "") => {
+    const loadJobs = async (currentPage, industryParam = '', addressParam = '') => {
         setLoading(true);
-        const response = await fetchAllJobs(currentPage, 9, '', false, industry, address);
+        const response = await fetchAllJobs(currentPage, 9, '', false, industryParam, addressParam);
+
         if (response && response.data) {
-            // Lọc công việc có status === "SHOW"
-            console.log("LACHINHAN", response.data)
-            const filteredJobs = response.data.filter(job => job.status === "SHOW" && new Date(job.deadline) > new Date());
-            setJobs(filteredJobs);
+            const now = new Date();
+            const filteredJobsByDeadline = response.data.filter(job => new Date(job.deadline) > now);
 
-            // Tính lại totalPages và totalElements dựa trên công việc đã lọc
-            const totalFilteredElements = filteredJobs.length;
-            const totalFilteredPages = Math.ceil(totalFilteredElements / 9); // 9 là số công việc trên mỗi trang
+            setJobs(filteredJobsByDeadline);
 
-            setTotalPages(totalFilteredPages);
-            setTotalElements(totalFilteredElements);
+            const totalFilteredElementsForPagination = filteredJobsByDeadline.length;
+            const totalFilteredPagesForPagination = Math.ceil(totalFilteredElementsForPagination / 9);
 
-            if (!filteredJobs.length) setLoading(false);
+            setTotalPages(totalFilteredPagesForPagination);
+            setTotalElements(totalFilteredElementsForPagination);
+
+
+            if (!filteredJobsByDeadline.length) {
+                setPage(0);
+            }
+
         } else if (response && response.error) {
             console.log("Error fetching jobs:", response.error);
+            setJobs([]);
+            setTotalPages(0);
+            setTotalElements(0);
         }
         setLoading(false);
     };
 
     useEffect(() => {
-        if (selectedOption === "Ngành nghề") {
-            loadJobs(page, selectedItem, "");
-        } else if (selectedOption === "Địa điểm") {
-            console.log("THANHPHO", selectedItem)
-            if (selectedItem === "Tp Hồ Chí Minh")
-                setSelectedItem("Hồ Chí Minh");
-            loadJobs(page, "", selectedItem);
-        } else {
-            loadJobs(page);
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
         }
+
+        let industryToFetch = "";
+        let addressToFetch = "";
+
+        if (selectedOption === "Ngành nghề") {
+            industryToFetch = selectedItem;
+        } else if (selectedOption === "Địa điểm") {
+            addressToFetch = selectedItem === "Tp Hồ Chí Minh" ? "Hồ Chí Minh" : selectedItem;
+        }
+        loadJobs(page, industryToFetch, addressToFetch);
+
     }, [page, selectedItem, selectedOption]);
 
     const handleNextPage = () => {
-        if (jobs.length > 0) {
+        if (page < totalPages - 1) {
             setPage((prevPage) => prevPage + 1);
         }
     };
 
     const handlePrevPage = () => {
-        if (page > 0 && jobs.length > 0) {
+        if (page > 0) {
             setPage((prevPage) => prevPage - 1);
         }
     };
 
     const handleItemSelected = (item) => {
+        setPage(0);
         setSelectedItem(item);
-        // console.log("Item được chọn từ LocationCarousel:", item);
     };
-
 
     return (
         <>
@@ -110,12 +128,6 @@ const Home = () => {
                     <div className="mt-6">
                         <Searchbar setResults />
                     </div>
-
-                    {/* <div className="mt-4 text-center text-gray-600">
-                        <span className="mr-6">Vị trí chờ bạn khám phá <span className="text-green-500 font-bold">44,818</span></span>
-                        <span className="mr-6">Việc làm mới nhất <span className="text-green-500 font-bold">3,048</span></span>
-                        <span>Cập nhật lúc: <span className="text-green-500 font-bold">14:39 17/10/2024</span></span>
-                    </div> */}
                 </div>
             </div>
             <div className='px-8 max-w-[1280px] mx-auto'>
@@ -150,7 +162,7 @@ const Home = () => {
                                     </span>
                                     <span className="ml-4 cursor-pointer text-center flex-grow" onClick={toggleDropdown}>
                                         {selectedOption}
-                                        <FontAwesomeIcon icon={isOpen ? faChevronDown : faChevronUp} className="ml-20" />
+                                        <FontAwesomeIcon icon={isOpen ? faChevronUp : faChevronDown} className="ml-20" /> {/* Corrected chevron direction */}
                                     </span>
                                     {isOpen && (
                                         <div className="absolute top-full left-0 bg-white border border-gray-300 rounded-md z-10 w-full">
@@ -181,7 +193,7 @@ const Home = () => {
                             <div className="pb-1">
                                 {loading ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {Array(6).fill(0).map((_, index) => (
+                                        {Array(9).fill(0).map((_, index) => ( // Render 9 skeletons for loading
                                             <div key={index} className="p-2">
                                                 <Skeleton height={180} />
                                                 <div className="mt-2">
@@ -199,7 +211,7 @@ const Home = () => {
                                             const [title, companyName] = uniqueJob.split('|');
                                             const jobToDisplay = jobs.find(job => job.title === title && job.companyName === companyName);
                                             return (
-                                                <div key={jobToDisplay.id} className="p-2">
+                                                <div key={jobToDisplay.id} className="p-2 h-full">
                                                     <JobItem job={jobToDisplay} />
                                                 </div>
                                             );
@@ -210,7 +222,7 @@ const Home = () => {
                                     <div className="mt-4 text-center flex items-center justify-center gap-2">
                                         <button
                                             onClick={handlePrevPage}
-                                            className={`border rounded-full w-8 h-8 flex items-center justify-center ${page === 0 ? "border-gray-300 text-gray-300" : "border-green-500 text-green-500"
+                                            className={`border rounded-full w-8 h-8 flex items-center justify-center ${page === 0 ? "border-gray-300 text-gray-300 cursor-not-allowed" : "border-green-500 text-green-500"
                                                 }`}
                                             disabled={page === 0}
                                         >
@@ -218,15 +230,15 @@ const Home = () => {
                                         </button>
                                         <span className="text-gray-500">
                                             <span className="text-green-500 font-bold">
-                                                {totalPages === 0 ? page : page + 1}
+                                                {totalPages === 0 ? 0 : page + 1}
                                             </span>
                                             / {totalPages} trang
                                         </span>
                                         <button
                                             onClick={handleNextPage}
-                                            className={`border rounded-full w-8 h-8 flex items-center justify-center ${page === totalPages - 1 ? "border-gray-300 text-gray-300" : "border-green-500 text-green-500"
+                                            className={`border rounded-full w-8 h-8 flex items-center justify-center ${page >= totalPages - 1 || totalPages === 0 ? "border-gray-300 text-gray-300 cursor-not-allowed" : "border-green-500 text-green-500"
                                                 }`}
-                                            disabled={page === totalPages - 1}
+                                            disabled={page >= totalPages - 1 || totalPages === 0}
                                         >
                                             <FontAwesomeIcon icon={faChevronRight} />
                                         </button>

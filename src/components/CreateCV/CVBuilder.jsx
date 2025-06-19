@@ -102,7 +102,7 @@ const CVBuilder = () => {
         );
         navigate('/education/list');
     };
-
+    console.log("FORMDATA",formData)
     return (
         <div className="flex min-h-screen">
             <Sidebar currentStep={1} />

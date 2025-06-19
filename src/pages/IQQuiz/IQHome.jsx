@@ -42,7 +42,7 @@ const IQHome = () => {
         }
         fetchData();
     }, []);
-
+    console.log("QUIZITEM",quizAttempts)
     return (
         <div className="flex items-center justify-center bg-gray-100 p-6 min-h-screen">
             <div className="w-full p-8 bg-white rounded-xl shadow-lg text-center">
@@ -115,7 +115,6 @@ const IQHome = () => {
                     </div>
                 </div>
 
-                {/* Lịch sử làm bài */}
                 <h2 className="mt-12 text-xl font-bold text-gray-800">Lịch sử làm bài</h2>
                 <div className="mt-4 space-y-4 text-left">
                     {loadingHistory ? (
@@ -125,27 +124,28 @@ const IQHome = () => {
                     ) : quizAttempts.length === 0 ? (
                         <p className="text-gray-500">Bạn chưa có bài làm nào trước đó.</p>
                     ) : (
-                        quizAttempts.map((attempt, index) => (
-                            <div
-                                key={attempt.id}
-                                className="p-4 border rounded shadow hover:bg-gray-50 cursor-pointer"
-                                onClick={() =>
-                                    navigate("/iq-test", {
-                                        state: {
-                                            questions: attempt.questions,
-                                            isReview: true,
-                                        },
-                                    })
-                                }
-                            >
-                                <h3 className="font-semibold text-green-600">Bài {index + 1}</h3>
-                                <p className="text-sm text-gray-600">
-                                    Bắt đầu: {new Date(attempt.startTime.getTime() + 7 * 60 * 60 * 1000).toLocaleString()}
-                                    <br />
-                                    Giới hạn thời gian: {Math.floor(attempt.timeLimit / 60)} phút
-                                </p>
-                            </div>
-                        ))
+                        quizAttempts.filter(attempt => attempt.submittedAt)
+                            .map((attempt, index) => (
+                                <div
+                                    key={attempt.id}
+                                    className="p-4 border rounded shadow hover:bg-gray-50 cursor-pointer"
+                                    onClick={() =>
+                                        navigate("/iq-test", {
+                                            state: {
+                                                questions: attempt.questions,
+                                                isReview: true,
+                                            },
+                                        })
+                                    }
+                                >
+                                    <h3 className="font-semibold text-green-600">Bài {index + 1}</h3>
+                                    <p className="text-sm text-gray-600">
+                                        Bắt đầu: {new Date(attempt.startTime).toLocaleString()}
+                                        <br />
+                                        Giới hạn thời gian: {Math.floor(attempt.timeLimit / 60)} phút
+                                    </p>
+                                </div>
+                            ))
                     )}
                 </div>
             </div>

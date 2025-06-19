@@ -5,7 +5,7 @@ import Rating from '@mui/material/Rating';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { jwtDecode } from "jwt-decode";
-import { addJobSave, addReview, deleteJobSave, deleteReview, fetchAllReviews, fetchJobById, fetchJobSavesByUser, updateReview } from '../../utils/ApiFunctions';
+import { addJobSave, addReview, checkJobApplied, deleteJobSave, deleteReview, fetchAllReviews, fetchJobById, fetchJobSavesByUser, updateReview } from '../../utils/ApiFunctions';
 import JobApplicationPopup from './JobApplicationPopup';
 import JobReview from './JobReview';
 import { ClipLoader } from 'react-spinners';
@@ -40,6 +40,7 @@ const JobDetail = () => {
     const [userId, setUserId] = useState("");
     const [currentEditId, setCurrentEditId] = useState(null);
     const [hasReviewed, setHasReviewed] = useState(false);
+    const [hasApplied, setHasApplied] = useState(false);
     const navigate = useNavigate();
 
 
@@ -62,6 +63,20 @@ const JobDetail = () => {
         }
         loadReviews();
     }, [id]);
+
+    useEffect(() => {
+        const checkAppliedStatus = async () => {
+            if (userId && id) {
+                const { data, error } = await checkJobApplied(userId, id);
+                if (data === true) {
+                    setHasApplied(true);
+                } else if (error) {
+                    console.error("Lỗi kiểm tra ứng tuyển:", error);
+                }
+            }
+        };
+        checkAppliedStatus();
+    }, [userId, id]);
 
     const handleSubmitReview = async (e) => {
         e.preventDefault();
@@ -193,6 +208,20 @@ const JobDetail = () => {
         setIsPopupOpen(false);
     }
 
+    const handleApplicationSuccess = () => {
+        setHasApplied(true);
+        setIsPopupOpen(false);
+        toast.success("Ứng tuyển thành công!", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+        });
+    };
+
     const handleFavoriteClick = async () => {
         if (!userId) {
             navigate('/dang-nhap');
@@ -296,9 +325,12 @@ const JobDetail = () => {
                     <div className="flex justify-between mt-4">
                         <button
                             onClick={handleApplyClick}
-                            className="bg-green-500 text-white w-full sm:w-4/6 mr-2 py-2 px-4 rounded-xl flex items-center justify-center hover:bg-green-600">
+                            className={`w-full sm:w-4/6 mr-2 py-2 px-4 rounded-xl flex items-center justify-center
+                            ${hasApplied ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 text-white'}`}
+                            disabled={hasApplied}
+                        >
                             <FontAwesomeIcon icon={faPaperPlane} className="mr-2" />
-                            Ứng tuyển ngay
+                            {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
                         </button>
                         <button
                             onClick={handleFavoriteClick}
@@ -351,11 +383,19 @@ const JobDetail = () => {
                     </div>
 
                     <div className="flex mt-4">
-                        <button
-                            onClick={handleApplyClick}
-                            className="bg-green-500 text-white mr-2 py-2 px-4 rounded-xl flex items-center justify-center hover:bg-green-600">
-                            Ứng tuyển ngay
-                        </button>
+                        {hasApplied ? (
+                            <button
+                                disabled
+                                className="bg-gray-300 text-gray-600 mr-2 py-2 px-4 rounded-xl flex items-center justify-center cursor-not-allowed">
+                                Đã ứng tuyển
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleApplyClick}
+                                className="bg-green-500 text-white mr-2 py-2 px-4 rounded-xl flex items-center justify-center hover:bg-green-600">
+                                Ứng tuyển ngay
+                            </button>
+                        )}
                         <button
                             onClick={handleFavoriteClick}
                             className="border border-green-500 text-green-600 py-2 px-4 rounded-xl flex items-center 
@@ -527,7 +567,9 @@ const JobDetail = () => {
             </div>
 
             {isPopupOpen && (
-                <JobApplicationPopup isPopupOpen={isPopupOpen} job={job} handleCloseClick={handleCloseClick} userId={userId} />
+                <JobApplicationPopup isPopupOpen={isPopupOpen} job={job} handleCloseClick={handleCloseClick}
+                    userId={userId} onApplicationSuccess={handleApplicationSuccess}
+                />
             )}
         </div>
     );

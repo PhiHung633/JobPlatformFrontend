@@ -3,7 +3,7 @@ import { FaSearch, FaMapMarkerAlt, FaRegHeart, FaHeart } from "react-icons/fa";
 import { Link, useParams } from "react-router-dom";
 import { parseISO, differenceInDays } from 'date-fns';
 import { jwtDecode } from "jwt-decode";
-import { addJobSave, deleteJobSave, fetchJobSavesByUser, fetchJobsByCompany, getCompanyById } from "../../utils/ApiFunctions";
+import { addJobSave, deleteJobSave, fetchApplications, fetchJobSavesByUser, fetchJobsByCompany, getCompanyById } from "../../utils/ApiFunctions";
 import JobApplicationPopup from "../JobDetail/JobApplicationPopup";
 import { ClipLoader } from "react-spinners";
 import { toast } from "react-toastify";
@@ -34,6 +34,8 @@ const CompanyDetails = () => {
     const [jobs, setJobs] = useState(null);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [email, setEmail] = useState("");
+    const [appliedJobIds, setAppliedJobIds] = useState([])
     const pageSize = 10;
 
 
@@ -42,8 +44,25 @@ const CompanyDetails = () => {
         if (token) {
             const decodedToken = jwtDecode(token);
             setUserId(decodedToken.user_id);
+            setEmail(decodedToken.sub)
         }
     }, []);
+
+    const fetchUserAppliedJobs = async () => {
+        if (email) {
+            try {
+                const { data, error } = await fetchApplications({ email: email });
+                if (data) {
+                    const jobIds = data.map(app => app.job.id);
+                    setAppliedJobIds(jobIds);
+                } else if (error) {
+                    console.error("Lỗi khi lấy danh sách ứng tuyển của người dùng:", error);
+                }
+            } catch (err) {
+                console.error("Lỗi không xác định khi lấy danh sách ứng tuyển:", err);
+            }
+        }
+    };
 
     const fetchJobs = async (page) => {
         setLoading(true);
@@ -61,6 +80,9 @@ const CompanyDetails = () => {
         }
     };
 
+    useEffect(() => {
+        fetchUserAppliedJobs();
+    }, [email]);
 
     useEffect(() => {
         fetchJobs(currentPage);
@@ -106,6 +128,11 @@ const CompanyDetails = () => {
         }
     }, [error]);
 
+    const handleApplicationSuccess = (jobId) => {
+        setAppliedJobIds(prevIds => [...prevIds, jobId]);
+        handleCloseClick();
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center min-h-screen">
@@ -141,7 +168,8 @@ const CompanyDetails = () => {
         setIsPopupOpen(false);
         setSelectedJob(null);
     };
-
+    console.log("DAYLACOMA",company)
+    console.log("OKEEEEE",jobs)
     return (
         <div className="min-h-screen bg-gray-100 px-20 py-10">
             {/* Header */}
@@ -254,12 +282,21 @@ const CompanyDetails = () => {
                                             {job.salary.toLocaleString()} VNĐ
                                         </p>
                                         <div className="flex items-center space-x-4">
-                                            <button
-                                                onClick={() => handleApplyClick(job)}
-                                                className="mt-2 px-4 py-2 bg-green-600 text-white text-sm rounded-xl hover:bg-green-700"
-                                            >
-                                                Ứng tuyển
-                                            </button>
+                                            {appliedJobIds.includes(job.id) ? (
+                                                <button
+                                                    className="mt-2 px-4 py-2 bg-gray-400 text-white text-sm rounded-xl cursor-not-allowed"
+                                                    disabled
+                                                >
+                                                    Đã ứng tuyển
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleApplyClick(job)}
+                                                    className="mt-2 px-4 py-2 bg-green-600 text-white text-sm rounded-xl hover:bg-green-700"
+                                                >
+                                                    Ứng tuyển
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => toggleFavorite(job.id)}
                                                 className="mt-2 text-green-500 hover:text-green-700 bg-gray-100 p-2 rounded-full"
@@ -284,6 +321,7 @@ const CompanyDetails = () => {
                                 job={selectedJob}
                                 handleCloseClick={handleCloseClick}
                                 userId={userId}
+                                onApplicationSuccess={() => handleApplicationSuccess(selectedJob.id)}
                             />
                         )}
                         <div className="flex justify-center mt-4 space-x-2">

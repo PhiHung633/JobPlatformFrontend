@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import SockJS from "sockjs-client/dist/sockjs";
 import { over } from "stompjs";
 import { ClipLoader } from 'react-spinners';
@@ -20,6 +20,7 @@ const IQQuiz = () => {
     const [loading, setLoading] = useState(true);
     const location = useLocation();
     const { questions = [], isReview = false } = location.state || {};
+    const navigate = useNavigate();
 
 
     useEffect(() => {
@@ -67,8 +68,8 @@ const IQQuiz = () => {
             setLoading(false);
 
             const token = localStorage.getItem("accessToken");
-            // const socket = new SockJS(`http://localhost:8080/ws?token=${token}`);
-            const socket = new SockJS(`https://jobplatformbackend.onrender.com/ws?token=${token}`);
+            const socket = new SockJS(`http://localhost:8080/ws?token=${token}`);
+            // const socket = new SockJS(`https://jobplatformbackend.onrender.com/ws?token=${token}`);
             const stomp = over(socket);
             stomp.connect({}, () => {
                 setStompClient(stomp);
@@ -114,8 +115,8 @@ const IQQuiz = () => {
 
     const connectWebSocket = (quizId) => {
         const token = localStorage.getItem("accessToken");
-        // const socket = new SockJS(`http://localhost:8080/ws?token=${token}`);
-        const socket = new SockJS(`https://jobplatformbackend.onrender.com/ws?token=${token}`);
+        const socket = new SockJS(`http://localhost:8080/ws?token=${token}`);
+        // const socket = new SockJS(`https://jobplatformbackend.onrender.com/ws?token=${token}`);
         const stomp = over(socket);
 
         stomp.connect({}, () => {
@@ -140,6 +141,7 @@ const IQQuiz = () => {
 
 
     const handleSubmit = async () => {
+        if (isSubmitting || showResult) return;
         try {
             setIsSubmitting(true);
             await submitQuiz(quiz.id);
@@ -148,6 +150,7 @@ const IQQuiz = () => {
             console.error("Error submitting quiz:", error);
         } finally {
             setIsSubmitting(false);
+            setShowResult(true);
         }
     };
 
@@ -193,6 +196,12 @@ const IQQuiz = () => {
                     <p className="text-xl mt-4 text-gray-700">
                         Bạn đạt <span className="font-bold text-green-600">{score}</span> / {quiz?.questions.length} điểm
                     </p>
+                    <button
+                        onClick={() => navigate("/iq-home")}
+                        className="mt-8 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300"
+                    >
+                        Quay về trang IQ Home
+                    </button>
                 </div>
             ) : (
                 <>

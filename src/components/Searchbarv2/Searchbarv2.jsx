@@ -161,7 +161,7 @@ const SearchBarv2 = ({ searchTitle = '' }) => {
 
                         <div className="flex flex-col mt-2 pt-2 w-full max-h-72 overflow-y-auto">
                             {jobSuggestions.length > 0 ? (
-                                jobSuggestions.map((result, id) => (
+                                jobSuggestions.filter((job) => job.status === "SHOW").map((result, id) => (
                                     <div key={id} className="p-2 w-full hover:bg-gray-200">
                                         <p>{result.title}</p>
                                     </div>
@@ -177,7 +177,7 @@ const SearchBarv2 = ({ searchTitle = '' }) => {
                         <div className="flex flex-col">
                             {
                                 jobSuggestions.length > 0 ? (
-                                    jobSuggestions.map((job, index) => (
+                                    jobSuggestions.filter((job) => job.status === "SHOW").map((job, index) => (
                                         <Link
                                             href={job.link}
                                             className="flex items-center p-2 hover:bg-[#e0e7ff] transition-colors w-[600px] relative group"

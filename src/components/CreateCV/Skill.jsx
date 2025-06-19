@@ -8,9 +8,7 @@ const Skill = () => {
     const [skills, setSkills] = useState([{ name: '', rating: 0 }]);
     const navigate = useNavigate();
 
-    // Tải dữ liệu kỹ năng từ localStorage khi component được render
     useEffect(() => {
-        // Retrieve `selectedCvData` and check if skills data is available
         const selectedCvData = JSON.parse(localStorage.getItem('selectedCvData'));
         let skillsFromSelectedCv = [];
         
@@ -21,7 +19,6 @@ const Skill = () => {
             });
         }
     
-        // Retrieve `skillsData` directly from localStorage
         const storedSkills = localStorage.getItem('skillsData');
         let skillsFromStorage = [];
         
@@ -32,7 +29,6 @@ const Skill = () => {
             });
         }
     
-        // Combine both sources, prioritizing `selectedCvData` if both are present
         setSkills(skillsFromSelectedCv.length > 0 ? skillsFromSelectedCv : skillsFromStorage);
     }, []);
 
